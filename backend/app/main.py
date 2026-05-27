@@ -5,10 +5,11 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
 
+from app.api.deps import CurrentUser, get_current_user, require_admin
 from app.core.config import get_settings
 from app.core.logging import (
     bind_request_context,
@@ -21,6 +22,7 @@ from app.services.supabase_client import supabase_health_check
 # Initialize logging immediately so import-time logs are captured too.
 setup_logging()
 log = get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -42,7 +44,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     log.info("app_shutting_down")
-
 
 def create_app() -> FastAPI:
     """Build and return the FastAPI application."""
@@ -157,6 +158,33 @@ def create_app() -> FastAPI:
             "timestamp_unix": int(time.time()),
         }
 
+    # ── Auth test endpoints (delete once real routes exist) ─
+    @app.get("/api/v1/me", tags=["meta"])
+    async def whoami(
+        user: CurrentUser = Depends(get_current_user),
+    ) -> dict[str, object]:
+        """Returns the authenticated user's resolved identity."""
+        return {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "status": user.status,
+            "organization_id": user.organization_id,
+            "avatar_url": user.avatar_url,
+        }
+
+    @app.get("/api/v1/admin-only", tags=["meta"])
+    async def admin_only(
+        user: CurrentUser = Depends(require_admin),
+    ) -> dict[str, object]:
+        """Test endpoint that only admins/owners can reach."""
+        return {
+            "message": f"Hello {user.full_name or user.email}, you're an admin.",
+            "role": user.role,
+        }
+
     return app
+
 
 app = create_app()
