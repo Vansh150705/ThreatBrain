@@ -16,23 +16,17 @@ from app.core.logging import (
     get_logger,
     setup_logging,
 )
+from app.services.supabase_client import supabase_health_check
 
 # Initialize logging immediately so import-time logs are captured too.
 setup_logging()
 log = get_logger(__name__)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Run startup/shutdown logic.
-
-    Anything we need to initialize once per process (HTTP clients,
-    background tasks, model loading) goes here. Cleanup runs after
-    the ``yield`` when the app shuts down.
-    """
+    """Run startup/shutdown logic."""
     settings = get_settings()
 
-    # Startup
     log.info(
         "app_starting",
         app_name=settings.APP_NAME,
@@ -45,18 +39,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         docs_url=f"http://localhost:{settings.BACKEND_PORT}/docs",
     )
 
-    yield  # ← application runs here
+    yield
 
-    # Shutdown 
     log.info("app_shutting_down")
 
 
 def create_app() -> FastAPI:
-    """Build and return the FastAPI application.
-
-    Wrapped in a factory so tests can instantiate fresh app
-    instances and so we can pass different configs per environment.
-    """
+    """Build and return the FastAPI application."""
     settings = get_settings()
 
     app = FastAPI(
@@ -115,8 +104,7 @@ def create_app() -> FastAPI:
     # Exception handler
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
-        """Catch-all so unhandled exceptions return clean JSON
-        instead of HTML stack traces."""
+        """Catch-all so unhandled exceptions return clean JSON."""
         log.exception(
             "unhandled_exception",
             exception_type=type(exc).__name__,
@@ -133,7 +121,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    # Routes 
+    # Routes
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, object]:
         """API info banner."""
@@ -154,6 +142,18 @@ def create_app() -> FastAPI:
             "service": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "environment": settings.APP_ENV,
+            "timestamp_unix": int(time.time()),
+        }
+
+    @app.get("/health/db", tags=["meta"])
+    async def health_db() -> dict[str, object]:
+        """Deep health check — confirms Supabase connectivity."""
+        db_status = supabase_health_check()
+        return {
+            "status": "ok" if db_status["ok"] else "degraded",
+            "service": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "database": db_status,
             "timestamp_unix": int(time.time()),
         }
 
