@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -9,31 +10,53 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
 
 from app.core.config import get_settings
+from app.core.logging import (
+    bind_request_context,
+    clear_request_context,
+    get_logger,
+    setup_logging,
+)
+
+# Initialize logging immediately so import-time logs are captured too.
+setup_logging()
+log = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Run startup/shutdown logic.
 
+    Anything we need to initialize once per process (HTTP clients,
+    background tasks, model loading) goes here. Cleanup runs after
+    the ``yield`` when the app shuts down.
+    """
     settings = get_settings()
 
     # Startup
-    print("\n" + "=" * 60)
-    print(f"🧠  {settings.APP_NAME}  v{settings.APP_VERSION}")
-    print(f"    Environment: {settings.APP_ENV}")
-    print(f"    Debug:       {settings.APP_DEBUG}")
-    print(f"    Listening:   http://{settings.BACKEND_HOST}:{settings.BACKEND_PORT}")
-    print(f"    Docs:        http://localhost:{settings.BACKEND_PORT}/docs")
-    print(f"    Supabase:    {settings.SUPABASE_URL}")
-    print("=" * 60 + "\n")
+    log.info(
+        "app_starting",
+        app_name=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        environment=settings.APP_ENV,
+        debug=settings.APP_DEBUG,
+        host=settings.BACKEND_HOST,
+        port=settings.BACKEND_PORT,
+        supabase_url=str(settings.SUPABASE_URL),
+        docs_url=f"http://localhost:{settings.BACKEND_PORT}/docs",
+    )
 
     yield  # ← application runs here
 
-    # Shutdown
-    print("\n👋  ThreatBrain shutting down. Goodbye.\n")
+    # Shutdown 
+    log.info("app_shutting_down")
 
 
 def create_app() -> FastAPI:
+    """Build and return the FastAPI application.
 
+    Wrapped in a factory so tests can instantiate fresh app
+    instances and so we can pass different configs per environment.
+    """
     settings = get_settings()
 
     app = FastAPI(
@@ -60,21 +83,45 @@ def create_app() -> FastAPI:
         expose_headers=["X-Request-Id", "X-Process-Time-Ms"],
     )
 
-    # Request timing middleware
+    # Request context + timing middleware
     @app.middleware("http")
-    async def add_process_time_header(request: Request, call_next):
-        """Add an ``X-Process-Time-Ms`` header to every response."""
+    async def request_context_middleware(request: Request, call_next):
+        """Attach a request_id to logs and add timing headers."""
+        request_id = request.headers.get("X-Request-Id") or uuid.uuid4().hex[:12]
+        bind_request_context(
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            client_ip=request.client.host if request.client else None,
+        )
+
         start = time.perf_counter()
-        response = await call_next(request)
-        elapsed_ms = (time.perf_counter() - start) * 1000
-        response.headers["X-Process-Time-Ms"] = f"{elapsed_ms:.2f}"
-        return response
+        response = None
+        try:
+            response = await call_next(request)
+            return response
+        finally:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            log.info(
+                "request_completed",
+                duration_ms=round(elapsed_ms, 2),
+                status_code=response.status_code if response is not None else 500,
+            )
+            clear_request_context()
+            if response is not None:
+                response.headers["X-Request-Id"] = request_id
+                response.headers["X-Process-Time-Ms"] = f"{elapsed_ms:.2f}"
 
     # Exception handler
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
         """Catch-all so unhandled exceptions return clean JSON
         instead of HTML stack traces."""
+        log.exception(
+            "unhandled_exception",
+            exception_type=type(exc).__name__,
+            exception_message=str(exc),
+        )
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
@@ -86,7 +133,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    # Routes
+    # Routes 
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, object]:
         """API info banner."""
@@ -111,6 +158,5 @@ def create_app() -> FastAPI:
         }
 
     return app
-
 
 app = create_app()
