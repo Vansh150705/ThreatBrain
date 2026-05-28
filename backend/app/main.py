@@ -5,11 +5,11 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import Depends, FastAPI, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
 
-from app.api.deps import CurrentUser, get_current_user, require_admin
+from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.logging import (
     bind_request_context,
@@ -17,12 +17,10 @@ from app.core.logging import (
     get_logger,
     setup_logging,
 )
-from app.services.supabase_client import supabase_health_check
 
 # Initialize logging immediately so import-time logs are captured too.
 setup_logging()
 log = get_logger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -44,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     log.info("app_shutting_down")
+
 
 def create_app() -> FastAPI:
     """Build and return the FastAPI application."""
@@ -122,7 +121,7 @@ def create_app() -> FastAPI:
             },
         )
 
-    # Routes
+    # Root endpoint 
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, object]:
         """API info banner."""
@@ -132,57 +131,11 @@ def create_app() -> FastAPI:
             "environment": settings.APP_ENV,
             "tagline": "The Neural SOC — Where AI Agents Converge to Defend",
             "docs": "/docs",
-            "health": "/health",
+            "api": "/api/v1",
         }
 
-    @app.get("/health", tags=["meta"])
-    async def health() -> dict[str, object]:
-        """Liveness probe used by Railway, load balancers, uptime monitors."""
-        return {
-            "status": "ok",
-            "service": settings.APP_NAME,
-            "version": settings.APP_VERSION,
-            "environment": settings.APP_ENV,
-            "timestamp_unix": int(time.time()),
-        }
-
-    @app.get("/health/db", tags=["meta"])
-    async def health_db() -> dict[str, object]:
-        """Deep health check — confirms Supabase connectivity."""
-        db_status = supabase_health_check()
-        return {
-            "status": "ok" if db_status["ok"] else "degraded",
-            "service": settings.APP_NAME,
-            "version": settings.APP_VERSION,
-            "database": db_status,
-            "timestamp_unix": int(time.time()),
-        }
-
-    # ── Auth test endpoints (delete once real routes exist) ─
-    @app.get("/api/v1/me", tags=["meta"])
-    async def whoami(
-        user: CurrentUser = Depends(get_current_user),
-    ) -> dict[str, object]:
-        """Returns the authenticated user's resolved identity."""
-        return {
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role,
-            "status": user.status,
-            "organization_id": user.organization_id,
-            "avatar_url": user.avatar_url,
-        }
-
-    @app.get("/api/v1/admin-only", tags=["meta"])
-    async def admin_only(
-        user: CurrentUser = Depends(require_admin),
-    ) -> dict[str, object]:
-        """Test endpoint that only admins/owners can reach."""
-        return {
-            "message": f"Hello {user.full_name or user.email}, you're an admin.",
-            "role": user.role,
-        }
+    #  Mount the versioned API router 
+    app.include_router(api_router, prefix="/api/v1")
 
     return app
 
