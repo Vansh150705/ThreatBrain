@@ -4,6 +4,11 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field
 
 from app.agents.base import AgentInput
+from app.agents.investigation import (
+    InvestigationAgent,
+    InvestigationInput,
+    InvestigationOutput,
+)
 from app.agents.threat_intel import (
     ThreatIntelAgent,
     ThreatIntelInput,
@@ -17,16 +22,12 @@ router = APIRouter()
 log = get_logger(__name__)
 
 class TriageClassifyRequest(BaseModel):
-    """Body for ``POST /agents/triage/classify``."""
-
     event: TriageInput
     promote_if_recommended: bool = Field(default=True)
     primary_asset_id: str | None = None
 
 
 class TriageClassifyResponse(BaseModel):
-    """Response for ``POST /agents/triage/classify``."""
-
     run_id: str
     agent_key: str
     verdict: TriageOutput
@@ -46,7 +47,6 @@ async def triage_classify(
     request: TriageClassifyRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> TriageClassifyResponse:
-    """Run the Triage Agent on a security event."""
     agent = TriageAgent()
     agent_input = AgentInput(
         organization_id=user.organization_id,
@@ -78,15 +78,11 @@ async def triage_classify(
     )
 
 class ThreatIntelEnrichRequest(BaseModel):
-    """Body for ``POST /agents/threat-intel/enrich``."""
-
     ip_address: str = Field(..., min_length=3, max_length=45)
     context: str | None = Field(default=None, max_length=2000)
 
 
 class ThreatIntelEnrichResponse(BaseModel):
-    """Response for ``POST /agents/threat-intel/enrich``."""
-
     run_id: str
     agent_key: str
     verdict: ThreatIntelOutput
@@ -100,15 +96,11 @@ class ThreatIntelEnrichResponse(BaseModel):
     response_model=ThreatIntelEnrichResponse,
     status_code=status.HTTP_200_OK,
     summary="Enrich an IP IOC with the Threat Intel Agent",
-    responses={
-        503: {"description": "External feeds unavailable and no key configured."},
-    },
 )
 async def threat_intel_enrich(
     request: ThreatIntelEnrichRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ThreatIntelEnrichResponse:
-
     agent = ThreatIntelAgent()
     agent_input = AgentInput(
         organization_id=user.organization_id,
@@ -126,6 +118,74 @@ async def threat_intel_enrich(
         run_id=run_result.run_id,
         agent_key=run_result.agent_key,
         verdict=verdict,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+class InvestigationCorrelateRequest(BaseModel):
+    lookback_hours: int = Field(default=24, ge=1, le=720)
+    max_threats: int = Field(default=30, ge=2, le=100)
+    min_severity: str = Field(default="low")
+    create_incidents: bool = Field(default=True)
+
+
+class IncidentSummary(BaseModel):
+    incident_id: str
+    short_id: str | None = None
+    title: str
+    threat_count: str
+
+
+class InvestigationCorrelateResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: InvestigationOutput
+    incidents_created: list[IncidentSummary]
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/investigation/correlate",
+    response_model=InvestigationCorrelateResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Correlate recent threats into incidents",
+)
+async def investigation_correlate(
+    request: InvestigationCorrelateRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> InvestigationCorrelateResponse:
+
+    agent = InvestigationAgent()
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=InvestigationInput(
+            lookback_hours=request.lookback_hours,
+            max_threats=request.max_threats,
+            min_severity=request.min_severity,
+        ).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = InvestigationOutput.model_validate(run_result.output)
+
+    incidents_created: list[IncidentSummary] = []
+    if request.create_incidents and verdict.groups:
+        rows = agent.create_incidents_from_output(
+            organization_id=user.organization_id,
+            verdict=verdict,
+            agent_run_id=run_result.run_id,
+        )
+        incidents_created = [IncidentSummary(**r) for r in rows]
+
+    return InvestigationCorrelateResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
+        incidents_created=incidents_created,
         model=run_result.model,
         latency_ms=run_result.latency_ms,
         total_tokens=run_result.total_tokens,
