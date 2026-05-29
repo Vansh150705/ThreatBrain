@@ -4,6 +4,12 @@ from app.agents.base import (  # noqa: F401
     AgentRunResult,
     BaseAgent,
 )
+from app.agents.forensics import (  # noqa: F401
+    ForensicsAgent,
+    ForensicsInput,
+    ForensicsOutput,
+    TimelineEvent,
+)
 from app.agents.investigation import (  # noqa: F401
     InvestigationAgent,
     InvestigationInput,

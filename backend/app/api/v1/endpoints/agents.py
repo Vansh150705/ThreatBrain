@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.agents.base import AgentInput
+from app.agents.forensics import (
+    ForensicsAgent,
+    ForensicsInput,
+    ForensicsOutput,
+)
 from app.agents.investigation import (
     InvestigationAgent,
     InvestigationInput,
@@ -20,7 +25,7 @@ from app.agents.threat_intel import (
     ThreatIntelOutput,
 )
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
-from app.api.deps import CurrentUser, require_admin, require_analyst
+from app.api.deps import CurrentUser, require_analyst
 from app.core.logging import get_logger
 
 router = APIRouter()
@@ -192,6 +197,7 @@ async def investigation_correlate(
         total_tokens=run_result.total_tokens,
     )
 
+
 class ResponseRecommendRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
     dry_run: bool = Field(default=True)
@@ -211,16 +217,12 @@ class ResponseRecommendResponse(BaseModel):
     "/response/recommend",
     response_model=ResponseRecommendResponse,
     status_code=status.HTTP_200_OK,
-    summary="Recommend or execute playbook actions on an incident",
 )
 async def response_recommend(
     request: ResponseRecommendRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ResponseRecommendResponse:
-
     if (not request.dry_run) and request.execute_auto_playbooks and not user.is_admin:
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -242,8 +244,6 @@ async def response_recommend(
     )
     run_result = agent.run(agent_input)
     verdict = ResponseOutput.model_validate(run_result.output)
-
-    # Apply the actions per dry_run/execute flags and update counters
     verdict = agent.apply_actions(
         organization_id=user.organization_id,
         verdict=verdict,
@@ -253,6 +253,51 @@ async def response_recommend(
     )
 
     return ResponseRecommendResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+class ForensicsReconstructRequest(BaseModel):
+    incident_short_id: str = Field(..., min_length=3, max_length=40)
+
+
+class ForensicsReconstructResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: ForensicsOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/forensics/reconstruct",
+    response_model=ForensicsReconstructResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Build a forensic timeline for an incident",
+)
+async def forensics_reconstruct(
+    request: ForensicsReconstructRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> ForensicsReconstructResponse:
+
+    agent = ForensicsAgent()
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=ForensicsInput(
+            incident_short_id=request.incident_short_id,
+        ).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = ForensicsOutput.model_validate(run_result.output)
+
+    return ForensicsReconstructResponse(
         run_id=run_result.run_id,
         agent_key=run_result.agent_key,
         verdict=verdict,
