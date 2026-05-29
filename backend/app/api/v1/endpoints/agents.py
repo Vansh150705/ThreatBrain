@@ -4,6 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.agents.base import AgentInput
+from app.agents.compliance import (
+    ComplianceAgent,
+    ComplianceInput,
+    ComplianceOutput,
+)
 from app.agents.forensics import (
     ForensicsAgent,
     ForensicsInput,
@@ -85,7 +90,6 @@ async def triage_classify(
         total_tokens=run_result.total_tokens,
         promoted_threat_id=promoted_id,
     )
-
 class ThreatIntelEnrichRequest(BaseModel):
     ip_address: str = Field(..., min_length=3, max_length=45)
     context: str | None = Field(default=None, max_length=2000)
@@ -197,7 +201,6 @@ async def investigation_correlate(
         total_tokens=run_result.total_tokens,
     )
 
-
 class ResponseRecommendRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
     dry_run: bool = Field(default=True)
@@ -278,13 +281,11 @@ class ForensicsReconstructResponse(BaseModel):
     "/forensics/reconstruct",
     response_model=ForensicsReconstructResponse,
     status_code=status.HTTP_200_OK,
-    summary="Build a forensic timeline for an incident",
 )
 async def forensics_reconstruct(
     request: ForensicsReconstructRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ForensicsReconstructResponse:
-
     agent = ForensicsAgent()
     agent_input = AgentInput(
         organization_id=user.organization_id,
@@ -298,6 +299,57 @@ async def forensics_reconstruct(
     verdict = ForensicsOutput.model_validate(run_result.output)
 
     return ForensicsReconstructResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+class ComplianceAssessRequest(BaseModel):
+    incident_short_id: str = Field(..., min_length=3, max_length=40)
+    regulations: list[str] | None = Field(
+        default=None,
+        description="Subset of regulations; default = all common ones.",
+    )
+
+
+class ComplianceAssessResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: ComplianceOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/compliance/assess",
+    response_model=ComplianceAssessResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Produce regulatory compliance reports for an incident",
+)
+async def compliance_assess(
+    request: ComplianceAssessRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> ComplianceAssessResponse:
+
+    agent = ComplianceAgent()
+    payload_kwargs = {"incident_short_id": request.incident_short_id}
+    if request.regulations:
+        payload_kwargs["regulations"] = request.regulations
+
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=ComplianceInput(**payload_kwargs).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = ComplianceOutput.model_validate(run_result.output)
+
+    return ComplianceAssessResponse(
         run_id=run_result.run_id,
         agent_key=run_result.agent_key,
         verdict=verdict,
