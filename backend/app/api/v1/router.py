@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import agents, meta, organizations
+from app.api.v1.endpoints import agents, meta, orchestrator, organizations
 
 api_router = APIRouter()
 
-# Meta endpoints (health, identity, RBAC tests)
+# Meta endpoints (health, identity)
 api_router.include_router(meta.router)
 
 # Organizations
@@ -16,9 +16,16 @@ api_router.include_router(
     tags=["organizations"],
 )
 
-# Agents
+# Agents (individual)
 api_router.include_router(
     agents.router,
     prefix="/agents",
     tags=["agents"],
+)
+
+# Orchestrator (chained pipeline)
+api_router.include_router(
+    orchestrator.router,
+    prefix="/orchestrator",
+    tags=["orchestrator"],
 )
