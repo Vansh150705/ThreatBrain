@@ -9,13 +9,18 @@ from app.agents.investigation import (
     InvestigationInput,
     InvestigationOutput,
 )
+from app.agents.response import (
+    ResponseAgent,
+    ResponseInput,
+    ResponseOutput,
+)
 from app.agents.threat_intel import (
     ThreatIntelAgent,
     ThreatIntelInput,
     ThreatIntelOutput,
 )
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
-from app.api.deps import CurrentUser, require_analyst
+from app.api.deps import CurrentUser, require_admin, require_analyst
 from app.core.logging import get_logger
 
 router = APIRouter()
@@ -41,7 +46,6 @@ class TriageClassifyResponse(BaseModel):
     "/triage/classify",
     response_model=TriageClassifyResponse,
     status_code=status.HTTP_200_OK,
-    summary="Classify an event with the Triage Agent",
 )
 async def triage_classify(
     request: TriageClassifyRequest,
@@ -95,7 +99,6 @@ class ThreatIntelEnrichResponse(BaseModel):
     "/threat-intel/enrich",
     response_model=ThreatIntelEnrichResponse,
     status_code=status.HTTP_200_OK,
-    summary="Enrich an IP IOC with the Threat Intel Agent",
 )
 async def threat_intel_enrich(
     request: ThreatIntelEnrichRequest,
@@ -151,13 +154,11 @@ class InvestigationCorrelateResponse(BaseModel):
     "/investigation/correlate",
     response_model=InvestigationCorrelateResponse,
     status_code=status.HTTP_200_OK,
-    summary="Correlate recent threats into incidents",
 )
 async def investigation_correlate(
     request: InvestigationCorrelateRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> InvestigationCorrelateResponse:
-
     agent = InvestigationAgent()
     agent_input = AgentInput(
         organization_id=user.organization_id,
@@ -186,6 +187,75 @@ async def investigation_correlate(
         agent_key=run_result.agent_key,
         verdict=verdict,
         incidents_created=incidents_created,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+class ResponseRecommendRequest(BaseModel):
+    incident_short_id: str = Field(..., min_length=3, max_length=40)
+    dry_run: bool = Field(default=True)
+    execute_auto_playbooks: bool = Field(default=False)
+
+
+class ResponseRecommendResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: ResponseOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/response/recommend",
+    response_model=ResponseRecommendResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Recommend or execute playbook actions on an incident",
+)
+async def response_recommend(
+    request: ResponseRecommendRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> ResponseRecommendResponse:
+
+    if (not request.dry_run) and request.execute_auto_playbooks and not user.is_admin:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "insufficient_role",
+                "message": "Live playbook execution requires the admin role.",
+            },
+        )
+
+    agent = ResponseAgent()
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=ResponseInput(
+            incident_short_id=request.incident_short_id,
+            dry_run=request.dry_run,
+            execute_auto_playbooks=request.execute_auto_playbooks,
+        ).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = ResponseOutput.model_validate(run_result.output)
+
+    # Apply the actions per dry_run/execute flags and update counters
+    verdict = agent.apply_actions(
+        organization_id=user.organization_id,
+        verdict=verdict,
+        agent_run_id=run_result.run_id,
+        dry_run=request.dry_run,
+        execute_auto_playbooks=request.execute_auto_playbooks,
+    )
+
+    return ResponseRecommendResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
         model=run_result.model,
         latency_ms=run_result.latency_ms,
         total_tokens=run_result.total_tokens,
