@@ -14,6 +14,7 @@ from app.agents.forensics import (
     ForensicsInput,
     ForensicsOutput,
 )
+from app.agents.hunt import HuntAgent, HuntInput, HuntOutput
 from app.agents.investigation import (
     InvestigationAgent,
     InvestigationInput,
@@ -35,7 +36,6 @@ from app.core.logging import get_logger
 
 router = APIRouter()
 log = get_logger(__name__)
-
 class TriageClassifyRequest(BaseModel):
     event: TriageInput
     promote_if_recommended: bool = Field(default=True)
@@ -90,6 +90,7 @@ async def triage_classify(
         total_tokens=run_result.total_tokens,
         promoted_threat_id=promoted_id,
     )
+
 class ThreatIntelEnrichRequest(BaseModel):
     ip_address: str = Field(..., min_length=3, max_length=45)
     context: str | None = Field(default=None, max_length=2000)
@@ -309,10 +310,7 @@ async def forensics_reconstruct(
 
 class ComplianceAssessRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
-    regulations: list[str] | None = Field(
-        default=None,
-        description="Subset of regulations; default = all common ones.",
-    )
+    regulations: list[str] | None = Field(default=None)
 
 
 class ComplianceAssessResponse(BaseModel):
@@ -328,13 +326,11 @@ class ComplianceAssessResponse(BaseModel):
     "/compliance/assess",
     response_model=ComplianceAssessResponse,
     status_code=status.HTTP_200_OK,
-    summary="Produce regulatory compliance reports for an incident",
 )
 async def compliance_assess(
     request: ComplianceAssessRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ComplianceAssessResponse:
-
     agent = ComplianceAgent()
     payload_kwargs = {"incident_short_id": request.incident_short_id}
     if request.regulations:
@@ -350,6 +346,55 @@ async def compliance_assess(
     verdict = ComplianceOutput.model_validate(run_result.output)
 
     return ComplianceAssessResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+class HuntGenerateRequest(BaseModel):
+    lookback_hours: int = Field(default=168, ge=1, le=720)
+    focus_areas: list[str] = Field(default_factory=list)
+    max_hypotheses: int = Field(default=5, ge=1, le=15)
+
+
+class HuntGenerateResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: HuntOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/hunt/generate",
+    response_model=HuntGenerateResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Generate proactive threat hunting hypotheses",
+)
+async def hunt_generate(
+    request: HuntGenerateRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> HuntGenerateResponse:
+
+    agent = HuntAgent()
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=HuntInput(
+            lookback_hours=request.lookback_hours,
+            focus_areas=request.focus_areas,
+            max_hypotheses=request.max_hypotheses,
+        ).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = HuntOutput.model_validate(run_result.output)
+
+    return HuntGenerateResponse(
         run_id=run_result.run_id,
         agent_key=run_result.agent_key,
         verdict=verdict,

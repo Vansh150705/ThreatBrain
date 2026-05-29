@@ -16,6 +16,12 @@ from app.agents.forensics import (  # noqa: F401
     ForensicsOutput,
     TimelineEvent,
 )
+from app.agents.hunt import (  # noqa: F401
+    HuntAgent,
+    HuntHypothesis,
+    HuntInput,
+    HuntOutput,
+)
 from app.agents.investigation import (  # noqa: F401
     InvestigationAgent,
     InvestigationInput,
