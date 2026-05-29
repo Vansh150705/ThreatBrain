@@ -1,3 +1,10 @@
+from app.schemas.agent import (
+    AgentListResponse,
+    AgentResponse,
+    AgentRunDetail,
+    AgentRunListResponse,
+    AgentRunSummary,
+)
 from app.schemas.common import (
     ErrorDetail,
     ErrorResponse,
@@ -32,4 +39,10 @@ __all__ = [
     "OrganizationUpdate",
     "OrgPlan",
     "OrgStatus",
+    # agent
+    "AgentResponse",
+    "AgentListResponse",
+    "AgentRunSummary",
+    "AgentRunDetail",
+    "AgentRunListResponse",
 ]

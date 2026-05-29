@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.agents.base import AgentInput
@@ -33,9 +33,20 @@ from app.agents.threat_intel import (
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
 from app.api.deps import CurrentUser, require_analyst
 from app.core.logging import get_logger
+from app.schemas import (
+    AgentListResponse,
+    AgentResponse,
+    AgentRunDetail,
+    AgentRunListResponse,
+    AgentRunSummary,
+    Pagination,
+)
+from app.services import agent_service
 
 router = APIRouter()
 log = get_logger(__name__)
+
+# Triage
 class TriageClassifyRequest(BaseModel):
     event: TriageInput
     promote_if_recommended: bool = Field(default=True)
@@ -91,6 +102,7 @@ async def triage_classify(
         promoted_threat_id=promoted_id,
     )
 
+# Threat Intel
 class ThreatIntelEnrichRequest(BaseModel):
     ip_address: str = Field(..., min_length=3, max_length=45)
     context: str | None = Field(default=None, max_length=2000)
@@ -136,6 +148,7 @@ async def threat_intel_enrich(
         total_tokens=run_result.total_tokens,
     )
 
+# Investigation
 class InvestigationCorrelateRequest(BaseModel):
     lookback_hours: int = Field(default=24, ge=1, le=720)
     max_threats: int = Field(default=30, ge=2, le=100)
@@ -202,6 +215,7 @@ async def investigation_correlate(
         total_tokens=run_result.total_tokens,
     )
 
+# Response
 class ResponseRecommendRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
     dry_run: bool = Field(default=True)
@@ -265,6 +279,7 @@ async def response_recommend(
         total_tokens=run_result.total_tokens,
     )
 
+# Forensics
 class ForensicsReconstructRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
 
@@ -308,6 +323,7 @@ async def forensics_reconstruct(
         total_tokens=run_result.total_tokens,
     )
 
+# Compliance
 class ComplianceAssessRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
     regulations: list[str] | None = Field(default=None)
@@ -354,6 +370,7 @@ async def compliance_assess(
         total_tokens=run_result.total_tokens,
     )
 
+# Hunt
 class HuntGenerateRequest(BaseModel):
     lookback_hours: int = Field(default=168, ge=1, le=720)
     focus_areas: list[str] = Field(default_factory=list)
@@ -379,7 +396,6 @@ async def hunt_generate(
     request: HuntGenerateRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> HuntGenerateResponse:
-
     agent = HuntAgent()
     agent_input = AgentInput(
         organization_id=user.organization_id,
@@ -402,3 +418,115 @@ async def hunt_generate(
         latency_ms=run_result.latency_ms,
         total_tokens=run_result.total_tokens,
     )
+
+# Management endpoints (read-only)
+@router.get(
+    "",
+    response_model=AgentListResponse,
+    summary="List all agents for the caller's organization",
+)
+async def list_agents(
+    user: CurrentUser = Depends(require_analyst),
+) -> AgentListResponse:
+    rows = agent_service.list_agents_for_org(
+        organization_id=str(user.organization_id)
+    )
+    items = [AgentResponse.model_validate(r) for r in rows]
+    return AgentListResponse(items=items, total=len(items))
+
+
+@router.get(
+    "/recent-runs",
+    response_model=AgentRunListResponse,
+    summary="List recent runs across ALL agents",
+)
+async def list_recent_runs(
+    page: int = Query(default=1, ge=1, le=10_000),
+    page_size: int = Query(default=20, ge=1, le=100),
+    run_status: str | None = Query(default=None),
+    user: CurrentUser = Depends(require_analyst),
+) -> AgentRunListResponse:
+    offset = (page - 1) * page_size
+    rows, total = agent_service.list_runs(
+        organization_id=str(user.organization_id),
+        agent_key=None,
+        status=run_status,
+        limit=page_size,
+        offset=offset,
+    )
+    items = [AgentRunSummary.model_validate(r) for r in rows]
+    pagination = Pagination.build(page=page, page_size=page_size, total=total)
+    return AgentRunListResponse(items=items, pagination=pagination)
+
+
+@router.get(
+    "/runs/{run_id}",
+    response_model=AgentRunDetail,
+    summary="Get full details of one specific agent run",
+)
+async def get_agent_run(
+    run_id: str,
+    user: CurrentUser = Depends(require_analyst),
+) -> AgentRunDetail:
+    row = agent_service.get_run_by_id(
+        organization_id=str(user.organization_id),
+        run_id=run_id,
+    )
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "run_not_found",
+                "message": f"No agent run with id '{run_id}' in your organization.",
+            },
+        )
+    return AgentRunDetail.model_validate(row)
+
+
+@router.get(
+    "/{agent_key}",
+    response_model=AgentResponse,
+    summary="Get one agent's config and stats",
+)
+async def get_agent(
+    agent_key: str,
+    user: CurrentUser = Depends(require_analyst),
+) -> AgentResponse:
+    row = agent_service.get_agent_by_key(
+        organization_id=str(user.organization_id),
+        agent_key=agent_key,
+    )
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "agent_not_found",
+                "message": f"No agent with key '{agent_key}' in your organization.",
+            },
+        )
+    return AgentResponse.model_validate(row)
+
+
+@router.get(
+    "/{agent_key}/runs",
+    response_model=AgentRunListResponse,
+    summary="List recent runs for a specific agent",
+)
+async def list_agent_runs(
+    agent_key: str,
+    page: int = Query(default=1, ge=1, le=10_000),
+    page_size: int = Query(default=20, ge=1, le=100),
+    run_status: str | None = Query(default=None),
+    user: CurrentUser = Depends(require_analyst),
+) -> AgentRunListResponse:
+    offset = (page - 1) * page_size
+    rows, total = agent_service.list_runs(
+        organization_id=str(user.organization_id),
+        agent_key=agent_key,
+        status=run_status,
+        limit=page_size,
+        offset=offset,
+    )
+    items = [AgentRunSummary.model_validate(r) for r in rows]
+    pagination = Pagination.build(page=page, page_size=page_size, total=total)
+    return AgentRunListResponse(items=items, pagination=pagination)
