@@ -4,4 +4,13 @@ from app.agents.base import (  # noqa: F401
     AgentRunResult,
     BaseAgent,
 )
-from app.agents.triage import TriageAgent, TriageInput, TriageOutput  # noqa: F401
+from app.agents.threat_intel import (  # noqa: F401
+    ThreatIntelAgent,
+    ThreatIntelInput,
+    ThreatIntelOutput,
+)
+from app.agents.triage import (  # noqa: F401
+    TriageAgent,
+    TriageInput,
+    TriageOutput,
+)

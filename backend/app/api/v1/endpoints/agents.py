@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, Field
 
 from app.agents.base import AgentInput
+from app.agents.threat_intel import (
+    ThreatIntelAgent,
+    ThreatIntelInput,
+    ThreatIntelOutput,
+)
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
 from app.api.deps import CurrentUser, require_analyst
 from app.core.logging import get_logger
@@ -13,23 +16,16 @@ from app.core.logging import get_logger
 router = APIRouter()
 log = get_logger(__name__)
 
-
 class TriageClassifyRequest(BaseModel):
     """Body for ``POST /agents/triage/classify``."""
 
     event: TriageInput
-    promote_if_recommended: bool = Field(
-        default=True,
-        description="If true and the agent recommends promotion, create a threats row.",
-    )
-    primary_asset_id: str | None = Field(
-        default=None,
-        description="UUID of the affected asset, for the threats row if promoted.",
-    )
+    promote_if_recommended: bool = Field(default=True)
+    primary_asset_id: str | None = None
 
 
 class TriageClassifyResponse(BaseModel):
-    """Response shape for ``POST /agents/triage/classify``."""
+    """Response for ``POST /agents/triage/classify``."""
 
     run_id: str
     agent_key: str
@@ -39,32 +35,25 @@ class TriageClassifyResponse(BaseModel):
     total_tokens: int
     promoted_threat_id: str | None = None
 
+
 @router.post(
     "/triage/classify",
     response_model=TriageClassifyResponse,
     status_code=status.HTTP_200_OK,
     summary="Classify an event with the Triage Agent",
-    responses={
-        401: {"description": "Missing or invalid auth token."},
-        403: {"description": "Requires analyst role or higher."},
-        422: {"description": "Invalid event payload or LLM produced bad output."},
-        503: {"description": "LLM call failed after retries."},
-    },
 )
 async def triage_classify(
     request: TriageClassifyRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> TriageClassifyResponse:
-
+    """Run the Triage Agent on a security event."""
     agent = TriageAgent()
-
     agent_input = AgentInput(
         organization_id=user.organization_id,
         trigger_type="manual",
         trigger_id=None,
         payload=request.event.model_dump(),
     )
-
     run_result = agent.run(agent_input)
     verdict = TriageOutput.model_validate(run_result.output)
 
@@ -86,4 +75,58 @@ async def triage_classify(
         latency_ms=run_result.latency_ms,
         total_tokens=run_result.total_tokens,
         promoted_threat_id=promoted_id,
+    )
+
+class ThreatIntelEnrichRequest(BaseModel):
+    """Body for ``POST /agents/threat-intel/enrich``."""
+
+    ip_address: str = Field(..., min_length=3, max_length=45)
+    context: str | None = Field(default=None, max_length=2000)
+
+
+class ThreatIntelEnrichResponse(BaseModel):
+    """Response for ``POST /agents/threat-intel/enrich``."""
+
+    run_id: str
+    agent_key: str
+    verdict: ThreatIntelOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/threat-intel/enrich",
+    response_model=ThreatIntelEnrichResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Enrich an IP IOC with the Threat Intel Agent",
+    responses={
+        503: {"description": "External feeds unavailable and no key configured."},
+    },
+)
+async def threat_intel_enrich(
+    request: ThreatIntelEnrichRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> ThreatIntelEnrichResponse:
+
+    agent = ThreatIntelAgent()
+    agent_input = AgentInput(
+        organization_id=user.organization_id,
+        trigger_type="manual",
+        trigger_id=None,
+        payload=ThreatIntelInput(
+            ip_address=request.ip_address,
+            context=request.context,
+        ).model_dump(),
+    )
+    run_result = agent.run(agent_input)
+    verdict = ThreatIntelOutput.model_validate(run_result.output)
+
+    return ThreatIntelEnrichResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=verdict,
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
     )

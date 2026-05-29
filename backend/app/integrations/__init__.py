@@ -1,0 +1,1 @@
+from app.integrations import abuseipdb  # noqa: F401
