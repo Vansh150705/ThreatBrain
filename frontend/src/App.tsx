@@ -1,131 +1,194 @@
-import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Shield,
+  Brain,
+  AlertTriangle,
+  Activity,
+  Zap,
+  Search,
+  Eye,
+  CheckCircle2,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Toaster, toast } from "sonner";
+import { Button } from "@/components/ui/button";
+
+// The 7 agents — what we built in Phase 4
+const agents = [
+  {
+    key: "triage",
+    name: "Triage",
+    icon: AlertTriangle,
+    description: "First-responder classification with MITRE mapping",
+    color: "bg-severity-high",
+    runs: 47,
+  },
+  {
+    key: "threat-intel",
+    name: "Threat Intel",
+    icon: Search,
+    description: "Live AbuseIPDB enrichment + IOC caching",
+    color: "bg-severity-info",
+    runs: 31,
+  },
+  {
+    key: "investigation",
+    name: "Investigation",
+    icon: Brain,
+    description: "Correlates threats into attack stories",
+    color: "bg-primary-600",
+    runs: 12,
+  },
+  {
+    key: "response",
+    name: "Response",
+    icon: Zap,
+    description: "Playbook execution with audit trail",
+    color: "bg-severity-critical",
+    runs: 24,
+  },
+  {
+    key: "forensics",
+    name: "Forensics",
+    icon: Eye,
+    description: "Chain-of-custody timeline reconstruction",
+    color: "bg-severity-medium",
+    runs: 8,
+  },
+  {
+    key: "compliance",
+    name: "Compliance",
+    icon: CheckCircle2,
+    description: "GDPR / HIPAA / PCI-DSS reporting",
+    color: "bg-severity-low",
+    runs: 6,
+  },
+  {
+    key: "hunt",
+    name: "Hunt",
+    icon: Activity,
+    description: "Proactive hypothesis generation",
+    color: "bg-primary-500",
+    runs: 14,
+  },
+];
+
+// Entrance animation for the whole list
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+// Each card slides up + fades in
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      damping: 16,
+      stiffness: 200,
+    },
+  },
+};
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold">
-            T
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero section */}
+      <div className="max-w-6xl mx-auto px-8 pt-16 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-4 mb-2"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/30">
+            <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              ThreatBrain — Component Library
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              ThreatBrain
             </h1>
-            <p className="text-sm text-slate-500">step 5.3 ✓ shadcn/ui ready</p>
+            <p className="text-sm text-slate-500">
+              The Neural SOC · 7 specialized AI agents
+            </p>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Buttons card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Buttons</CardTitle>
-            <CardDescription>All shadcn button variants.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button>Default</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="link">Link</Button>
-            <Button disabled>Disabled</Button>
-          </CardContent>
-        </Card>
-
-        {/* Inputs card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Form fields</CardTitle>
-            <CardDescription>Inputs, labels, and form layout.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 max-w-md">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="jane@acme.example" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" />
-            </div>
-            <Button className="w-full">Sign in</Button>
-          </CardContent>
-        </Card>
-
-        {/* Badges card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Severity badges</CardTitle>
-            <CardDescription>
-              Status indicators for threats and incidents.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Badge variant="default">Default</Badge>
-            <Badge variant="secondary">Secondary</Badge>
-            <Badge variant="outline">Outline</Badge>
-            <Badge variant="destructive">Destructive</Badge>
-            <Separator orientation="vertical" className="h-6 mx-2" />
-            <Badge className="bg-severity-info text-white">info</Badge>
-            <Badge className="bg-severity-low text-white">low</Badge>
-            <Badge className="bg-severity-medium text-white">medium</Badge>
-            <Badge className="bg-severity-high text-white">high</Badge>
-            <Badge className="bg-severity-critical text-white">critical</Badge>
-          </CardContent>
-        </Card>
-
-        {/* Avatars + Toast card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Avatars + Toast</CardTitle>
-            <CardDescription>User identity and notifications.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-4">
-            <Avatar>
-              <AvatarFallback className="bg-primary-600 text-white">
-                JM
-              </AvatarFallback>
-            </Avatar>
-            <Avatar>
-              <AvatarFallback className="bg-severity-medium text-white">
-                MC
-              </AvatarFallback>
-            </Avatar>
-            <Avatar>
-              <AvatarFallback className="bg-severity-critical text-white">
-                PS
-              </AvatarFallback>
-            </Avatar>
-            <Separator orientation="vertical" className="h-10" />
-            <Button
-              variant="outline"
-              onClick={() =>
-                toast.success("Threat classified", {
-                  description: "Severity: high · Confidence: 92",
-                })
-              }
-            >
-              Trigger toast
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="text-slate-600 text-lg leading-relaxed max-w-2xl mt-6"
+        >
+          Step 5.4 ✓ Framer Motion + Lucide icons wired up. Watch the agent
+          cards stagger in below.
+        </motion.p>
       </div>
 
-      <Toaster richColors position="top-right" />
+      {/* Agent grid */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-6xl mx-auto px-8 pb-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+      >
+        {agents.map((agent) => {
+          const Icon = agent.icon;
+          return (
+            <motion.div
+              key={agent.key}
+              variants={itemVariants}
+              whileHover={{ y: -4, transition: { duration: 0.15 } }}
+            >
+              <Card className="cursor-pointer transition-shadow hover:shadow-lg h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`${agent.color} w-11 h-11 rounded-lg flex items-center justify-center shadow-sm`}
+                    >
+                      <Icon className="w-5 h-5 text-white" strokeWidth={2} />
+                    </div>
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {agent.runs} runs
+                    </Badge>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-1">
+                    {agent.name}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {agent.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+
+      {/* CTA section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.9 }}
+        className="max-w-6xl mx-auto px-8 pb-16 text-center"
+      >
+        <Button size="lg" className="gap-2">
+          <Zap className="w-4 h-4" />
+          Run full pipeline
+        </Button>
+        <p className="text-xs text-slate-400 mt-4 font-mono">
+          step 5.4 ✓ motion + lucide
+        </p>
+      </motion.div>
     </div>
   );
 }
