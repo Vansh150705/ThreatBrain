@@ -101,6 +101,7 @@ def decode_supabase_jwt(
             key=settings.SUPABASE_JWT_SECRET,
             algorithms=["HS256"],
             audience="authenticated",
+            leeway=30,
             options={
                 "verify_signature": verify_signature,
                 "verify_exp": verify_exp,
