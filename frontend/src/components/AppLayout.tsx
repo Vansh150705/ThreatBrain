@@ -2,8 +2,9 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Shield, LogOut, LayoutDashboard, Bot, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { signOut } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserStore } from "@/store/useUserStore";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -13,7 +14,7 @@ const navItems = [
 
 export default function AppLayout() {
   const location = useLocation();
-  const { session } = useAuth();
+  const profile = useUserStore((s) => s.profile);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -28,6 +29,11 @@ export default function AppLayout() {
               <span className="font-bold text-slate-900 text-sm tracking-tight">
                 ThreatBrain
               </span>
+              {profile?.organization && (
+                <span className="text-xs text-slate-400 hidden md:inline">
+                  · {profile.organization.name}
+                </span>
+              )}
             </Link>
 
             <nav className="flex items-center gap-1">
@@ -53,9 +59,24 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 hidden sm:inline">
-              {session?.user.email}
-            </span>
+            {profile && (
+              <div className="flex items-center gap-2">
+                <div className="text-right hidden sm:block">
+                  <div className="text-xs font-medium text-slate-900">
+                    {profile.full_name || profile.email}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {profile.email}
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="text-xs font-mono capitalize"
+                >
+                  {profile.role}
+                </Badge>
+              </div>
+            )}
             <Button variant="ghost" size="sm" onClick={() => signOut()}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign out
