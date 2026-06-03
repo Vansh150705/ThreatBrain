@@ -12,6 +12,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import RequireAuth from "./components/RequireAuth";
 import AppLayout from "./components/AppLayout";
 import { AuthProvider } from "./contexts/AuthContext";
+import ThreatsPage from "./pages/ThreatsPage";
 
 import "./index.css";
 
@@ -32,7 +33,9 @@ createRoot(document.getElementById("root")!).render(
                 </RequireAuth>
               }
             >
-              <Route path="dashboard" element={<DashboardPage />} />
+<Route path="dashboard" element={<DashboardPage />} />
+              <Route path="threats" element={<ThreatsPage />} />
+              <Route path="threats/:identifier" element={<ThreatsPage />} />
               <Route path="agents" element={<AgentsPage />} />
               <Route path="agents/:agentKey" element={<AgentsPage />} />
               <Route path="incidents" element={<IncidentsPage />} />

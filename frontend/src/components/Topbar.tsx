@@ -17,6 +17,7 @@ import { useUserStore } from "@/store/useUserStore";
 // Map URL segments to readable labels
 const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
+  threats: "Threats",
   agents: "Agents",
   incidents: "Incidents",
   runs: "Run history",

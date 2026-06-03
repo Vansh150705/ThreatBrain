@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Bot,
   ShieldAlert,
+  AlertOctagon,
   Activity,
   ChevronLeft,
 } from "lucide-react";
@@ -23,7 +24,8 @@ const navSections = [
     title: "Operations",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/incidents", label: "Incidents", icon: ShieldAlert },
+      { to: "/threats", label: "Threats", icon: ShieldAlert },
+      { to: "/incidents", label: "Incidents", icon: AlertOctagon },
     ],
   },
   {
