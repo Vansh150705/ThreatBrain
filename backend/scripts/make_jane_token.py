@@ -1,4 +1,4 @@
-"""Print a fresh JWT for Jane (analyst at Acme Corp)."""
+"""Print a fresh JWT for the Acme test user (owner)."""
 from __future__ import annotations
 
 import sys
@@ -17,8 +17,8 @@ def main() -> None:
     now = int(time.time())
     token = jwt.encode(
         {
-            "sub": "00000000-0000-0000-0000-00000000a001",
-            "email": "jane.morrison@acme.example",
+            "sub": "f0d1c8c5-c567-4710-acc8-2926fa47519d",
+            "email": "test@acme.example",
             "aud": "authenticated",
             "role": "authenticated",
             "exp": now + 3600,

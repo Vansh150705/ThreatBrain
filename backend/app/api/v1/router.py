@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.api.v1.endpoints import threats as threats_endpoints
 
 from fastapi import APIRouter
 
@@ -8,6 +9,7 @@ api_router = APIRouter()
 
 # Meta endpoints (health, identity)
 api_router.include_router(meta.router)
+api_router.include_router(threats_endpoints.router)
 
 # Organizations
 api_router.include_router(
