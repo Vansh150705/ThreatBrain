@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentsPage from "./pages/AgentsPage";
 import IncidentsPage from "./pages/IncidentsPage";
+import RunsPage from "./pages/RunsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import RequireAuth from "./components/RequireAuth";
 import AppLayout from "./components/AppLayout";
@@ -35,6 +36,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="agents" element={<AgentsPage />} />
               <Route path="agents/:agentKey" element={<AgentsPage />} />
               <Route path="incidents" element={<IncidentsPage />} />
+              <Route path="runs" element={<RunsPage />} />
             </Route>
 
             {/* 404 */}
