@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { api, type Agent } from "@/lib/api";
+import { api, type Agent, type DashboardStats } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 
@@ -26,12 +26,17 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    api.agents
-      .listAgents()
-      .then((res) => setAgents(res.items))
+
+    // Fire both requests in parallel
+    Promise.all([api.agents.listAgents(), api.stats.getDashboardStats()])
+      .then(([agentsRes, statsRes]) => {
+        setAgents(agentsRes.items);
+        setStats(statsRes);
+      })
       .catch((err) => {
         if (err instanceof ApiError) {
           setError(`${err.status} — ${err.message}`);
@@ -60,7 +65,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
@@ -99,17 +104,43 @@ export default function DashboardPage() {
 
         <Card>
           <CardContent className="p-5">
-            <div className="flex items-center gap-3">
+            <Link
+              to="/threats"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <div className="w-10 h-10 rounded-lg bg-severity-high/15 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-severity-high" />
               </div>
               <div>
                 <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold">
+                  Open threats
+                </div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {loading || !stats ? "—" : stats.open_threats}
+                </div>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <Link
+              to="/incidents"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
+              <div className="w-10 h-10 rounded-lg bg-severity-critical/15 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-severity-critical" />
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold">
                   Open incidents
                 </div>
-                <div className="text-2xl font-bold text-slate-900">—</div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {loading || !stats ? "—" : stats.open_incidents}
+                </div>
               </div>
-            </div>
+            </Link>
           </CardContent>
         </Card>
       </div>
