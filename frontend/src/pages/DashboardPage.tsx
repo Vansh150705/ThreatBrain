@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api, type Agent } from "@/lib/api";
 import { ApiError } from "@/lib/api";
+import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -46,13 +47,16 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Dashboard
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Operational overview of your autonomous SOC.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Operational overview of your autonomous SOC.
+          </p>
+        </div>
+        <TriggerPipelineDialog />
       </div>
 
       {/* Stat cards */}
