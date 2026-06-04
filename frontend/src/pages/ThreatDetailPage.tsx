@@ -10,7 +10,6 @@ import {
   Globe,
   Activity,
   ChevronRight,
-  ExternalLink,
 } from "lucide-react";
 
 import { api, type ThreatDetail } from "@/lib/api";
