@@ -36,36 +36,70 @@ Every decision is logged to an **append-only audit trail** enforced by Postgres 
 
 ## 🏗️ Architecture
 
-```
-                            ┌─────────────────────────┐
-   Security alert ─────────►│   FastAPI Orchestrator  │
-   (SIEM, firewall,         └────────────┬────────────┘
-    cloud audit log)                     │
-                            ┌────────────┼────────────┬─────────────┐
-                            ▼            ▼            ▼             ▼
-                       ┌────────┐  ┌──────────┐ ┌─────────────┐ ┌─────────┐
-                       │ Triage │─►│  Threat  │►│Investigation│►│Response │
-                       │ Agent  │  │   Intel  │ │   Agent     │ │  Agent  │
-                       └────────┘  └──────────┘ └─────────────┘ └─────────┘
-                                        │              │              │
-                                        ▼              ▼              ▼
-                                  ┌─────────────────────────────────────┐
-                                  │ Forensics │ Compliance │ Hunt (bg) │
-                                  └─────────────────┬───────────────────┘
-                                                    │
-                                                    ▼
-                                          ┌──────────────────┐
-                                          │ Supabase Postgres│
-                                          │  ─ RLS isolation │
-                                          │  ─ Append-only   │
-                                          │    audit trail   │
-                                          └──────────────────┘
-                                                    │
-                                                    ▼
-                                          ┌──────────────────┐
-                                          │  React Frontend  │
-                                          │     (Vercel)     │
-                                          └──────────────────┘
+```mermaid
+flowchart TD
+    Alert([🚨 Security Alert<br/>SIEM · firewall · cloud audit log])
+    Frontend[🖥️ React Frontend<br/>Vercel]
+    Auth[🔐 Supabase Auth<br/>JWT · HS256]
+
+    subgraph Backend["⚙️ FastAPI Backend &nbsp;·&nbsp; Hugging Face Spaces"]
+        Orchestrator[🎯 Orchestrator]
+        Triage[🚨 Triage Agent<br/>MITRE ATT&CK]
+        Intel[🌐 Threat Intel Agent<br/>AbuseIPDB]
+        Invest[🔬 Investigation Agent<br/>Correlation]
+        Response[⚡ Response Agent<br/>Playbooks]
+        Forensics[🕵️ Forensics Agent<br/>Timeline]
+        Compliance[📋 Compliance Agent<br/>GDPR · PCI-DSS · SOC 2]
+        Hunt[🎯 Hunt Agent<br/>Proactive]
+    end
+
+    subgraph Data["💾 Supabase Postgres"]
+        Tables[(Threats · Incidents · Agents)]
+        RLS[/🔒 Row-Level Security<br/>tenant isolation/]
+        Audit[/📜 Append-only audit log<br/>Postgres triggers/]
+    end
+
+    LLM[🤖 Groq · LLaMA 3.3 70B<br/>JSON mode]
+
+    Alert ==> Orchestrator
+    Frontend <==> Backend
+    Frontend <==> Auth
+
+    Orchestrator --> Triage
+    Triage --> Intel
+    Intel --> Invest
+    Invest --> Response
+    Invest --> Forensics
+    Invest --> Compliance
+    Hunt -.proactive.-> Tables
+
+    Triage -.->|prompt + JSON| LLM
+    Intel -.->|prompt + JSON| LLM
+    Invest -.->|prompt + JSON| LLM
+    Response -.->|prompt + JSON| LLM
+    Forensics -.->|prompt + JSON| LLM
+    Compliance -.->|prompt + JSON| LLM
+    Hunt -.->|prompt + JSON| LLM
+
+    Triage --> Tables
+    Intel --> Tables
+    Invest --> Tables
+    Response --> Audit
+    Forensics --> Tables
+    Compliance --> Tables
+
+    Tables --- RLS
+    Audit --- RLS
+
+    classDef agent fill:#eef2ff,stroke:#6366f1,stroke-width:1.5px,color:#1e1b4b
+    classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#451a03
+    classDef llm fill:#fdf4ff,stroke:#a855f7,stroke-width:1.5px,color:#3b0764
+    classDef edge fill:#f1f5f9,stroke:#475569,stroke-width:1.5px,color:#0f172a
+
+    class Triage,Intel,Invest,Response,Forensics,Compliance,Hunt,Orchestrator agent
+    class Tables,RLS,Audit store
+    class LLM llm
+    class Alert,Frontend,Auth edge
 ```
 
 Each agent is a thin, prompt-engineered service that:
