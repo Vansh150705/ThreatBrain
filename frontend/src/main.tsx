@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentsPage from "./pages/AgentsPage";
 import IncidentsPage from "./pages/IncidentsPage";
+import IncidentDetailPage from "./pages/IncidentDetailPage";
 import RunsPage from "./pages/RunsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import RequireAuth from "./components/RequireAuth";
@@ -34,12 +35,13 @@ createRoot(document.getElementById("root")!).render(
                 </RequireAuth>
               }
             >
-            <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
               <Route path="threats" element={<ThreatsPage />} />
               <Route path="threats/:identifier" element={<ThreatDetailPage />} />
               <Route path="agents" element={<AgentsPage />} />
               <Route path="agents/:agentKey" element={<AgentsPage />} />
               <Route path="incidents" element={<IncidentsPage />} />
+              <Route path="incidents/:identifier" element={<IncidentDetailPage />} />
               <Route path="runs" element={<RunsPage />} />
             </Route>
 
