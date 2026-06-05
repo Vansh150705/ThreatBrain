@@ -15,6 +15,7 @@ import AppLayout from "./components/AppLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import ThreatsPage from "./pages/ThreatsPage";
 import ThreatDetailPage from "./pages/ThreatDetailPage";
+import RunDetailPage from "./pages/RunDetailPage";
 
 import "./index.css";
 
@@ -43,6 +44,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="incidents" element={<IncidentsPage />} />
               <Route path="incidents/:identifier" element={<IncidentDetailPage />} />
               <Route path="runs" element={<RunsPage />} />
+              <Route path="runs/:runId" element={<RunDetailPage />} />
             </Route>
 
             {/* 404 */}
