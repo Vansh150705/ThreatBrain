@@ -413,7 +413,7 @@ export default function ThreatDetailPage() {
               <CardTitle className="text-base">Related</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {threat.incident_id ? (
+{threat.incident_id ? (
                 <Link
                   to={`/incidents/${threat.incident_id}`}
                   className="flex items-center justify-between p-2 -mx-2 rounded hover:bg-slate-50 transition-colors group"
@@ -423,7 +423,7 @@ export default function ThreatDetailPage() {
                       Incident
                     </div>
                     <div className="text-sm font-mono text-primary-700 truncate">
-                      {threat.incident_id.slice(0, 8)}…
+                      View parent incident
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
@@ -433,7 +433,7 @@ export default function ThreatDetailPage() {
                   No related incident
                 </div>
               )}
-
+              
               {threat.primary_asset_id && (
                 <>
                   <Separator />
