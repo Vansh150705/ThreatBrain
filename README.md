@@ -14,21 +14,21 @@ A production-deployed, multi-tenant AI-driven security operations platform. Seve
 
 Security analysts in modern SOCs are drowning in alerts. A typical Tier-1 analyst sees thousands of events per shift out of which 95% are false positives, but every single one needs to be checked. The cost is real:
 
-- **Burnout** — analysts last 18 months on average before quitting
-- **Alert fatigue** — real threats get missed in the noise
-- **Slow response** — by the time an attack is investigated manually, the attacker has moved laterally
+- **Burnout** :- analysts last 18 months on average before quitting
+- **Alert fatigue** :- real threats get missed in the noise
+- **Slow response** :- by the time an attack is investigated manually, the attacker has moved laterally
 
 ## ⚡ The Solution
 
 ThreatBrain turns one alert into a complete investigation in under 15 seconds — without removing humans from the loop. Seven specialized AI agents collaborate on every event:
 
-1. **Triage** — Classifies severity using MITRE ATT&CK
-2. **Threat Intel** — Enriches IPs against AbuseIPDB
-3. **Investigation** — Correlates with recent threats, groups into incidents
-4. **Response** — Recommends remediation playbooks (human approval required)
-5. **Forensics** — Builds a chain-of-custody timeline
-6. **Compliance** — Assesses GDPR / PCI-DSS / SOC 2 obligations
-7. **Hunt** *(proactive)* — Generates threat-hunting hypotheses
+1. **Triage** :- Classifies severity using MITRE ATT&CK
+2. **Threat Intel** :- Enriches IPs against AbuseIPDB
+3. **Investigation** :- Correlates with recent threats, groups into incidents
+4. **Response** :- Recommends remediation playbooks (human approval required)
+5. **Forensics** :- Builds a chain-of-custody timeline
+6. **Compliance** :- Assesses GDPR / PCI-DSS / SOC 2 obligations
+7. **Hunt** *(proactive)* :- Generates threat-hunting hypotheses
 
 Every decision is logged to an **append-only audit trail** enforced by Postgres triggers — so when this evidence is presented in court or to a regulator, it's verifiable.
 
@@ -97,10 +97,10 @@ The orchestrator chains six reactive agents on every event. The seventh (Hunt) r
 
 Security isn't a feature added later — it's the design center.
 
-- **Multi-tenant isolation** — Every table has an `organization_id`. Postgres RLS policies bind every query to the JWT's `organization_id` claim, so even if backend code has a bug, cross-tenant data can't leak.
-- **Prompt injection defense** — Three layers: Pydantic schema validation on input, LLM JSON mode with strict output schemas, and minimal database permissions per agent. The model has no free-form text channel to misbehave through.
-- **Append-only audit logs** — A Postgres trigger physically rejects `UPDATE` and `DELETE` on `audit_logs`. Even the service role key can't modify history.
-- **Human-in-the-loop for action** — The Response Agent recommends remediation. Real actions require admin role + dry-run flag off + per-playbook authorization. Four independent checks before anything destructive runs.
+- **Multi-tenant isolation** :- Every table has an `organization_id`. Postgres RLS policies bind every query to the JWT's `organization_id` claim, so even if backend code has a bug, cross-tenant data can't leak.
+- **Prompt injection defense** :- Three layers: Pydantic schema validation on input, LLM JSON mode with strict output schemas, and minimal database permissions per agent. The model has no free-form text channel to misbehave through.
+- **Append-only audit logs** :- A Postgres trigger physically rejects `UPDATE` and `DELETE` on `audit_logs`. Even the service role key can't modify history.
+- **Human-in-the-loop for action** :- The Response Agent recommends remediation. Real actions require admin role + dry-run flag off + per-playbook authorization. Four independent checks before anything destructive runs.
 
 ---
 
@@ -111,9 +111,9 @@ Security isn't a feature added later — it's the design center.
 
 Things to try:
 
-1. **Browse threats** — `/threats` shows 12 simulated detections with severity, MITRE codes, confidence scores
-2. **Open an incident** — `/incidents/INC-ACT001` is a simulated APT29 intrusion with kill chain, attribution, 4 linked threats, and lifecycle timestamps
-3. **Run the pipeline** — From the dashboard, click `✨ Trigger pipeline`, pick a scenario (e.g. "S3 bucket made public"), and watch all six agents work in real time. About 15 seconds end-to-end. A brand new threat and incident appear in the database when it finishes.
+1. **Browse threats** :- `/threats` shows 12 simulated detections with severity, MITRE codes, confidence scores
+2. **Open an incident** :- `/incidents/INC-ACT001` is a simulated APT29 intrusion with kill chain, attribution, 4 linked threats, and lifecycle timestamps
+3. **Run the pipeline** :- From the dashboard, click `✨ Trigger pipeline`, pick a scenario (e.g. "S3 bucket made public"), and watch all six agents work in real time. About 15 seconds end-to-end. A brand new threat and incident appear in the database when it finishes.
 
 ---
 
