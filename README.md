@@ -1,6 +1,6 @@
 # 🛡️ ThreatBrain
 
-**The Neural SOC — Where AI Agents Converge to Defend**
+**The Neural SOC - Where AI Agents Converge to Defend**
 
 A production-deployed, multi-tenant AI-driven security operations platform. Seven specialized AI agents work together to triage, enrich, investigate, and respond to security alerts end-to-end - turning hours of analyst work into a 14-second automated pipeline.
 
@@ -20,7 +20,7 @@ Security analysts in modern SOCs are drowning in alerts. A typical Tier-1 analys
 
 ## ⚡ The Solution
 
-ThreatBrain turns one alert into a complete investigation in under 15 seconds — without removing humans from the loop. Seven specialized AI agents collaborate on every event:
+ThreatBrain turns one alert into a complete investigation in under 15 seconds - without removing humans from the loop. Seven specialized AI agents collaborate on every event:
 
 1. **Triage** :- Classifies severity using MITRE ATT&CK
 2. **Threat Intel** :- Enriches IPs against AbuseIPDB
@@ -30,7 +30,7 @@ ThreatBrain turns one alert into a complete investigation in under 15 seconds �
 6. **Compliance** :- Assesses GDPR / PCI-DSS / SOC 2 obligations
 7. **Hunt** *(proactive)* :- Generates threat-hunting hypotheses
 
-Every decision is logged to an **append-only audit trail** enforced by Postgres triggers — so when this evidence is presented in court or to a regulator, it's verifiable.
+Every decision is logged to an **append-only audit trail** enforced by Postgres triggers, so when this evidence is presented in court or to a regulator, it's verifiable.
 
 ---
 
@@ -95,7 +95,7 @@ The orchestrator chains six reactive agents on every event. The seventh (Hunt) r
 
 ## 🔐 Security Architecture
 
-Security isn't a feature added later — it's the design center.
+Security isn't a feature added later, it's the design center.
 
 - **Multi-tenant isolation** :- Every table has an `organization_id`. Postgres RLS policies bind every query to the JWT's `organization_id` claim, so even if backend code has a bug, cross-tenant data can't leak.
 - **Prompt injection defense** :- Three layers: Pydantic schema validation on input, LLM JSON mode with strict output schemas, and minimal database permissions per agent. The model has no free-form text channel to misbehave through.
@@ -147,7 +147,7 @@ ThreatBrain/
 - **Multi-agent design beats one mega-LLM.** Seven focused agents with strict schemas outperformed a single "do everything" prompt in both accuracy and debuggability.
 - **Retrieval and structure matter more than model size.** Pydantic JSON mode on a 70B model produced more reliable output than free-form text from larger models.
 - **Security is a database problem.** RLS and Postgres triggers do more for safety than any amount of application-layer code.
-- **Observability is the foundation.** Logging every agent run with input, output, latency, and tokens isn't optional — it's how you debug an AI system.
+- **Observability is the foundation.** Logging every agent run with input, output, latency, and tokens isn't optional, it's how you debug an AI system.
 
 ---
 
