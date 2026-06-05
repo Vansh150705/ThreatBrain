@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     agents,
+    incidents,
     meta,
     orchestrator,
     organizations,
@@ -18,6 +19,9 @@ api_router.include_router(meta.router)
 
 # Threats
 api_router.include_router(threats_endpoints.router)
+
+# Incidents
+api_router.include_router(incidents.router)
 
 # Dashboard stats
 api_router.include_router(stats.router)
