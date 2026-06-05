@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Cpu,
   Zap,
   FileInput,
   FileOutput,
