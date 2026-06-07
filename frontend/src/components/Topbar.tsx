@@ -46,13 +46,11 @@ export default function Topbar() {
     : profile?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <header className="h-16 bg-background/85 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-14 bg-background border-b border-border flex items-center justify-between px-8 sticky top-0 z-10">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-[13.5px]">
+      <nav className="flex items-center gap-2 text-[13px]">
         {crumbs.length === 0 && (
-          <span className="font-mono text-muted-foreground uppercase tracking-[0.14em] text-[11px] font-semibold">
-            ThreatBrain
-          </span>
+          <span className="text-muted-foreground">ThreatBrain</span>
         )}
         {crumbs.map((c, idx) => {
           const isLast = idx === crumbs.length - 1;
@@ -62,13 +60,13 @@ export default function Topbar() {
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.8} />
               )}
               {isLast ? (
-                <span className="font-serif italic font-medium text-foreground tracking-[-0.015em] text-[16px]">
+                <span className="font-medium text-foreground tracking-[-0.01em]">
                   {c.label}
                 </span>
               ) : (
                 <Link
                   to={c.path}
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium tracking-[-0.01em]"
+                  className="text-muted-foreground hover:text-foreground transition-colors tracking-[-0.01em]"
                 >
                   {c.label}
                 </Link>
@@ -83,7 +81,7 @@ export default function Topbar() {
         {profile?.organization && (
           <Badge
             variant="outline"
-            className="text-[11px] font-mono font-semibold tracking-[0.06em] uppercase hidden sm:inline-flex bg-background border-border text-muted-foreground"
+            className="text-[11px] font-medium hidden sm:inline-flex bg-background border-border text-muted-foreground"
           >
             {profile.organization.name}
           </Badge>
@@ -93,12 +91,12 @@ export default function Topbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2.5 h-10 px-2 hover:bg-accent"
+              className="gap-2.5 h-9 px-2 hover:bg-accent"
             >
-              <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-background text-[12px] font-semibold shadow-sm tracking-[-0.01em]">
+              <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center text-background text-[11px] font-semibold tracking-[-0.01em]">
                 {initials}
               </div>
-              <span className="text-[13.5px] font-medium text-foreground hidden md:inline tracking-[-0.01em]">
+              <span className="text-[13px] font-medium text-foreground hidden md:inline tracking-[-0.01em]">
                 {profile?.full_name || profile?.email}
               </span>
             </Button>
@@ -106,16 +104,16 @@ export default function Topbar() {
           <DropdownMenuContent align="end" className="w-60">
             <DropdownMenuLabel className="font-normal py-3">
               <div className="flex flex-col gap-1">
-                <span className="text-[14px] font-serif font-semibold tracking-[-0.02em]">
+                <span className="text-[13.5px] font-semibold tracking-[-0.015em]">
                   {profile?.full_name || "User"}
                 </span>
-                <span className="text-[11px] font-mono text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {profile?.email}
                 </span>
                 <div className="mt-2 flex items-center gap-1.5">
                   <Badge
                     variant="outline"
-                    className="text-[10px] font-mono font-semibold uppercase tracking-[0.06em] capitalize"
+                    className="text-[10px] font-medium uppercase tracking-[0.06em] capitalize"
                   >
                     {profile?.role || "user"}
                   </Badge>
@@ -125,7 +123,7 @@ export default function Topbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="text-[13px]">
               <User className="w-4 h-4 mr-2" />
-              Profile <span className="ml-auto text-[10px] font-mono text-muted-foreground">soon</span>
+              Profile <span className="ml-auto text-[10px] text-muted-foreground">soon</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -1,53 +1,39 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Activity,
-  Search,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ChevronRight,
-} from "lucide-react";
+import { motion } from "motion/react";
+import { Activity, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
 import { api } from "@/lib/api";
 import type { AgentRunSummary, PaginatedResponse } from "@/lib/api/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
+const STATUS_OPTS = [
+  { value: "all",       label: "All" },
   { value: "completed", label: "Completed" },
-  { value: "failed", label: "Failed" },
+  { value: "failed",    label: "Failed" },
+  { value: "running",   label: "Running" },
 ];
 
 const AGENT_LABELS: Record<string, string> = {
-  triage: "Triage",
-  threat_intel: "Threat Intel",
+  triage:        "Triage",
+  threat_intel:  "Threat Intel",
   investigation: "Investigation",
-  response: "Response",
-  forensics: "Forensics",
-  compliance: "Compliance",
-  hunt: "Hunt",
+  response:      "Response",
+  forensics:     "Forensics",
+  compliance:    "Compliance",
+  hunt:          "Hunt",
 };
 
-function formatRelativeTime(iso: string | null): string {
+function timeAgo(iso: string | null): string {
   if (!iso) return "—";
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffSecs = Math.floor(diffMs / 1000);
   if (diffSecs < 60) return `${diffSecs}s ago`;
   const diffMins = Math.floor(diffSecs / 60);
   if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${Math.floor(diffHours / 24)}d ago`;
+  const h = Math.floor(diffMins / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function formatLatency(ms: number | null): string {
@@ -56,20 +42,70 @@ function formatLatency(ms: number | null): string {
   return `${(ms / 1000).toFixed(2)}s`;
 }
 
-function RunStatusIcon({ status }: { status: string }) {
-  if (status === "completed" || status === "succeeded" || status === "success" || status === "ok") {
-    return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+function StatusDot({ status }: { status: string }) {
+  const s = status.toLowerCase();
+  if (s === "completed" || s === "succeeded" || s === "success" || s === "ok") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-severity-low" />
+        <span className="font-mono text-[11px] text-muted-foreground">Completed</span>
+      </span>
+    );
   }
-  if (status === "failed" || status === "error") {
-    return <XCircle className="w-4 h-4 text-red-600" />;
+  if (s === "failed" || s === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-severity-critical" />
+        <span className="font-mono text-[11px] text-muted-foreground">Failed</span>
+      </span>
+    );
   }
-  return <Clock className="w-4 h-4 text-slate-400" />;
+  if (s === "running") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-severity-info animate-pulse" />
+        <span className="font-mono text-[11px] text-muted-foreground">Running</span>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+      <span className="font-mono text-[11px] text-muted-foreground">{status}</span>
+    </span>
+  );
+}
+
+function FilterPills({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-3 py-1 rounded-full text-[12px] font-medium border transition-colors ${
+            value === opt.value
+              ? "bg-foreground text-background border-foreground"
+              : "bg-card border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function RunsPage() {
-  const [data, setData] = useState<PaginatedResponse<AgentRunSummary> | null>(
-    null
-  );
+  const [data, setData] = useState<PaginatedResponse<AgentRunSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -87,190 +123,166 @@ export default function RunsPage() {
         page_size: pageSize,
         run_status: statusFilter === "all" ? undefined : statusFilter,
       })
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
+      .then((res) => { if (!cancelled) setData(res); })
       .catch((err) => {
-        if (!cancelled) {
-          const msg = err instanceof Error ? err.message : String(err);
-          setError(msg);
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [page, statusFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-start justify-between gap-6 flex-wrap"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
             Run history
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Every AI agent call, with full input, output, and timing — an
-            audit trail of every decision made.
+          <p className="text-[13.5px] text-muted-foreground mt-1">
+            Every AI agent call — a full audit trail of every decision made.
           </p>
         </div>
-        <div className="text-sm text-slate-500">
-          {data?.pagination ? (
-            <span>
-              <span className="font-medium text-slate-900">
-                {data.pagination.total}
-              </span>{" "}
-              total
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-3">
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {statusFilter !== "all" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setStatusFilter("all");
-              setPage(1);
-            }}
-          >
-            Clear filters
-          </Button>
+        {data?.pagination && (
+          <div className="font-mono text-[12px] text-muted-foreground self-end pb-1">
+            <span className="text-foreground font-semibold tabular">{data.pagination.total}</span> total
+          </div>
         )}
-      </div>
+      </motion.div>
+
+      {/* Filter chips */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.04 }}
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-2">
+          Status
+        </div>
+        <FilterPills
+          options={STATUS_OPTS}
+          value={statusFilter}
+          onChange={(v) => { setStatusFilter(v); setPage(1); }}
+        />
+      </motion.div>
 
       {/* Loading */}
       {loading && (
-        <Card>
-          <CardContent className="p-8 flex flex-col items-center text-slate-500">
-            <Search className="w-8 h-8 mb-2 text-slate-400 animate-pulse" />
-            <p className="text-sm">Loading runs…</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Loading runs...
+        </div>
       )}
 
       {/* Error */}
       {error && !loading && (
-        <Card className="border-severity-critical/30 bg-severity-critical/5">
-          <CardContent className="p-6 flex items-center gap-3 text-severity-critical">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-2.5 p-3.5 border border-severity-critical/30 bg-severity-critical/5 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-severity-critical shrink-0 mt-0.5" />
+          <div className="text-[13px] text-foreground">
+            <div className="font-semibold">Could not load runs</div>
+            <div className="text-muted-foreground mt-0.5 font-mono text-[11px]">{error}</div>
+          </div>
+        </div>
       )}
 
       {/* Empty */}
       {!loading && !error && data && data.items.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="p-10 flex flex-col items-center text-center text-slate-500">
-            <Activity className="w-10 h-10 mb-3 text-slate-400" />
-            <p className="text-sm">No runs match your filters.</p>
-          </CardContent>
-        </Card>
+        <div className="py-16 text-center">
+          <Activity className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
+          <p className="text-[13.5px] text-muted-foreground">No runs match your filters.</p>
+        </div>
       )}
 
       {/* Table */}
       {!loading && !error && data && data.items.length > 0 && (
         <>
-          <Card className="overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            className="bg-card border border-border rounded-xl overflow-hidden"
+          >
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    <th className="px-4 py-3 w-12"></th>
-                    <th className="px-4 py-3">Agent</th>
-                    <th className="px-4 py-3">Trigger</th>
-                    <th className="px-4 py-3">Model</th>
-                    <th className="px-4 py-3 text-right">Latency</th>
-                    <th className="px-4 py-3 text-right">Tokens</th>
-                    <th className="px-4 py-3">When</th>
-                    <th className="px-4 py-3 w-12"></th>
+              <table className="w-full">
+                <thead className="bg-muted/40 border-b border-border">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
+                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Agent</th>
+                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Run ID</th>
+                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Trigger</th>
+                    <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Tokens</th>
+                    <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Latency</th>
+                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">When</th>
+                    <th className="px-2 py-3 w-8" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {data.items.map((run) => (
-                    <tr
+                <tbody className="divide-y divide-border">
+                  {data.items.map((run, i) => (
+                    <motion.tr
                       key={run.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="hover:bg-accent/40 transition-colors group"
                     >
-                      <td className="px-4 py-3">
-                        <RunStatusIcon status={run.status} />
+                      <td className="px-5 py-3.5">
+                        <StatusDot status={run.status} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <Link
                           to={`/runs/${run.id}`}
-                          className="font-medium text-slate-900 hover:text-primary-700"
+                          className="text-[13px] font-medium text-foreground hover:text-foreground/70 transition-colors"
                         >
-                          {AGENT_LABELS[run.agent_key] || run.agent_key}
+                          {AGENT_LABELS[run.agent_key] ?? run.agent_key}
                         </Link>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-mono">
+                      <td className="px-5 py-3.5 hidden md:table-cell">
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          {run.id.slice(0, 8)}...
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 hidden md:table-cell">
+                        <span className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
                           {run.trigger_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-600 max-w-[200px] truncate">
-                        {run.model || "—"}
+                      <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
+                        {run.total_tokens > 0 ? run.total_tokens.toLocaleString() : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
+                      <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular">
                         {formatLatency(run.latency_ms)}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
-                        {run.total_tokens > 0 ? run.total_tokens : "—"}
+                      <td className="px-5 py-3.5">
+                        <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                          {timeAgo(run.created_at)}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                        {formatRelativeTime(run.created_at)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          to={`/runs/${run.id}`}
-                          className="text-slate-400 hover:text-slate-700"
-                        >
-                          <ChevronRight className="w-4 h-4" />
+                      <td className="px-2 py-3.5 text-right">
+                        <Link to={`/runs/${run.id}`}>
+                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </Link>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </Card>
+          </motion.div>
 
           {/* Pagination */}
           {data.pagination && data.pagination.total_pages > 1 && (
-            <div className="flex items-center justify-between text-sm">
-              <div className="text-slate-500">
+            <div className="flex items-center justify-between">
+              <div className="font-mono text-[12px] text-muted-foreground">
                 Page{" "}
-                <span className="font-medium text-slate-900">
-                  {data.pagination.page}
-                </span>{" "}
-                of {data.pagination.total_pages}
+                <span className="text-foreground font-semibold tabular">{data.pagination.page}</span>
+                {" "}of{" "}
+                <span className="tabular">{data.pagination.total_pages}</span>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -278,6 +290,7 @@ export default function RunsPage() {
                   size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
+                  className="h-8 px-3 text-[12px]"
                 >
                   Previous
                 </Button>
@@ -286,6 +299,7 @@ export default function RunsPage() {
                   size="sm"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= data.pagination.total_pages}
+                  className="h-8 px-3 text-[12px]"
                 >
                   Next
                 </Button>

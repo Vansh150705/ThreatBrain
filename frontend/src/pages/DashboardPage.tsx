@@ -1,150 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { ArrowUpRight, Loader2, AlertCircle } from "lucide-react";
-import type { JSX } from "react";
+import {
+  ArrowUpRight,
+  Loader2,
+  AlertCircle,
+  Activity,
+  ShieldAlert,
+  AlertOctagon,
+  CheckCircle2,
+} from "lucide-react";
 
 import { api, type Agent, type DashboardStats } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useUserStore } from "@/store/useUserStore";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
+import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
 
-// Bitmoji crew portraits matching the landing page
-const CREW: Record<
-  string,
-  { name: string; role: string; portrait: (className?: string) => JSX.Element }
-> = {
-  triage: {
-    name: "Olivia",
-    role: "Sorter",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#f5d0b8" />
-        <path d="M13 18 Q13 9 24 9 Q35 9 35 18 L35 14 L33 12 L15 12 L13 14 Z" fill="#c0392b" />
-        <rect x="15" y="11" width="18" height="3" rx="1" fill="#a93226" />
-        <circle cx="20" cy="22" r="1.2" fill="#1a1a1f" />
-        <circle cx="28" cy="22" r="1.2" fill="#1a1a1f" />
-        <path d="M20 27 Q24 29 28 27" stroke="#1a1a1f" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#2c3e50" />
-      </svg>
-    ),
-  },
-  threat_intel: {
-    name: "Henry",
-    role: "Investigator",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#e8c4a0" />
-        <path d="M12 17 Q12 12 24 12 Q36 12 36 17 L36 15 L33 13 L15 13 L12 15 Z" fill="#5d4037" />
-        <ellipse cx="24" cy="13" rx="14" ry="2.5" fill="#3e2723" />
-        <circle cx="20" cy="22" r="1.2" fill="#1a1a1f" />
-        <circle cx="28" cy="22" r="1.2" fill="#1a1a1f" />
-        <path d="M22 27 L26 27" stroke="#1a1a1f" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#34495e" />
-      </svg>
-    ),
-  },
-  investigation: {
-    name: "Nathan",
-    role: "Connector",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#d4a574" />
-        <path d="M14 16 Q14 11 24 11 Q34 11 34 16 L34 19 Q30 14 24 14 Q18 14 14 19 Z" fill="#2c3e50" />
-        <rect x="16" y="20" width="6" height="4" rx="1.5" fill="none" stroke="#1a1a1f" strokeWidth="0.8" />
-        <rect x="26" y="20" width="6" height="4" rx="1.5" fill="none" stroke="#1a1a1f" strokeWidth="0.8" />
-        <line x1="22" y1="22" x2="26" y2="22" stroke="#1a1a1f" strokeWidth="0.8" />
-        <circle cx="19" cy="22" r="0.9" fill="#1a1a1f" />
-        <circle cx="29" cy="22" r="0.9" fill="#1a1a1f" />
-        <path d="M21 28 Q24 29 27 28" stroke="#1a1a1f" strokeWidth="1" strokeLinecap="round" fill="none" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#1a3a52" />
-        <circle cx="20" cy="40" r="0.8" fill="#7a9cc6" />
-        <circle cx="24" cy="42" r="0.8" fill="#7a9cc6" />
-        <circle cx="28" cy="40" r="0.8" fill="#7a9cc6" />
-      </svg>
-    ),
-  },
-  response: {
-    name: "Rachel",
-    role: "Responder",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#f0c8b0" />
-        <path d="M13 14 Q14 9 24 9 Q34 9 35 14 Q36 22 33 30 L31 28 Q33 22 32 16 Q30 12 24 12 Q18 12 16 16 Q15 22 17 28 L15 30 Q12 22 13 14 Z" fill="#8b4513" />
-        <circle cx="20" cy="22" r="1.2" fill="#1a1a1f" />
-        <circle cx="28" cy="22" r="1.2" fill="#1a1a1f" />
-        <path d="M21 28 Q24 30 27 28" stroke="#c0392b" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#5d2e2e" />
-        <path d="M22 38 L24 42 L26 38 Z" fill="#f4d03f" stroke="#c0392b" strokeWidth="0.8" />
-      </svg>
-    ),
-  },
-  forensics: {
-    name: "Frank",
-    role: "Forensicist",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#e8c5a0" />
-        <path d="M14 15 Q14 10 24 10 Q34 10 34 15 L34 18 Q28 14 24 14 Q20 14 14 18 Z" fill="#1a1a1f" />
-        <circle cx="19" cy="22" r="3" fill="none" stroke="#1a1a1f" strokeWidth="1" />
-        <circle cx="29" cy="22" r="3" fill="none" stroke="#1a1a1f" strokeWidth="1" />
-        <line x1="22" y1="22" x2="26" y2="22" stroke="#1a1a1f" strokeWidth="0.8" />
-        <circle cx="19" cy="22" r="0.8" fill="#1a1a1f" />
-        <circle cx="29" cy="22" r="0.8" fill="#1a1a1f" />
-        <path d="M21 28 L27 28" stroke="#1a1a1f" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#ffffff" stroke="#bdc3c7" strokeWidth="0.5" />
-        <rect x="22" y="36" width="4" height="8" rx="1" fill="#7ddc9c" opacity="0.7" />
-      </svg>
-    ),
-  },
-  compliance: {
-    name: "Claire",
-    role: "Compliance",
-    portrait: (c = "") => (
-      <svg className={c} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="22" r="11" fill="#f2d4b8" />
-        <path d="M13 15 Q14 10 24 10 Q34 10 35 15 Q36 19 34 22 L32 20 Q33 16 32 14 Q29 11 24 11 Q19 11 16 14 Q15 16 16 20 L14 22 Q12 19 13 15 Z" fill="#34495e" />
-        <circle cx="20" cy="22" r="1.2" fill="#1a1a1f" />
-        <circle cx="28" cy="22" r="1.2" fill="#1a1a1f" />
-        <path d="M21 28 Q24 29 27 28" stroke="#1a1a1f" strokeWidth="1" strokeLinecap="round" fill="none" />
-        <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#2c3e50" />
-        <rect x="21" y="38" width="6" height="2" fill="#a07a4d" />
-        <rect x="23" y="37" width="2" height="6" fill="#a07a4d" />
-      </svg>
-    ),
-  },
+const CREW = {
+  triage: { name: "Olivia", portrait: (c?: string) => <Olivia className={c} /> },
+  threat_intel: { name: "Henry", portrait: (c?: string) => <Henry className={c} /> },
+  investigation: { name: "Nathan", portrait: (c?: string) => <Nathan className={c} /> },
+  response: { name: "Rachel", portrait: (c?: string) => <Rachel className={c} /> },
+  forensics: { name: "Frank", portrait: (c?: string) => <Frank className={c} /> },
+  compliance: { name: "Claire", portrait: (c?: string) => <Claire className={c} /> },
 };
 
-// Map agent_key variants to crew entries (handles both threat_intel and threat-intel etc.)
-function getCrew(agentKey: string) {
-  const k = agentKey.toLowerCase().replace(/-/g, "_");
-  return CREW[k];
+type CrewEntry = (typeof CREW)[keyof typeof CREW];
+
+function getCrew(agentKey: string): CrewEntry | undefined {
+  return (CREW as Record<string, CrewEntry>)[agentKey.toLowerCase().replace(/-/g, "_")];
 }
 
-// Greeting that adapts to local time
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Working late";
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  if (h < 21) return "Good evening";
-  return "Working late";
-}
+const AGENT_DISPLAY: Record<string, string> = {
+  triage: "Triage",
+  threat_intel: "Threat Intel",
+  investigation: "Investigation",
+  response: "Response",
+  forensics: "Forensics",
+  compliance: "Compliance",
+  hunt: "Hunt",
+};
 
-// Format time as "Friday, 7 June"
-function formattedDate() {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
+const SEVERITY_TONE: Record<string, string> = {
+  critical: "text-severity-critical border-severity-critical/30 bg-severity-critical/8",
+  high: "text-severity-high border-severity-high/30 bg-severity-high/8",
+  medium: "text-severity-medium border-severity-medium/30 bg-severity-medium/8",
+  low: "text-severity-low border-severity-low/30 bg-severity-low/8",
+  info: "text-severity-info border-severity-info/30 bg-severity-info/8",
+};
 
 interface RecentThreat {
   id: string;
   short_id: string;
   title: string;
   severity: string;
+  status: string;
   detected_at: string;
 }
 
@@ -158,20 +69,9 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-const SEVERITY_TONE: Record<string, string> = {
-  critical: "text-severity-critical",
-  high: "text-severity-high",
-  medium: "text-severity-medium",
-  low: "text-severity-low",
-  info: "text-severity-info",
-};
-
 export default function DashboardPage() {
   const profile = useUserStore((s) => s.profile);
-  const firstName = useMemo(() => {
-    if (!profile?.full_name) return "there";
-    return profile.full_name.split(" ")[0];
-  }, [profile?.full_name]);
+  const orgName = useMemo(() => profile?.organization?.name ?? "your organization", [profile]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +85,7 @@ export default function DashboardPage() {
       api.agents.listAgents(),
       api.stats.getDashboardStats(),
       api.threats
-        .listThreats({ page: 1, page_size: 3 })
+        .listThreats({ page: 1, page_size: 5 })
         .then((r) => r.items as RecentThreat[])
         .catch(() => [] as RecentThreat[]),
     ])
@@ -202,270 +102,364 @@ export default function DashboardPage() {
   }, []);
 
   const totalRuns = agents.reduce((sum, a) => sum + a.total_runs, 0);
+  const successfulRuns = agents.reduce((sum, a) => sum + a.successful_runs, 0);
   const activeAgents = agents.filter((a) => a.enabled).length;
+  const successRate = totalRuns > 0 ? Math.round((successfulRuns / totalRuns) * 100) : 100;
+
+  const lastRunAt = useMemo(() => {
+    const times = agents
+      .map((a) => a.last_run_at)
+      .filter((t): t is string => !!t)
+      .map((t) => new Date(t).getTime());
+    if (times.length === 0) return null;
+    return new Date(Math.max(...times)).toISOString();
+  }, [agents]);
 
   return (
-    <div className="space-y-16 pb-12">
-      {/* ─────── HEADER — Editorial masthead ─────── */}
+    <div className="space-y-8 pb-12">
+      {/* ─────── HEADER ─────── */}
       <motion.section
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-start justify-between gap-6 flex-wrap"
       >
-        <div className="flex items-baseline justify-between gap-6 mb-2">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-            The neural SOC · Briefing
-          </span>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {formattedDate()}
-          </span>
-        </div>
-        <div className="border-t border-foreground/15 pt-8">
-          <h1 className="font-serif text-[52px] md:text-[68px] leading-[0.98] tracking-[-0.04em] font-semibold text-foreground">
-            {greeting()},{" "}
-            <span className="italic font-medium">{firstName}.</span>
+        <div>
+          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+            Operations overview
           </h1>
-          <p className="font-serif text-[20px] md:text-[22px] text-muted-foreground italic mt-5 max-w-2xl leading-[1.4]">
-            Your six agents have been working. Here is what they found.
+          <p className="text-[13.5px] text-muted-foreground mt-1">
+            Live status across <span className="text-foreground font-medium">{orgName}</span>.
+            {lastRunAt && (
+              <>
+                <span className="mx-2 text-foreground/30">·</span>
+                <span className="font-mono text-[12.5px]">Last run {timeAgo(lastRunAt)}</span>
+              </>
+            )}
           </p>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <TriggerPipelineDialog />
-            <Link
-              to="/runs"
-              className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-foreground hover:text-muted-foreground transition-colors group"
-            >
-              See last run
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-          </div>
         </div>
+        <TriggerPipelineDialog />
       </motion.section>
 
-      {/* ─────── HERO STATS — Big Fraunces numerals ─────── */}
+      {/* ─────── KEY METRICS ─────── */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-foreground/10 border-y border-foreground/10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               label: "Active agents",
               value: loading ? "—" : `${activeAgents}/${agents.length}`,
-              footnote: "all online",
-              tone: "text-foreground",
+              caption: loading ? "" : "all online",
+              icon: Activity,
+              iconBg: "bg-severity-low/10 text-severity-low",
             },
             {
               label: "Total runs",
               value: loading ? "—" : totalRuns.toLocaleString(),
-              footnote: "across pipeline",
-              tone: "text-foreground",
+              caption: loading ? "" : `${successRate}% success rate`,
+              icon: CheckCircle2,
+              iconBg: "bg-severity-info/10 text-severity-info",
             },
             {
               label: "Open threats",
               value: loading || !stats ? "—" : stats.open_threats.toString(),
-              footnote: `${stats?.critical_threats ?? 0} critical`,
-              tone: "text-severity-high",
+              caption:
+                loading || !stats
+                  ? ""
+                  : `${stats.critical_threats} critical · ${stats.total_threats} total`,
               link: "/threats",
+              icon: ShieldAlert,
+              iconBg: "bg-severity-high/10 text-severity-high",
             },
             {
               label: "Open incidents",
               value: loading || !stats ? "—" : stats.open_incidents.toString(),
-              footnote: "awaiting review",
-              tone: "text-severity-critical",
+              caption: loading || !stats ? "" : "awaiting review",
               link: "/incidents",
+              icon: AlertOctagon,
+              iconBg: "bg-severity-critical/10 text-severity-critical",
             },
-          ].map((s, i) => {
-            const content = (
-              <div className="px-6 py-8 first:pl-0 group">
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-semibold mb-3">
+          ].map((s) => {
+            const Icon = s.icon;
+            const inner = (
+              <div className="bg-card border border-border rounded-xl p-5 hover:border-foreground/20 transition-colors group h-full">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
+                    <Icon className="w-4 h-4" strokeWidth={2} />
+                  </div>
+                  {s.link && (
+                    <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+                <div className="text-[12px] text-muted-foreground font-medium mb-1.5">
                   {s.label}
                 </div>
-                <div
-                  className={`stat-number text-[64px] leading-[0.9] tracking-[-0.045em] ${s.tone}`}
-                >
+                <div className="text-[32px] leading-[1] tracking-[-0.025em] font-semibold text-foreground tabular">
                   {s.value}
                 </div>
-                <div className="font-mono text-[11px] text-muted-foreground mt-3 flex items-center gap-1">
-                  {s.footnote}
-                  {s.link && (
-                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
+                <div className="font-mono text-[11px] text-muted-foreground mt-3 tracking-tight">
+                  {s.caption || "—"}
                 </div>
               </div>
             );
             return s.link ? (
-              <Link key={s.label} to={s.link} className="block hover:bg-accent/40 transition-colors">
-                {content}
+              <Link key={s.label} to={s.link} className="block">
+                {inner}
               </Link>
             ) : (
-              <div key={s.label}>{content}</div>
+              <div key={s.label}>{inner}</div>
             );
           })}
         </div>
       </motion.section>
 
-      {/* ─────── RECENT THREATS — Three-column editorial spread ─────── */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="flex items-baseline justify-between mb-8">
-          <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">
-              The desk · Latest
-            </span>
-            <h2 className="font-serif text-[32px] tracking-[-0.03em] mt-2 font-semibold">
-              From the watch floor.
-            </h2>
-          </div>
-          <Link
-            to="/threats"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:text-muted-foreground transition-colors group whitespace-nowrap"
-          >
-            All threats
-            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-        </div>
-
-        {loading && (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-8">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Loading the desk…
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-start gap-2 p-4 border border-severity-critical/30 bg-severity-critical/5 rounded-lg">
-            <AlertCircle className="w-4 h-4 text-severity-critical flex-shrink-0 mt-0.5" />
-            <span className="text-sm text-foreground">{error}</span>
-          </div>
-        )}
-
-        {!loading && !error && recentThreats.length === 0 && (
-          <div className="py-16 text-center">
-            <p className="font-serif italic text-[22px] text-muted-foreground">
-              No threats. Quiet right now.
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && recentThreats.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-foreground/10">
-            {recentThreats.slice(0, 3).map((t, i) => (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="bg-background"
+      {/* ─────── TWO-COLUMN: THREATS + AGENTS ─────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Recent threats */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="lg:col-span-3"
+        >
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-foreground">
+                  Recent threats
+                </h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  Most recent detections.
+                </p>
+              </div>
+              <Link
+                to="/threats"
+                className="inline-flex items-center gap-1 text-[12.5px] font-medium text-foreground hover:text-muted-foreground transition-colors group"
               >
-                <Link
-                  to={`/threats/${t.short_id}`}
-                  className="block p-6 hover:bg-accent/30 transition-colors h-full group"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span
-                      className={`font-mono text-[10px] uppercase tracking-[0.14em] font-semibold ${
-                        SEVERITY_TONE[t.severity.toLowerCase()] ?? "text-foreground"
-                      }`}
-                    >
-                      {t.severity}
-                    </span>
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {timeAgo(t.detected_at)}
-                    </span>
-                  </div>
-                  <h3 className="font-serif text-[22px] leading-[1.15] tracking-[-0.02em] font-semibold text-foreground group-hover:text-foreground/70 transition-colors line-clamp-3">
-                    {t.title}
-                  </h3>
-                  <div className="font-mono text-[10px] text-muted-foreground mt-4 pt-4 border-t border-foreground/10">
-                    {t.short_id}
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.section>
+                View all
+                <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+            </div>
 
-      {/* ─────── THE CREW — Six-agent live status row ─────── */}
+            {loading && (
+              <div className="flex items-center gap-2 text-muted-foreground text-[13px] p-8">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading threats…
+              </div>
+            )}
+
+            {error && (
+              <div className="m-5 flex items-start gap-2.5 p-3.5 border border-severity-critical/30 bg-severity-critical/5 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-severity-critical flex-shrink-0 mt-0.5" />
+                <div className="text-[13px] text-foreground">
+                  <div className="font-semibold">Could not load threats</div>
+                  <div className="text-muted-foreground mt-0.5 font-mono text-[11px]">{error}</div>
+                </div>
+              </div>
+            )}
+
+            {!loading && !error && recentThreats.length === 0 && (
+              <div className="py-12 text-center px-6">
+                <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
+                <p className="text-[13.5px] text-muted-foreground">No threats detected.</p>
+              </div>
+            )}
+
+            {!loading && !error && recentThreats.length > 0 && (
+              <div className="divide-y divide-border">
+                {recentThreats.slice(0, 5).map((t, i) => (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <Link
+                      to={`/threats/${t.short_id}`}
+                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/40 transition-colors group"
+                    >
+                      <span
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] uppercase tracking-[0.06em] font-mono font-semibold border ${
+                          SEVERITY_TONE[t.severity.toLowerCase()] ?? SEVERITY_TONE.info
+                        }`}
+                      >
+                        {t.severity}
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground w-20 flex-shrink-0 tabular">
+                        {t.short_id}
+                      </span>
+                      <span className="text-[13.5px] text-foreground font-medium flex-1 truncate group-hover:text-foreground/70 transition-colors">
+                        {t.title}
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap hidden md:inline">
+                        {timeAgo(t.detected_at)}
+                      </span>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* Pipeline status */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="lg:col-span-2"
+        >
+          <div className="bg-card border border-border rounded-xl overflow-hidden h-full">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-foreground">
+                Pipeline health
+              </h2>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                Per-agent runtime.
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center gap-2 text-muted-foreground text-[13px] p-8">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading…
+              </div>
+            ) : (
+              <div className="p-5 space-y-3">
+                {agents.slice(0, 6).map((a, i) => {
+                  const displayKey = a.agent_key.toLowerCase().replace(/-/g, "_");
+                  const displayName = AGENT_DISPLAY[displayKey] ?? a.name;
+                  const maxLatency = 4000;
+                  const widthPct = Math.min(
+                    100,
+                    Math.max(8, ((a.avg_latency_ms ?? 0) / maxLatency) * 100)
+                  );
+                  return (
+                    <motion.div
+                      key={a.id}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              a.enabled ? "bg-severity-low" : "bg-muted-foreground/30"
+                            }`}
+                          />
+                          <span className="text-[12.5px] font-medium text-foreground">
+                            {displayName}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 font-mono text-[10.5px] text-muted-foreground tabular">
+                          <span>{a.total_runs} runs</span>
+                          <span className="text-foreground font-semibold">
+                            {a.avg_latency_ms ?? "—"}ms
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${widthPct}%` }}
+                          transition={{ duration: 0.6, delay: i * 0.05 }}
+                          className="h-full bg-foreground/80 rounded-full"
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </motion.section>
+      </div>
+
+      {/* ─────── AGENT ROSTER ─────── */}
       <motion.section
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
       >
-        <div className="flex items-baseline justify-between mb-8">
+        <div className="flex items-end justify-between mb-4">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">
-              The crew · On duty
-            </span>
-            <h2 className="font-serif text-[32px] tracking-[-0.03em] mt-2 font-semibold">
-              Six agents, <span className="italic font-medium">always working.</span>
+            <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-foreground">
+              Agent roster
             </h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              Six specialists, one orchestrator.
+            </p>
           </div>
           <Link
             to="/agents"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground hover:text-muted-foreground transition-colors group whitespace-nowrap"
+            className="inline-flex items-center gap-1 text-[12.5px] font-medium text-foreground hover:text-muted-foreground transition-colors group whitespace-nowrap"
           >
-            Roster
+            View all
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm py-8">
+          <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Roll call…
+            Loading agents…
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {agents.slice(0, 6).map((agent, i) => {
               const crew = getCrew(agent.agent_key);
+              const displayKey = agent.agent_key.toLowerCase().replace(/-/g, "_");
+              const displayName = AGENT_DISPLAY[displayKey] ?? agent.name;
               return (
                 <motion.div
                   key={agent.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 6 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                  whileHover={{ y: -4 }}
+                  transition={{ delay: i * 0.04 }}
+                  whileHover={{ y: -2 }}
                 >
                   <Link
                     to={`/agents/${agent.agent_key}`}
-                    className="block bg-card border border-foreground/10 rounded-2xl p-5 hover:border-foreground/30 hover:shadow-sm transition-all group h-full"
+                    className="block bg-card border border-border rounded-xl p-4 hover:border-foreground/25 transition-all group h-full"
                   >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-16 h-16 rounded-full bg-accent overflow-hidden mb-3 ring-1 ring-foreground/10">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex-shrink-0 ring-1 ring-border">
                         {crew ? (
                           crew.portrait("w-full h-full")
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center font-serif text-2xl text-muted-foreground">
+                          <div className="w-full h-full flex items-center justify-center text-[14px] text-muted-foreground">
                             {agent.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <div className="font-serif text-[17px] font-semibold tracking-[-0.02em] leading-tight">
-                        {crew?.name ?? agent.name.split(" ")[0]}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-semibold text-foreground tracking-[-0.01em] leading-tight">
+                          {displayName}
+                        </div>
+                        <div className="font-mono text-[10px] text-muted-foreground mt-0.5 truncate">
+                          {crew?.name ?? agent.agent_key}
+                        </div>
                       </div>
-                      <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground mt-1">
-                        the {crew?.role ?? agent.agent_key}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-foreground/10 w-full justify-center">
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border font-mono text-[10.5px] text-muted-foreground tabular">
+                      <span className="flex items-center gap-1.5">
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            agent.enabled ? "bg-severity-low" : "bg-muted-foreground/40"
+                            agent.enabled ? "bg-severity-low" : "bg-muted-foreground/30"
                           }`}
                         />
-                        <span className="font-mono text-[10px] text-muted-foreground">
-                          {agent.total_runs} runs
-                        </span>
-                      </div>
+                        {agent.enabled ? "Online" : "Offline"}
+                      </span>
+                      <span>{agent.total_runs} runs</span>
                     </div>
                   </Link>
                 </motion.div>
@@ -473,21 +467,6 @@ export default function DashboardPage() {
             })}
           </div>
         )}
-      </motion.section>
-
-      {/* ─────── FOOTER LINE ─────── */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="border-t border-foreground/10 pt-6 flex items-center justify-between"
-      >
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-          End of briefing
-        </span>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          ThreatBrain · vol. I
-        </span>
       </motion.section>
     </div>
   );

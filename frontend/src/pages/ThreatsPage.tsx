@@ -1,50 +1,66 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldAlert, Search, AlertCircle } from "lucide-react";
+import { motion } from "motion/react";
+import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
 import { api, type ThreatListResponse } from "@/lib/api";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 
-const SEVERITY_OPTIONS = [
-  { value: "all", label: "All severities" },
+const SEVERITY_OPTS = [
+  { value: "all",      label: "All" },
   { value: "critical", label: "Critical" },
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
-  { value: "info", label: "Info" },
+  { value: "high",     label: "High" },
+  { value: "medium",   label: "Medium" },
+  { value: "low",      label: "Low" },
+  { value: "info",     label: "Info" },
 ];
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "open", label: "Open" },
-  { value: "investigating", label: "Investigating" },
-  { value: "contained", label: "Contained" },
-  { value: "resolved", label: "Resolved" },
+const STATUS_OPTS = [
+  { value: "all",            label: "All" },
+  { value: "open",           label: "Open" },
+  { value: "investigating",  label: "Investigating" },
+  { value: "contained",      label: "Contained" },
+  { value: "resolved",       label: "Resolved" },
   { value: "false_positive", label: "False positive" },
 ];
 
-function formatRelativeTime(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
   const diffMins = Math.floor(diffMs / 60000);
   if (diffMins < 1) return "just now";
   if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 30) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  const h = Math.floor(diffMins / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function FilterPills({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-3 py-1 rounded-full text-[12px] font-medium border transition-colors ${
+            value === opt.value
+              ? "bg-foreground text-background border-foreground"
+              : "bg-card border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function ThreatsPage() {
@@ -66,195 +82,176 @@ export default function ThreatsPage() {
         severity: severity === "all" ? undefined : severity,
         status: threatStatus === "all" ? undefined : threatStatus,
       })
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
+      .then((res) => { if (!cancelled) setData(res); })
       .catch((err) => {
-        if (!cancelled) {
-          const msg = err instanceof Error ? err.message : String(err);
-          setError(msg);
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [severity, threatStatus]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-start justify-between gap-6 flex-wrap"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
             Threats
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            All detected security threats across your organization.
+          <p className="text-[13.5px] text-muted-foreground mt-1">
+            All detected security threats.
           </p>
         </div>
-        <div className="text-sm text-slate-500">
-          {data ? (
-            <span>
-              <span className="font-medium text-slate-900">{data.total}</span>{" "}
-              total
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-3">
-        <Select value={severity} onValueChange={setSeverity}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Severity" />
-          </SelectTrigger>
-          <SelectContent>
-            {SEVERITY_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={threatStatus} onValueChange={setThreatStatus}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {(severity !== "all" || threatStatus !== "all") && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSeverity("all");
-              setThreatStatus("all");
-            }}
-          >
-            Clear filters
-          </Button>
+        {data && (
+          <div className="font-mono text-[12px] text-muted-foreground self-end pb-1">
+            <span className="text-foreground font-semibold tabular">{data.total}</span> total
+          </div>
         )}
-      </div>
+      </motion.div>
+
+      {/* Filter chips */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.04 }}
+        className="space-y-3"
+      >
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-2">
+            Severity
+          </div>
+          <FilterPills options={SEVERITY_OPTS} value={severity} onChange={setSeverity} />
+        </div>
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-2">
+            Status
+          </div>
+          <FilterPills options={STATUS_OPTS} value={threatStatus} onChange={setThreatStatus} />
+        </div>
+      </motion.div>
 
       {/* Loading */}
       {loading && (
-        <Card>
-          <CardContent className="p-8 flex flex-col items-center text-slate-500">
-            <Search className="w-8 h-8 mb-2 text-slate-400 animate-pulse" />
-            <p className="text-sm">Loading threats…</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Loading threats...
+        </div>
       )}
 
       {/* Error */}
       {error && !loading && (
-        <Card className="border-severity-critical/30 bg-severity-critical/5">
-          <CardContent className="p-6 flex items-center gap-3 text-severity-critical">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-2.5 p-3.5 border border-severity-critical/30 bg-severity-critical/5 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-severity-critical shrink-0 mt-0.5" />
+          <div className="text-[13px] text-foreground">
+            <div className="font-semibold">Could not load threats</div>
+            <div className="text-muted-foreground mt-0.5 font-mono text-[11px]">{error}</div>
+          </div>
+        </div>
       )}
 
       {/* Empty */}
       {!loading && !error && data && data.items.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="p-10 flex flex-col items-center text-center text-slate-500">
-            <ShieldAlert className="w-10 h-10 mb-3 text-slate-400" />
-            <p className="text-sm">No threats match your filters.</p>
-          </CardContent>
-        </Card>
+        <div className="py-16 text-center">
+          <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
+          <p className="text-[13.5px] text-muted-foreground">No threats match your filters.</p>
+        </div>
       )}
 
       {/* Table */}
       {!loading && !error && data && data.items.length > 0 && (
-        <Card className="overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08 }}
+          className="bg-card border border-border rounded-xl overflow-hidden"
+        >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">Severity</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Confidence</th>
-                  <th className="px-4 py-3 text-right">Risk</th>
-                  <th className="px-4 py-3">MITRE</th>
-                  <th className="px-4 py-3">Detected</th>
+            <table className="w-full">
+              <thead className="bg-muted/40 border-b border-border">
+                <tr>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Severity</th>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">ID</th>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Title</th>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">MITRE</th>
+                  <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Confidence</th>
+                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Detected</th>
+                  <th className="px-2 py-3 w-8" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {data.items.map((threat) => (
-                  <tr
+              <tbody className="divide-y divide-border">
+                {data.items.map((threat, i) => (
+                  <motion.tr
                     key={threat.id}
-                    className="hover:bg-slate-50 transition-colors"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="hover:bg-accent/40 transition-colors group"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3.5">
+                      <SeverityBadge severity={threat.severity} />
+                    </td>
+                    <td className="px-5 py-3.5">
                       <Link
                         to={`/threats/${threat.short_id}`}
-                        className="font-mono text-xs text-primary-700 hover:underline"
+                        className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {threat.short_id}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 max-w-md">
+                    <td className="px-5 py-3.5 max-w-sm">
                       <Link
                         to={`/threats/${threat.short_id}`}
-                        className="font-medium text-slate-900 hover:text-primary-700 line-clamp-2"
+                        className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
                       >
                         {threat.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">
-                      <SeverityBadge severity={threat.severity} />
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3.5">
                       <StatusBadge status={threat.status} />
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
-                      {threat.confidence}%
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
-                      {threat.risk_score ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3.5 hidden md:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {threat.mitre_techniques.slice(0, 2).map((t) => (
                           <span
                             key={t}
-                            className="font-mono text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded"
+                            className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
                           >
                             {t}
                           </span>
                         ))}
                         {threat.mitre_techniques.length > 2 && (
-                          <span className="text-[10px] text-slate-400">
+                          <span className="font-mono text-[10px] text-muted-foreground">
                             +{threat.mitre_techniques.length - 2}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                      {formatRelativeTime(threat.detected_at)}
+                    <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
+                      {threat.confidence}%
                     </td>
-                  </tr>
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                        {timeAgo(threat.detected_at)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3.5 text-right">
+                      <Link to={`/threats/${threat.short_id}`}>
+                        <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    </td>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Card>
+        </motion.div>
       )}
     </div>
   );

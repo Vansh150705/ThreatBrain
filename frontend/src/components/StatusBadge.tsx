@@ -6,28 +6,29 @@ interface StatusBadgeProps {
 }
 
 const statusStyles: Record<string, string> = {
-  open: "bg-red-50 text-red-700 border-red-200",
-  investigating: "bg-amber-50 text-amber-700 border-amber-200",
-  contained: "bg-blue-50 text-blue-700 border-blue-200",
-  resolved: "bg-green-50 text-green-700 border-green-200",
-  false_positive: "bg-slate-100 text-slate-600 border-slate-200",
+  open:           "bg-severity-critical/8 text-severity-critical border-severity-critical/30",
+  investigating:  "bg-severity-medium/8 text-severity-medium border-severity-medium/30",
+  contained:      "bg-severity-info/8 text-severity-info border-severity-info/30",
+  resolved:       "bg-severity-low/8 text-severity-low border-severity-low/30",
+  false_positive: "bg-muted text-muted-foreground border-border",
 };
 
 const statusLabels: Record<string, string> = {
-  open: "Open",
-  investigating: "Investigating",
-  contained: "Contained",
-  resolved: "Resolved",
+  open:           "Open",
+  investigating:  "Investigating",
+  contained:      "Contained",
+  resolved:       "Resolved",
   false_positive: "False positive",
 };
 
 export default function StatusBadge({ status, className }: StatusBadgeProps) {
-  const style = statusStyles[status] || statusStyles.open;
-  const label = statusLabels[status] || status;
+  const key = status.toLowerCase();
+  const style = statusStyles[key] ?? statusStyles.open;
+  const label = statusLabels[key] ?? status;
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border",
+        "inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold uppercase tracking-[0.06em] border",
         style,
         className
       )}

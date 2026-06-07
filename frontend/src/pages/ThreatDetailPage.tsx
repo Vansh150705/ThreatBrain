@@ -1,59 +1,71 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { motion } from "motion/react";
 import {
   ArrowLeft,
   AlertCircle,
-  ShieldAlert,
-  User,
-  Clock,
-  Target,
+  Loader2,
   Globe,
-  Activity,
+  Target,
+  User,
   ChevronRight,
 } from "lucide-react";
 
 import { api, type ThreatDetail } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 
+type IocTab = "source" | "targets" | "users";
+
+function toRoman(n: number): string {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+  let result = "";
+  for (let i = 0; i < vals.length; i++) {
+    while (n >= vals[i]) { result += syms[i]; n -= vals[i]; }
+  }
+  return result;
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
   });
 }
 
-function formatRelativeTime(iso: string): string {
+function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMins = Math.floor(diffMs / 60000);
   if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${Math.floor(diffHours / 24)}d ago`;
+  const h = Math.floor(diffMins / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
-interface MetaItemProps {
-  icon: React.ElementType;
-  label: string;
-  value: string | React.ReactNode;
-}
-
-function MetaItem({ icon: Icon, label, value }: MetaItemProps) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2">
-      <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-      <div className="min-w-0">
-        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-          {label}
-        </div>
-        <div className="text-sm text-slate-900 mt-0.5">{value}</div>
+    <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-3">
+      {children}
+    </div>
+  );
+}
+
+function MetaSlot({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-1">
+        {label}
       </div>
+      <div className="text-[14px] font-medium text-foreground">{children}</div>
+    </div>
+  );
+}
+
+function InfoCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-card border border-border rounded-xl p-5 ${className}`}>
+      {children}
     </div>
   );
 }
@@ -63,6 +75,7 @@ export default function ThreatDetailPage() {
   const [threat, setThreat] = useState<ThreatDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [iocTab, setIocTab] = useState<IocTab>("source");
 
   useEffect(() => {
     if (!identifier) return;
@@ -72,187 +85,148 @@ export default function ThreatDetailPage() {
 
     api.threats
       .getThreat(identifier)
-      .then((res) => {
-        if (!cancelled) setThreat(res);
-      })
+      .then((res) => { if (!cancelled) setThreat(res); })
       .catch((err) => {
-        if (!cancelled) {
-          const msg = err instanceof Error ? err.message : String(err);
-          setError(msg);
-        }
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [identifier]);
+
+  const backLink = (
+    <Link
+      to="/threats"
+      className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      Back to threats
+    </Link>
+  );
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Link
-          to="/threats"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to threats
-        </Link>
-        <Card>
-          <CardContent className="p-8 text-center text-slate-500">
-            Loading threat…
-          </CardContent>
-        </Card>
+      <div className="space-y-5">
+        {backLink}
+        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Loading threat...
+        </div>
       </div>
     );
   }
 
   if (error || !threat) {
     return (
-      <div className="space-y-4">
-        <Link
-          to="/threats"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to threats
-        </Link>
-        <Card className="border-severity-critical/30 bg-severity-critical/5">
-          <CardContent className="p-6 flex items-center gap-3 text-severity-critical">
-            <AlertCircle className="w-5 h-5" />
-            <p className="text-sm font-medium">{error || "Threat not found"}</p>
-          </CardContent>
-        </Card>
+      <div className="space-y-5">
+        {backLink}
+        <div className="flex items-start gap-2.5 p-3.5 border border-severity-critical/30 bg-severity-critical/5 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-severity-critical shrink-0 mt-0.5" />
+          <span className="text-[13px] text-foreground">{error || "Threat not found"}</span>
+        </div>
       </div>
     );
   }
 
+  const hasIocs =
+    threat.source_ips.length > 0 ||
+    threat.target_ips.length > 0 ||
+    threat.affected_users.length > 0;
+
   return (
-    <div className="space-y-6">
-      {/* Back link */}
-      <Link
-        to="/threats"
-        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to threats
-      </Link>
+    <div className="space-y-6 pb-12">
+      {/* Back */}
+      {backLink}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-6">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-              {threat.short_id}
-            </span>
-            <SeverityBadge severity={threat.severity} />
-            <StatusBadge status={threat.status} />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {threat.title}
-          </h1>
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="font-mono text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded">
+            {threat.short_id}
+          </span>
+          <SeverityBadge severity={threat.severity} />
+          <StatusBadge status={threat.status} />
         </div>
-      </div>
+        <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground leading-[1.2]">
+          {threat.title}
+        </h1>
+      </motion.div>
 
-      {/* Metadata grid */}
-      <Card>
-        <CardContent className="p-5 grid grid-cols-2 md:grid-cols-4 gap-5">
-          <MetaItem
-            icon={Activity}
-            label="Confidence"
-            value={
-              <span className="font-mono">{threat.confidence}%</span>
-            }
-          />
-          <MetaItem
-            icon={Target}
-            label="Risk score"
-            value={
-              <span className="font-mono">{threat.risk_score ?? "—"}</span>
-            }
-          />
-          <MetaItem
-            icon={Clock}
-            label="Detected"
-            value={
-              <span title={formatDate(threat.detected_at)}>
-                {formatRelativeTime(threat.detected_at)}
-              </span>
-            }
-          />
-          <MetaItem
-            icon={User}
-            label="Assigned"
-            value={
-              threat.assigned_to ? (
-                <span className="font-mono text-xs">
-                  {threat.assigned_to.slice(0, 8)}…
-                </span>
-              ) : (
-                <span className="text-slate-400">Unassigned</span>
-              )
-            }
-          />
-        </CardContent>
-      </Card>
+      {/* Stat strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.06 }}
+        className="bg-card border border-border rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-5"
+      >
+        <MetaSlot label="Confidence">
+          <span className="font-mono tabular">{threat.confidence}%</span>
+        </MetaSlot>
+        <MetaSlot label="Risk score">
+          <span className="font-mono tabular">{threat.risk_score ?? "—"}</span>
+        </MetaSlot>
+        <MetaSlot label="Detected">
+          <span title={formatDate(threat.detected_at)}>{timeAgo(threat.detected_at)}</span>
+        </MetaSlot>
+        <MetaSlot label="Assigned to">
+          {threat.assigned_to ? (
+            <span className="font-mono text-[12px]">{threat.assigned_to.slice(0, 8)}...</span>
+          ) : (
+            <span className="text-muted-foreground font-normal text-[13px]">Unassigned</span>
+          )}
+        </MetaSlot>
+      </motion.div>
 
-      {/* Main grid: content + sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT — main content */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Main grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        {/* LEFT — 2 cols */}
+        <div className="lg:col-span-2 space-y-5">
           {/* Description */}
           {threat.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  {threat.description}
-                </p>
-              </CardContent>
-            </Card>
+            <InfoCard>
+              <SectionLabel>Description</SectionLabel>
+              <p className="text-[13.5px] text-foreground/80 leading-[1.65]">
+                {threat.description}
+              </p>
+            </InfoCard>
           )}
 
           {/* AI Analysis */}
           {threat.ai_analysis && Object.keys(threat.ai_analysis).length > 0 && (
-            <Card className="border-primary-200 bg-gradient-to-br from-primary-50/30 to-transparent">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-primary-600" />
-                  AI analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-xs text-slate-700 bg-white rounded-md p-3 border border-slate-200 overflow-auto max-h-72 whitespace-pre-wrap">
-                  {JSON.stringify(threat.ai_analysis, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
+            <InfoCard>
+              <SectionLabel>AI analysis</SectionLabel>
+              <pre className="font-mono text-[11.5px] text-foreground/80 bg-muted/40 rounded-lg p-3.5 overflow-auto max-h-72 whitespace-pre-wrap">
+                {JSON.stringify(threat.ai_analysis, null, 2)}
+              </pre>
+            </InfoCard>
           )}
 
           {/* MITRE ATT&CK */}
-          {(threat.mitre_tactics.length > 0 ||
-            threat.mitre_techniques.length > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">MITRE ATT&CK</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {(threat.mitre_tactics.length > 0 || threat.mitre_techniques.length > 0) && (
+            <InfoCard>
+              <SectionLabel>MITRE ATT&CK</SectionLabel>
+              <div className="space-y-4">
                 {threat.mitre_tactics.length > 0 && (
                   <div>
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-2">
                       Tactics
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {threat.mitre_tactics.map((tactic) => (
+                      {threat.mitre_tactics.map((t) => (
                         <span
-                          key={tactic}
-                          className="font-mono text-xs px-2 py-1 bg-amber-50 text-amber-800 rounded border border-amber-200"
+                          key={t}
+                          className="font-mono text-[11px] px-2 py-0.5 bg-severity-medium/8 text-severity-medium border border-severity-medium/30 rounded"
                         >
-                          {tactic}
+                          {t}
                         </span>
                       ))}
                     </div>
@@ -260,240 +234,220 @@ export default function ThreatDetailPage() {
                 )}
                 {threat.mitre_techniques.length > 0 && (
                   <div>
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-2">
                       Techniques
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {threat.mitre_techniques.map((tech) => (
+                      {threat.mitre_techniques.map((t) => (
                         <span
-                          key={tech}
-                          className="font-mono text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded border border-slate-200"
+                          key={t}
+                          className="font-mono text-[11px] px-2 py-0.5 bg-muted text-muted-foreground border border-border rounded"
                         >
-                          {tech}
+                          {t}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </InfoCard>
           )}
 
           {/* Attack Chain */}
           {threat.attack_chain.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Attack chain</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ol className="space-y-2">
-                  {threat.attack_chain.map((step, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-3 text-sm text-slate-700"
-                    >
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold flex items-center justify-center mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
+            <InfoCard>
+              <SectionLabel>Attack chain</SectionLabel>
+              <ol className="space-y-3">
+                {threat.attack_chain.map((step, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center font-serif text-[10px] font-semibold text-muted-foreground mt-0.5">
+                      {toRoman(idx + 1)}
+                    </span>
+                    <span className="text-[13.5px] text-foreground/80 leading-relaxed">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </InfoCard>
           )}
 
           {/* IOCs */}
-          {(threat.source_ips.length > 0 ||
-            threat.target_ips.length > 0 ||
-            threat.affected_users.length > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Indicators of compromise</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="ips" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="ips">
-                      Source IPs ({threat.source_ips.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="targets">
-                      Targets ({threat.target_ips.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="users">
-                      Users ({threat.affected_users.length})
-                    </TabsTrigger>
-                  </TabsList>
+          {hasIocs && (
+            <InfoCard>
+              <SectionLabel>Indicators of compromise</SectionLabel>
+              <div className="flex items-center border-b border-border gap-5 mb-4">
+                <button
+                  onClick={() => setIocTab("source")}
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                    iocTab === "source"
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Source IPs ({threat.source_ips.length})
+                </button>
+                <button
+                  onClick={() => setIocTab("targets")}
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                    iocTab === "targets"
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Target IPs ({threat.target_ips.length})
+                </button>
+                <button
+                  onClick={() => setIocTab("users")}
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                    iocTab === "users"
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Users ({threat.affected_users.length})
+                </button>
+              </div>
 
-                  <TabsContent value="ips" className="mt-4">
-                    {threat.source_ips.length === 0 ? (
-                      <p className="text-sm text-slate-400">No source IPs.</p>
-                    ) : (
-                      <div className="space-y-1">
-                        {threat.source_ips.map((ip) => (
-                          <div
-                            key={ip}
-                            className="flex items-center gap-2 font-mono text-sm text-slate-700 bg-slate-50 rounded px-3 py-1.5"
-                          >
-                            <Globe className="w-3.5 h-3.5 text-slate-400" />
-                            {ip}
-                          </div>
-                        ))}
+              {iocTab === "source" && (
+                threat.source_ips.length === 0 ? (
+                  <p className="text-[12.5px] text-muted-foreground italic">No source IPs recorded.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {threat.source_ips.map((ip) => (
+                      <div
+                        key={ip}
+                        className="flex items-center gap-2 font-mono text-[12px] text-foreground bg-muted/40 rounded-md px-3 py-1.5"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        {ip}
                       </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="targets" className="mt-4">
-                    {threat.target_ips.length === 0 ? (
-                      <p className="text-sm text-slate-400">No target IPs.</p>
-                    ) : (
-                      <div className="space-y-1">
-                        {threat.target_ips.map((ip) => (
-                          <div
-                            key={ip}
-                            className="flex items-center gap-2 font-mono text-sm text-slate-700 bg-slate-50 rounded px-3 py-1.5"
-                          >
-                            <Target className="w-3.5 h-3.5 text-slate-400" />
-                            {ip}
-                          </div>
-                        ))}
+                    ))}
+                  </div>
+                )
+              )}
+              {iocTab === "targets" && (
+                threat.target_ips.length === 0 ? (
+                  <p className="text-[12.5px] text-muted-foreground italic">No target IPs recorded.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {threat.target_ips.map((ip) => (
+                      <div
+                        key={ip}
+                        className="flex items-center gap-2 font-mono text-[12px] text-foreground bg-muted/40 rounded-md px-3 py-1.5"
+                      >
+                        <Target className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        {ip}
                       </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="users" className="mt-4">
-                    {threat.affected_users.length === 0 ? (
-                      <p className="text-sm text-slate-400">No affected users.</p>
-                    ) : (
-                      <div className="space-y-1">
-                        {threat.affected_users.map((user) => (
-                          <div
-                            key={user}
-                            className="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 rounded px-3 py-1.5"
-                          >
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            {user}
-                          </div>
-                        ))}
+                    ))}
+                  </div>
+                )
+              )}
+              {iocTab === "users" && (
+                threat.affected_users.length === 0 ? (
+                  <p className="text-[12.5px] text-muted-foreground italic">No affected users recorded.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {threat.affected_users.map((user) => (
+                      <div
+                        key={user}
+                        className="flex items-center gap-2 text-[12.5px] text-foreground bg-muted/40 rounded-md px-3 py-1.5"
+                      >
+                        <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        {user}
                       </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                )
+              )}
+            </InfoCard>
           )}
         </div>
 
-        {/* RIGHT — sidebar */}
-        <div className="space-y-6">
+        {/* RIGHT sidebar — 1 col */}
+        <div className="space-y-5">
           {/* Tags */}
           {threat.tags.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Tags</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1.5">
-                  {threat.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <InfoCard>
+              <SectionLabel>Tags</SectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {threat.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="font-mono text-[11px] px-2 py-0.5 bg-muted text-muted-foreground rounded border border-border"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </InfoCard>
           )}
 
           {/* Related */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Related</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-{threat.incident_id ? (
-                <Link
-                  to={`/incidents/${threat.incident_id}`}
-                  className="flex items-center justify-between p-2 -mx-2 rounded hover:bg-slate-50 transition-colors group"
-                >
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      Incident
-                    </div>
-                    <div className="text-sm font-mono text-primary-700 truncate">
-                      View parent incident
-                    </div>
+          <InfoCard>
+            <SectionLabel>Related</SectionLabel>
+            {threat.incident_id ? (
+              <Link
+                to={`/incidents/${threat.incident_id}`}
+                className="flex items-center justify-between p-2.5 -mx-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+              >
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
+                    Incident
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
-                </Link>
-              ) : (
-                <div className="text-sm text-slate-400">
-                  No related incident
+                  <div className="text-[13px] font-medium text-foreground group-hover:text-foreground/70">
+                    View parent incident
+                  </div>
                 </div>
-              )}
-              
-              {threat.primary_asset_id && (
-                <>
-                  <Separator />
-                  <div className="p-2 -mx-2">
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      Primary asset
-                    </div>
-                    <div className="text-sm font-mono text-slate-700 truncate">
-                      {threat.primary_asset_id.slice(0, 8)}…
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+            ) : (
+              <p className="text-[12.5px] text-muted-foreground">No related incident.</p>
+            )}
+            {threat.primary_asset_id && (
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
+                  Primary asset
+                </div>
+                <div className="font-mono text-[12px] text-foreground">
+                  {threat.primary_asset_id.slice(0, 8)}...
+                </div>
+              </div>
+            )}
+          </InfoCard>
 
-          {/* Timestamps */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
+          {/* Timeline */}
+          <InfoCard>
+            <SectionLabel>Timeline</SectionLabel>
+            <div className="space-y-3">
               <div>
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
                   Detected
                 </div>
-                <div className="text-slate-700 mt-0.5">
-                  {formatDate(threat.detected_at)}
-                </div>
+                <div className="text-[12.5px] text-foreground">{formatDate(threat.detected_at)}</div>
               </div>
               <div>
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
                   Created
                 </div>
-                <div className="text-slate-700 mt-0.5">
-                  {formatDate(threat.created_at)}
-                </div>
+                <div className="text-[12.5px] text-foreground">{formatDate(threat.created_at)}</div>
               </div>
               <div>
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
                   Updated
                 </div>
-                <div className="text-slate-700 mt-0.5">
-                  {formatDate(threat.updated_at)}
-                </div>
+                <div className="text-[12.5px] text-foreground">{formatDate(threat.updated_at)}</div>
               </div>
               {threat.resolved_at && (
                 <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground mb-0.5">
                     Resolved
                   </div>
-                  <div className="text-slate-700 mt-0.5">
-                    {formatDate(threat.resolved_at)}
-                  </div>
+                  <div className="text-[12.5px] text-foreground">{formatDate(threat.resolved_at)}</div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </InfoCard>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

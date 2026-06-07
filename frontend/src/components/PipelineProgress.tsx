@@ -4,14 +4,13 @@ import { CheckCircle2, XCircle, MinusCircle, Loader2 } from "lucide-react";
 import type { OrchestratorStage } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-// Pipeline stages in the order the orchestrator runs them
 const STAGE_ORDER: Array<{ key: string; label: string }> = [
-  { key: "triage", label: "Triage" },
-  { key: "threat_intel", label: "Threat Intel" },
+  { key: "triage",        label: "Triage" },
+  { key: "threat_intel",  label: "Threat Intel" },
   { key: "investigation", label: "Investigation" },
-  { key: "response", label: "Response" },
-  { key: "forensics", label: "Forensics" },
-  { key: "compliance", label: "Compliance" },
+  { key: "response",      label: "Response" },
+  { key: "forensics",     label: "Forensics" },
+  { key: "compliance",    label: "Compliance" },
 ];
 
 interface PipelineProgressProps {
@@ -21,51 +20,49 @@ interface PipelineProgressProps {
 
 export default function PipelineProgress({ stages, isRunning }: PipelineProgressProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {STAGE_ORDER.map(({ key, label }, idx) => {
         const stage = stages?.[key];
         const status = stage?.status;
 
-        // Determine icon + color
         let icon: React.ReactNode;
-        let textClass = "text-slate-500";
-        let bgClass = "bg-slate-100";
+        let rowClass = "bg-muted/50";
+        let textClass = "text-muted-foreground";
 
         if (!stages && isRunning) {
-          icon = <Loader2 className="w-4 h-4 animate-spin text-slate-400" />;
+          icon = <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground/60" />;
         } else if (status === "ok") {
-          icon = <CheckCircle2 className="w-4 h-4 text-green-600" />;
-          textClass = "text-slate-900 font-medium";
-          bgClass = "bg-green-50";
+          icon = <CheckCircle2 className="w-3.5 h-3.5 text-severity-low" />;
+          textClass = "text-foreground font-medium";
+          rowClass = "bg-severity-low/8";
         } else if (status === "failed") {
-          icon = <XCircle className="w-4 h-4 text-red-600" />;
-          textClass = "text-red-700 font-medium";
-          bgClass = "bg-red-50";
+          icon = <XCircle className="w-3.5 h-3.5 text-severity-critical" />;
+          textClass = "text-severity-critical font-medium";
+          rowClass = "bg-severity-critical/8";
         } else if (status === "skipped") {
-          icon = <MinusCircle className="w-4 h-4 text-slate-400" />;
-          textClass = "text-slate-400";
-          bgClass = "bg-slate-50";
+          icon = <MinusCircle className="w-3.5 h-3.5 text-muted-foreground/40" />;
+          textClass = "text-muted-foreground/50";
+          rowClass = "bg-muted/30";
         } else {
-          icon = <div className="w-4 h-4 rounded-full border-2 border-slate-300" />;
-          textClass = "text-slate-400";
+          icon = <div className="w-3.5 h-3.5 rounded-full border-2 border-border" />;
         }
 
         return (
           <motion.div
             key={key}
-            initial={{ opacity: 0, x: -10 }}
+            initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.04 }}
             className={cn(
               "flex items-center justify-between gap-3 px-3 py-2 rounded-md transition-colors",
-              bgClass
+              rowClass
             )}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               {icon}
-              <span className={cn("text-sm", textClass)}>{label}</span>
+              <span className={cn("text-[13px]", textClass)}>{label}</span>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-500 font-mono">
+            <div className="flex items-center gap-3 font-mono text-[10.5px] text-muted-foreground tabular">
               {stage?.latency_ms != null && <span>{stage.latency_ms}ms</span>}
               {stage?.tokens != null && stage.tokens > 0 && (
                 <span>{stage.tokens} tok</span>

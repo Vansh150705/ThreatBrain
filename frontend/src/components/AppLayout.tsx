@@ -9,7 +9,7 @@ export default function AppLayout() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
-        <main className="flex-1 px-8 py-8 max-w-7xl w-full">
+        <main className="flex-1 px-8 py-7 max-w-[1400px] w-full">
           <Outlet />
         </main>
       </div>
