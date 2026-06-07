@@ -14,7 +14,6 @@ import {
 import { signOut } from "@/lib/supabase";
 import { useUserStore } from "@/store/useUserStore";
 
-// Map URL segments to readable labels
 const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
   threats: "Threats",
@@ -47,25 +46,29 @@ export default function Topbar() {
     : profile?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-10">
+    <header className="h-16 bg-background/85 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 sticky top-0 z-10">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-sm">
+      <nav className="flex items-center gap-2 text-[13.5px]">
         {crumbs.length === 0 && (
-          <span className="text-slate-400">ThreatBrain</span>
+          <span className="font-mono text-muted-foreground uppercase tracking-[0.14em] text-[11px] font-semibold">
+            ThreatBrain
+          </span>
         )}
         {crumbs.map((c, idx) => {
           const isLast = idx === crumbs.length - 1;
           return (
-            <div key={c.path} className="flex items-center gap-1.5">
+            <div key={c.path} className="flex items-center gap-2">
               {idx > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" strokeWidth={1.8} />
               )}
               {isLast ? (
-                <span className="font-medium text-slate-900">{c.label}</span>
+                <span className="font-serif italic font-medium text-foreground tracking-[-0.015em] text-[16px]">
+                  {c.label}
+                </span>
               ) : (
                 <Link
                   to={c.path}
-                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium tracking-[-0.01em]"
                 >
                   {c.label}
                 </Link>
@@ -76,48 +79,58 @@ export default function Topbar() {
       </nav>
 
       {/* User menu */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {profile?.organization && (
-          <Badge variant="outline" className="text-xs hidden sm:inline-flex">
+          <Badge
+            variant="outline"
+            className="text-[11px] font-mono font-semibold tracking-[0.06em] uppercase hidden sm:inline-flex bg-background border-border text-muted-foreground"
+          >
             {profile.organization.name}
           </Badge>
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2 h-9 px-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-semibold shadow-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2.5 h-10 px-2 hover:bg-accent"
+            >
+              <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-background text-[12px] font-semibold shadow-sm tracking-[-0.01em]">
                 {initials}
               </div>
-              <span className="text-sm font-medium text-slate-700 hidden md:inline">
+              <span className="text-[13.5px] font-medium text-foreground hidden md:inline tracking-[-0.01em]">
                 {profile?.full_name || profile?.email}
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel className="font-normal py-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-[14px] font-serif font-semibold tracking-[-0.02em]">
                   {profile?.full_name || "User"}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-[11px] font-mono text-muted-foreground">
                   {profile?.email}
                 </span>
                 <div className="mt-2 flex items-center gap-1.5">
-                  <Badge variant="outline" className="text-xs capitalize">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-mono font-semibold uppercase tracking-[0.06em] capitalize"
+                  >
                     {profile?.role || "user"}
                   </Badge>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem disabled className="text-[13px]">
               <User className="w-4 h-4 mr-2" />
-              Profile (soon)
+              Profile <span className="ml-auto text-[10px] font-mono text-muted-foreground">soon</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => signOut()}
-              className="text-severity-critical focus:text-severity-critical"
+              className="text-severity-critical focus:text-severity-critical text-[13px]"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign out
