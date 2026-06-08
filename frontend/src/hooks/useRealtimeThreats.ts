@@ -4,8 +4,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useUserStore } from "@/store/useUserStore";
 
-const REALTIME_DEBUG =
-  import.meta.env.DEV || import.meta.env.VITE_REALTIME_DEBUG === "true";
+const REALTIME_DEBUG = true;
 
 // Types
 
