@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
-import { api, type ThreatListResponse } from "@/lib/api";
+import { api, type ThreatListResponse, type Threat } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
+import {
+  useRealtimeThreats,
+  type RealtimeThreatRow,
+} from "@/hooks/useRealtimeThreats";
 
 const SEVERITY_OPTS = [
   { value: "all",      label: "All" },
@@ -63,12 +67,59 @@ function FilterPills({
   );
 }
 
+// ─────────── Live indicator (connection status pill) ───────────
+function LiveIndicator({
+  status,
+}: {
+  status: "connecting" | "live" | "disconnected" | "error";
+}) {
+  const config = {
+    live: { dotClass: "bg-severity-low", label: "Live", pulse: true },
+    connecting: {
+      dotClass: "bg-muted-foreground/40",
+      label: "Connecting",
+      pulse: false,
+    },
+    disconnected: {
+      dotClass: "bg-muted-foreground/30",
+      label: "Offline",
+      pulse: false,
+    },
+    error: {
+      dotClass: "bg-severity-critical",
+      label: "Error",
+      pulse: false,
+    },
+  }[status];
+
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+      <span className="relative flex items-center justify-center">
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
+        {config.pulse && (
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full ${config.dotClass} animate-ping opacity-75`}
+          />
+        )}
+      </span>
+      <span>{config.label}</span>
+    </div>
+  );
+}
+
 export default function ThreatsPage() {
   const [data, setData] = useState<ThreatListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [severity, setSeverity] = useState("all");
   const [threatStatus, setThreatStatus] = useState("all");
+
+  // Live arrivals stream — only the brand-new rows from Realtime.
+  // We merge these into the table view, filtered to match the current filters.
+  const { threats: liveArrivals, status: liveStatus } = useRealtimeThreats({
+    maxItems: 50,
+    highlightMs: 3000,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +142,36 @@ export default function ThreatsPage() {
     return () => { cancelled = true; };
   }, [severity, threatStatus]);
 
+  // Merge live arrivals (filtered) on top of the fetched page.
+  // - Show only live rows that match the active severity/status filters
+  // - De-duplicate by id (the fetched page may already contain them after refresh)
+  // - Live rows go first so freshly arrived threats appear at the top
+  const mergedItems = useMemo(() => {
+    const baseItems = (data?.items ?? []) as RealtimeThreatRow[];
+    if (liveArrivals.length === 0) return baseItems;
+
+    const baseIds = new Set(baseItems.map((t) => t.id));
+
+    const filteredLive = liveArrivals.filter((t) => {
+      if (baseIds.has(t.id)) return false; // already present from the fetched page
+      if (severity !== "all" && t.severity !== severity) return false;
+      if (threatStatus !== "all" && t.status !== threatStatus) return false;
+      return true;
+    });
+
+    // Live rows on top, keeping the _isNew flag they brought with them.
+    return [...filteredLive, ...baseItems];
+  }, [data, liveArrivals, severity, threatStatus]);
+
+  // For display, only treat a row as "new" if it's in the live arrivals AND still flagged.
+  const newIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const t of liveArrivals) {
+      if (t._isNew) ids.add(t.id);
+    }
+    return ids;
+  }, [liveArrivals]);
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
@@ -101,11 +182,14 @@ export default function ThreatsPage() {
         className="flex items-start justify-between gap-6 flex-wrap"
       >
         <div>
-          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
-            Threats
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+              Threats
+            </h1>
+            <LiveIndicator status={liveStatus} />
+          </div>
           <p className="text-[13.5px] text-muted-foreground mt-1">
-            All detected security threats.
+            All detected security threats. New detections stream in via Supabase Realtime.
           </p>
         </div>
         {data && (
@@ -156,15 +240,18 @@ export default function ThreatsPage() {
       )}
 
       {/* Empty */}
-      {!loading && !error && data && data.items.length === 0 && (
+      {!loading && !error && mergedItems.length === 0 && (
         <div className="py-16 text-center">
           <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
           <p className="text-[13.5px] text-muted-foreground">No threats match your filters.</p>
+          <p className="text-[12px] text-muted-foreground/70 mt-1">
+            New detections matching these filters will appear here automatically.
+          </p>
         </div>
       )}
 
       {/* Table */}
-      {!loading && !error && data && data.items.length > 0 && (
+      {!loading && !error && mergedItems.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -186,68 +273,92 @@ export default function ThreatsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {data.items.map((threat, i) => (
-                  <motion.tr
-                    key={threat.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="hover:bg-accent/40 transition-colors group"
-                  >
-                    <td className="px-5 py-3.5">
-                      <SeverityBadge severity={threat.severity} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Link
-                        to={`/threats/${threat.short_id}`}
-                        className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                <AnimatePresence initial={false}>
+                  {mergedItems.map((threat) => {
+                    const isNew = newIds.has(threat.id);
+                    return (
+                      <motion.tr
+                        key={threat.id}
+                        layout
+                        initial={{ opacity: 0, y: -8, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 8 }}
+                        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                        className={`relative transition-colors group ${
+                          isNew
+                            ? "bg-severity-low/5 hover:bg-severity-low/10"
+                            : "hover:bg-accent/40"
+                        }`}
                       >
-                        {threat.short_id}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5 max-w-sm">
-                      <Link
-                        to={`/threats/${threat.short_id}`}
-                        className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
-                      >
-                        {threat.title}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={threat.status} />
-                    </td>
-                    <td className="px-5 py-3.5 hidden md:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {threat.mitre_techniques.slice(0, 2).map((t) => (
-                          <span
-                            key={t}
-                            className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
+                        <td className="px-5 py-3.5 relative">
+                          {isNew && (
+                            <motion.span
+                              initial={{ opacity: 0, scaleY: 0.5 }}
+                              animate={{ opacity: 1, scaleY: 1 }}
+                              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-severity-low"
+                            />
+                          )}
+                          <SeverityBadge severity={threat.severity as Threat["severity"]} />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Link
+                            to={`/threats/${threat.short_id}`}
+                            className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {t}
-                          </span>
-                        ))}
-                        {threat.mitre_techniques.length > 2 && (
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            +{threat.mitre_techniques.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
-                      {threat.confidence}%
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
-                        {timeAgo(threat.detected_at)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3.5 text-right">
-                      <Link to={`/threats/${threat.short_id}`}>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                    </td>
-                  </motion.tr>
-                ))}
+                            {threat.short_id}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5 max-w-sm">
+                          <Link
+                            to={`/threats/${threat.short_id}`}
+                            className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
+                          >
+                            {threat.title}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={threat.status as Threat["status"]} />
+                        </td>
+                        <td className="px-5 py-3.5 hidden md:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {threat.mitre_techniques.slice(0, 2).map((t) => (
+                              <span
+                                key={t}
+                                className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {threat.mitre_techniques.length > 2 && (
+                              <span className="font-mono text-[10px] text-muted-foreground">
+                                +{threat.mitre_techniques.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
+                          {threat.confidence}%
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {isNew ? (
+                            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-severity-low font-semibold whitespace-nowrap">
+                              new
+                            </span>
+                          ) : (
+                            <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                              {timeAgo(threat.detected_at)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2 py-3.5 text-right">
+                          <Link to={`/threats/${threat.short_id}`}>
+                            <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </Link>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
