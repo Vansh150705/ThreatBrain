@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
-import { api, type IncidentListResponse } from "@/lib/api";
+import {
+  api,
+  type IncidentListResponse,
+  type Incident,
+} from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
+import {
+  useRealtimeRows,
+  type RealtimeBaseRow,
+} from "@/hooks/useRealtimeThreats";
 
 const SEVERITY_OPTS = [
   { value: "all", label: "All" },
@@ -31,6 +39,21 @@ const PRIORITY_OPTS = [
   { value: "p3",  label: "P3" },
   { value: "p4",  label: "P4" },
 ];
+
+// Row shape produced by Realtime — wider than the API's Incident, narrowed at render time.
+interface RealtimeIncidentRow extends RealtimeBaseRow {
+  short_id: string;
+  title: string;
+  severity: string;
+  status: string;
+  priority: string;
+  threat_count: number;
+  kill_chain: string[];
+  last_seen_at: string | null;
+  first_seen_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "—";
@@ -71,6 +94,33 @@ function FilterPills({
   );
 }
 
+function LiveIndicator({
+  status,
+}: {
+  status: "connecting" | "live" | "disconnected" | "error";
+}) {
+  const config = {
+    live: { dotClass: "bg-severity-low", label: "Live", pulse: true },
+    connecting: { dotClass: "bg-muted-foreground/40", label: "Connecting", pulse: false },
+    disconnected: { dotClass: "bg-muted-foreground/30", label: "Offline", pulse: false },
+    error: { dotClass: "bg-severity-critical", label: "Error", pulse: false },
+  }[status];
+
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+      <span className="relative flex items-center justify-center">
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
+        {config.pulse && (
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full ${config.dotClass} animate-ping opacity-75`}
+          />
+        )}
+      </span>
+      <span>{config.label}</span>
+    </div>
+  );
+}
+
 export default function IncidentsPage() {
   const [data, setData] = useState<IncidentListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +128,13 @@ export default function IncidentsPage() {
   const [severity, setSeverity] = useState("all");
   const [incidentStatus, setIncidentStatus] = useState("all");
   const [priority, setPriority] = useState("all");
+
+  // Real-time incident arrivals
+  const { rows: liveArrivals, status: liveStatus } = useRealtimeRows<RealtimeIncidentRow>({
+    table: "incidents",
+    maxItems: 50,
+    highlightMs: 3000,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +158,32 @@ export default function IncidentsPage() {
     return () => { cancelled = true; };
   }, [severity, incidentStatus, priority]);
 
+  // Merge live arrivals on top of the fetched page, filtered to match active filters
+  const mergedItems = useMemo(() => {
+    const baseItems = (data?.items ?? []) as unknown as RealtimeIncidentRow[];
+    if (liveArrivals.length === 0) return baseItems;
+
+    const baseIds = new Set(baseItems.map((i) => i.id));
+
+    const filteredLive = liveArrivals.filter((i) => {
+      if (baseIds.has(i.id)) return false;
+      if (severity !== "all" && i.severity !== severity) return false;
+      if (incidentStatus !== "all" && i.status !== incidentStatus) return false;
+      if (priority !== "all" && i.priority !== priority) return false;
+      return true;
+    });
+
+    return [...filteredLive, ...baseItems];
+  }, [data, liveArrivals, severity, incidentStatus, priority]);
+
+  const newIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const i of liveArrivals) {
+      if (i._isNew) ids.add(i.id);
+    }
+    return ids;
+  }, [liveArrivals]);
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
@@ -111,11 +194,14 @@ export default function IncidentsPage() {
         className="flex items-start justify-between gap-6 flex-wrap"
       >
         <div>
-          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
-            Incidents
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+              Incidents
+            </h1>
+            <LiveIndicator status={liveStatus} />
+          </div>
           <p className="text-[13.5px] text-muted-foreground mt-1">
-            Grouped attack campaigns under investigation across your organization.
+            Grouped attack campaigns under investigation. New incidents stream in via Supabase Realtime.
           </p>
         </div>
         {data && (
@@ -172,15 +258,18 @@ export default function IncidentsPage() {
       )}
 
       {/* Empty */}
-      {!loading && !error && data && data.items.length === 0 && (
+      {!loading && !error && mergedItems.length === 0 && (
         <div className="py-16 text-center">
           <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
           <p className="text-[13.5px] text-muted-foreground">No incidents match your filters.</p>
+          <p className="text-[12px] text-muted-foreground/70 mt-1">
+            New incidents matching these filters will appear here automatically.
+          </p>
         </div>
       )}
 
       {/* Table */}
-      {!loading && !error && data && data.items.length > 0 && (
+      {!loading && !error && mergedItems.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -203,71 +292,95 @@ export default function IncidentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {data.items.map((incident, i) => (
-                  <motion.tr
-                    key={incident.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="hover:bg-accent/40 transition-colors group"
-                  >
-                    <td className="px-5 py-3.5">
-                      <SeverityBadge severity={incident.severity} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <PriorityBadge priority={incident.priority} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Link
-                        to={`/incidents/${incident.short_id}`}
-                        className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                <AnimatePresence initial={false}>
+                  {mergedItems.map((incident) => {
+                    const isNew = newIds.has(incident.id);
+                    return (
+                      <motion.tr
+                        key={incident.id}
+                        layout
+                        initial={{ opacity: 0, y: -8, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 8 }}
+                        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                        className={`relative transition-colors group ${
+                          isNew
+                            ? "bg-severity-low/5 hover:bg-severity-low/10"
+                            : "hover:bg-accent/40"
+                        }`}
                       >
-                        {incident.short_id}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5 max-w-sm">
-                      <Link
-                        to={`/incidents/${incident.short_id}`}
-                        className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
-                      >
-                        {incident.title}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={incident.status} />
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden md:table-cell">
-                      {incident.threat_count}
-                    </td>
-                    <td className="px-5 py-3.5 hidden lg:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {incident.kill_chain.slice(0, 2).map((stage) => (
-                          <span
-                            key={stage}
-                            className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
+                        <td className="px-5 py-3.5 relative">
+                          {isNew && (
+                            <motion.span
+                              initial={{ opacity: 0, scaleY: 0.5 }}
+                              animate={{ opacity: 1, scaleY: 1 }}
+                              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-severity-low"
+                            />
+                          )}
+                          <SeverityBadge severity={incident.severity as Incident["severity"]} />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <PriorityBadge priority={incident.priority as Incident["priority"]} />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Link
+                            to={`/incidents/${incident.short_id}`}
+                            className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {stage}
-                          </span>
-                        ))}
-                        {incident.kill_chain.length > 2 && (
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            +{incident.kill_chain.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
-                        {timeAgo(incident.last_seen_at)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3.5 text-right">
-                      <Link to={`/incidents/${incident.short_id}`}>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                    </td>
-                  </motion.tr>
-                ))}
+                            {incident.short_id}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5 max-w-sm">
+                          <Link
+                            to={`/incidents/${incident.short_id}`}
+                            className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
+                          >
+                            {incident.title}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={incident.status as Incident["status"]} />
+                        </td>
+                        <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden md:table-cell">
+                          {incident.threat_count}
+                        </td>
+                        <td className="px-5 py-3.5 hidden lg:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {incident.kill_chain.slice(0, 2).map((stage) => (
+                              <span
+                                key={stage}
+                                className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
+                              >
+                                {stage}
+                              </span>
+                            ))}
+                            {incident.kill_chain.length > 2 && (
+                              <span className="font-mono text-[10px] text-muted-foreground">
+                                +{incident.kill_chain.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {isNew ? (
+                            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-severity-low font-semibold whitespace-nowrap">
+                              new
+                            </span>
+                          ) : (
+                            <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                              {timeAgo(incident.last_seen_at)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2 py-3.5 text-right">
+                          <Link to={`/incidents/${incident.short_id}`}>
+                            <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </Link>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>

@@ -114,7 +114,8 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
   // Real-time threats (seed with initial fetch, then live INSERT events stream in)
-  const { threats, status: liveStatus, setThreats } = useRealtimeThreats({
+// Real-time threats (seed with initial fetch, then live INSERT events stream in)
+  const { threats, status: liveStatus, setThreats, newCount } = useRealtimeThreats({
     maxItems: 50,
     highlightMs: 3000,
   });
@@ -203,12 +204,17 @@ export default function DashboardPage() {
               icon: CheckCircle2,
               iconBg: "bg-severity-info/10 text-severity-info",
             },
-            {
+{
               label: "Open threats",
-              value: loading || !stats ? "—" : stats.open_threats.toString(),
+              value:
+                loading || !stats
+                  ? "—"
+                  : (stats.open_threats + newCount).toString(),
               caption:
                 loading || !stats
                   ? ""
+                  : newCount > 0
+                  ? `+${newCount} just now · ${stats.total_threats + newCount} total`
                   : `${stats.critical_threats} critical · ${stats.total_threats} total`,
               link: "/threats",
               icon: ShieldAlert,
