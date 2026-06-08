@@ -9,9 +9,9 @@ import { useUserStore } from "@/store/useUserStore";
 export interface RealtimeThreatRow {
   id: string;
   short_id: string;
-  organization_id: string;
+  organization_id?: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   severity: "info" | "low" | "medium" | "high" | "critical";
   status:
     | "open"
@@ -21,7 +21,7 @@ export interface RealtimeThreatRow {
     | "closed"
     | "false_positive";
   confidence: number;
-  risk_score: number;
+  risk_score: number | null;
   mitre_tactics: string[];
   mitre_techniques: string[];
   source_ips: string[];

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
-import { api, type ThreatListResponse, type Threat } from "@/lib/api";
+import { api, type ThreatListResponse } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import {
@@ -298,7 +298,7 @@ export default function ThreatsPage() {
                               className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-severity-low"
                             />
                           )}
-                          <SeverityBadge severity={threat.severity as Threat["severity"]} />
+                          <SeverityBadge severity={threat.severity} />
                         </td>
                         <td className="px-5 py-3.5">
                           <Link
@@ -317,7 +317,7 @@ export default function ThreatsPage() {
                           </Link>
                         </td>
                         <td className="px-5 py-3.5">
-                          <StatusBadge status={threat.status as Threat["status"]} />
+                          <StatusBadge status={threat.status} />
                         </td>
                         <td className="px-5 py-3.5 hidden md:table-cell">
                           <div className="flex flex-wrap gap-1">

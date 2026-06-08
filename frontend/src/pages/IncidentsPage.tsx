@@ -6,7 +6,6 @@ import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 import {
   api,
   type IncidentListResponse,
-  type Incident,
 } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
@@ -317,10 +316,10 @@ export default function IncidentsPage() {
                               className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-severity-low"
                             />
                           )}
-                          <SeverityBadge severity={incident.severity as Incident["severity"]} />
+                          <SeverityBadge severity={incident.severity} />
                         </td>
                         <td className="px-5 py-3.5">
-                          <PriorityBadge priority={incident.priority as Incident["priority"]} />
+                          <PriorityBadge priority={incident.priority} />
                         </td>
                         <td className="px-5 py-3.5">
                           <Link
@@ -339,7 +338,7 @@ export default function IncidentsPage() {
                           </Link>
                         </td>
                         <td className="px-5 py-3.5">
-                          <StatusBadge status={incident.status as Incident["status"]} />
+                          <StatusBadge status={incident.status} />
                         </td>
                         <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden md:table-cell">
                           {incident.threat_count}
