@@ -27,20 +27,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearProfile = useUserStore((s) => s.clearProfile);
 
   useEffect(() => {
-    // On mount: check for an existing session
+    // On mount: check for an existing session.
+    // getSession() also calls supabase.realtime.setAuth, but we call it here
+    // too so the Realtime WebSocket has the JWT before any subscription fires.
     getSession()
       .then((s) => {
         setSession(s);
-        if (s) fetchProfile();
+        if (s) {
+          fetchProfile();
+          if (s.access_token) {
+            supabase.realtime.setAuth(s.access_token);
+          }
+        }
       })
       .catch(() => setSession(null))
       .finally(() => setLoading(false));
 
-    // Subscribe to auth state changes
+    // Subscribe to auth state changes (sign-in, sign-out, token refresh)
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
       setSession(s);
       if (s) {
         fetchProfile();
+        if (s.access_token) {
+          supabase.realtime.setAuth(s.access_token);
+        }
       } else {
         clearProfile();
       }

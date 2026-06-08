@@ -4,6 +4,9 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useUserStore } from "@/store/useUserStore";
 
+const REALTIME_DEBUG =
+  import.meta.env.DEV || import.meta.env.VITE_REALTIME_DEBUG === "true";
+
 // Types
 
 export interface RealtimeThreatRow {
@@ -85,6 +88,8 @@ export function useRealtimeThreats(
   const acknowledgeNew = useCallback(() => setNewCount(0), []);
 
   useEffect(() => {
+    if (REALTIME_DEBUG) console.log(`[Realtime:threats] orgId=${orgId} enabled=${enabled}`);
+
     if (!enabled || !orgId) {
       setStatus("connecting");
       return;
@@ -105,6 +110,7 @@ export function useRealtimeThreats(
         },
         (payload) => {
           const row = payload.new as RealtimeThreatRow;
+          if (REALTIME_DEBUG) console.log(`[Realtime:threats] INSERT received`, row);
 
           // Guard against echoes / duplicates.
           setThreats((prev) => {
@@ -129,6 +135,7 @@ export function useRealtimeThreats(
         }
       )
       .subscribe((subStatus) => {
+        if (REALTIME_DEBUG) console.log(`[Realtime:threats] channel status → ${subStatus}`);
         if (subStatus === "SUBSCRIBED") setStatus("live");
         else if (subStatus === "CHANNEL_ERROR") setStatus("error");
         else if (subStatus === "TIMED_OUT") setStatus("error");
@@ -222,6 +229,8 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
   const acknowledgeNew = useCallback(() => setNewCount(0), []);
 
   useEffect(() => {
+    if (REALTIME_DEBUG) console.log(`[Realtime:${table}] orgId=${orgId} enabled=${enabled}`);
+
     if (!enabled || !orgId) {
       setStatus("connecting");
       return;
@@ -241,6 +250,7 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
         },
         (payload) => {
           const row = payload.new as T;
+          if (REALTIME_DEBUG) console.log(`[Realtime:${table}] INSERT received`, row);
           setRows((prev) => {
             if (prev.some((r) => r.id === row.id)) return prev;
             const next = [{ ...row, _isNew: true }, ...prev];
@@ -258,6 +268,7 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
         }
       )
       .subscribe((subStatus) => {
+        if (REALTIME_DEBUG) console.log(`[Realtime:${table}] channel status → ${subStatus}`);
         if (subStatus === "SUBSCRIBED") setStatus("live");
         else if (subStatus === "CHANNEL_ERROR") setStatus("error");
         else if (subStatus === "TIMED_OUT") setStatus("error");

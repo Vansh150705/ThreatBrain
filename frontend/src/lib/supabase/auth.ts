@@ -10,6 +10,7 @@ export async function signIn(email: string, password: string) {
   if (error) throw error;
   if (data.session?.access_token) {
     setToken(data.session.access_token);
+    await supabase.realtime.setAuth(data.session.access_token);
   }
   return data;
 }
@@ -26,6 +27,7 @@ export async function getSession() {
   if (error) throw error;
   if (data.session?.access_token) {
     setToken(data.session.access_token);
+    await supabase.realtime.setAuth(data.session.access_token);
   }
   return data.session;
 }
@@ -34,6 +36,7 @@ export async function getSession() {
 supabase.auth.onAuthStateChange((_event, session) => {
   if (session?.access_token) {
     setToken(session.access_token);
+    supabase.realtime.setAuth(session.access_token);
   } else {
     clearToken();
   }
