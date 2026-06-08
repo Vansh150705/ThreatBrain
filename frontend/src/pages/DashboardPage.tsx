@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowUpRight,
   Loader2,
@@ -16,6 +16,10 @@ import { ApiError } from "@/lib/api";
 import { useUserStore } from "@/store/useUserStore";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
+import {
+  useRealtimeThreats,
+  type RealtimeThreatRow,
+} from "@/hooks/useRealtimeThreats";
 
 const CREW = {
   triage: { name: "Olivia", portrait: (c?: string) => <Olivia className={c} /> },
@@ -50,15 +54,6 @@ const SEVERITY_TONE: Record<string, string> = {
   info: "text-severity-info border-severity-info/30 bg-severity-info/8",
 };
 
-interface RecentThreat {
-  id: string;
-  short_id: string;
-  title: string;
-  severity: string;
-  status: string;
-  detected_at: string;
-}
-
 function timeAgo(iso: string): string {
   const diffMins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (diffMins < 1) return "just now";
@@ -69,6 +64,46 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
+// ─────────── Live indicator (connection status pill) ───────────
+function LiveIndicator({
+  status,
+}: {
+  status: "connecting" | "live" | "disconnected" | "error";
+}) {
+  const config = {
+    live: { dotClass: "bg-severity-low", label: "Live", pulse: true },
+    connecting: {
+      dotClass: "bg-muted-foreground/40",
+      label: "Connecting",
+      pulse: false,
+    },
+    disconnected: {
+      dotClass: "bg-muted-foreground/30",
+      label: "Offline",
+      pulse: false,
+    },
+    error: {
+      dotClass: "bg-severity-critical",
+      label: "Error",
+      pulse: false,
+    },
+  }[status];
+
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+      <span className="relative flex items-center justify-center">
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
+        {config.pulse && (
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full ${config.dotClass} animate-ping opacity-75`}
+          />
+        )}
+      </span>
+      <span>{config.label}</span>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const profile = useUserStore((s) => s.profile);
   const orgName = useMemo(() => profile?.organization?.name ?? "your organization", [profile]);
@@ -77,7 +112,12 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentThreats, setRecentThreats] = useState<RecentThreat[]>([]);
+
+  // Real-time threats (seed with initial fetch, then live INSERT events stream in)
+  const { threats, status: liveStatus, setThreats } = useRealtimeThreats({
+    maxItems: 50,
+    highlightMs: 3000,
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -85,21 +125,21 @@ export default function DashboardPage() {
       api.agents.listAgents(),
       api.stats.getDashboardStats(),
       api.threats
-        .listThreats({ page: 1, page_size: 5 })
-        .then((r) => r.items as RecentThreat[])
-        .catch(() => [] as RecentThreat[]),
+        .listThreats({ page: 1, page_size: 10 })
+        .then((r) => r.items as RealtimeThreatRow[])
+        .catch(() => [] as RealtimeThreatRow[]),
     ])
       .then(([agentsRes, statsRes, threatsRes]) => {
         setAgents(agentsRes.items);
         setStats(statsRes);
-        setRecentThreats(threatsRes);
+        setThreats(threatsRes);
       })
       .catch((err) => {
         if (err instanceof ApiError) setError(`${err.status} — ${err.message}`);
         else setError(String(err));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [setThreats]);
 
   const totalRuns = agents.reduce((sum, a) => sum + a.total_runs, 0);
   const successfulRuns = agents.reduce((sum, a) => sum + a.successful_runs, 0);
@@ -218,7 +258,7 @@ export default function DashboardPage() {
 
       {/* ─────── TWO-COLUMN: THREATS + AGENTS ─────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Recent threats */}
+        {/* Recent threats (LIVE) */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -229,11 +269,14 @@ export default function DashboardPage() {
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-foreground">
-                  Recent threats
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-foreground">
+                    Recent threats
+                  </h2>
+                  <LiveIndicator status={liveStatus} />
+                </div>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
-                  Most recent detections.
+                  Streaming via Supabase Realtime.
                 </p>
               </div>
               <Link
@@ -262,46 +305,71 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {!loading && !error && recentThreats.length === 0 && (
+            {!loading && !error && threats.length === 0 && (
               <div className="py-12 text-center px-6">
                 <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" strokeWidth={1.5} />
                 <p className="text-[13.5px] text-muted-foreground">No threats detected.</p>
+                <p className="text-[12px] text-muted-foreground/70 mt-1">
+                  New threats will appear here automatically.
+                </p>
               </div>
             )}
 
-            {!loading && !error && recentThreats.length > 0 && (
+            {!loading && !error && threats.length > 0 && (
               <div className="divide-y divide-border">
-                {recentThreats.slice(0, 5).map((t, i) => (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                  >
-                    <Link
-                      to={`/threats/${t.short_id}`}
-                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/40 transition-colors group"
+                <AnimatePresence initial={false}>
+                  {threats.slice(0, 6).map((t) => (
+                    <motion.div
+                      key={t.id}
+                      layout
+                      initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] uppercase tracking-[0.06em] font-mono font-semibold border ${
-                          SEVERITY_TONE[t.severity.toLowerCase()] ?? SEVERITY_TONE.info
+                      <Link
+                        to={`/threats/${t.short_id}`}
+                        className={`relative flex items-center gap-3 px-5 py-3.5 transition-colors group ${
+                          t._isNew
+                            ? "bg-severity-low/5 hover:bg-severity-low/10"
+                            : "hover:bg-accent/40"
                         }`}
                       >
-                        {t.severity}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground w-20 flex-shrink-0 tabular">
-                        {t.short_id}
-                      </span>
-                      <span className="text-[13.5px] text-foreground font-medium flex-1 truncate group-hover:text-foreground/70 transition-colors">
-                        {t.title}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap hidden md:inline">
-                        {timeAgo(t.detected_at)}
-                      </span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  </motion.div>
-                ))}
+                        {/* Pulse stripe on the left edge for newly arrived threats */}
+                        {t._isNew && (
+                          <motion.span
+                            initial={{ opacity: 0, scaleY: 0.5 }}
+                            animate={{ opacity: 1, scaleY: 1 }}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r bg-severity-low"
+                          />
+                        )}
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] uppercase tracking-[0.06em] font-mono font-semibold border ${
+                            SEVERITY_TONE[t.severity.toLowerCase()] ?? SEVERITY_TONE.info
+                          }`}
+                        >
+                          {t.severity}
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground w-20 flex-shrink-0 tabular">
+                          {t.short_id}
+                        </span>
+                        <span className="text-[13.5px] text-foreground font-medium flex-1 truncate group-hover:text-foreground/70 transition-colors">
+                          {t.title}
+                        </span>
+                        {t._isNew ? (
+                          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-severity-low font-semibold whitespace-nowrap hidden md:inline">
+                            new
+                          </span>
+                        ) : (
+                          <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap hidden md:inline">
+                            {timeAgo(t.detected_at)}
+                          </span>
+                        )}
+                        <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </div>
