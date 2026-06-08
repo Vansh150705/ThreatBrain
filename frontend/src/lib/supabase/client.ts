@@ -16,4 +16,10 @@ export const supabase = createClient(url, anonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: false,
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+    log_level: "info",
+  },
 });

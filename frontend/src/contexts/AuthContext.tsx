@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchProfile();
           if (s.access_token) {
             supabase.realtime.setAuth(s.access_token);
+            console.log("[Realtime auth] AuthContext bootstrap setAuth token prefix:", s.access_token.slice(0, 20));
           }
         }
       })
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchProfile();
         if (s.access_token) {
           supabase.realtime.setAuth(s.access_token);
+          console.log("[Realtime auth] AuthContext onAuthStateChange setAuth token prefix:", s.access_token.slice(0, 20));
         }
       } else {
         clearProfile();

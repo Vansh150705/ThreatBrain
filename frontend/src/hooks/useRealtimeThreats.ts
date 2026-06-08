@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useUserStore } from "@/store/useUserStore";
 
 const REALTIME_DEBUG = true;
+console.log("[Realtime module] loaded at", new Date().toISOString());
 
 // Types
 
@@ -64,6 +65,7 @@ interface UseRealtimeThreatsResult {
 export function useRealtimeThreats(
   options: UseRealtimeThreatsOptions = {}
 ): UseRealtimeThreatsResult {
+  console.log("[Realtime hook] useRealtimeThreats entered, options=", options);
   const {
     initial = [],
     maxItems = 100,
@@ -73,6 +75,7 @@ export function useRealtimeThreats(
 
   const profile = useUserStore((s) => s.profile);
   const orgId = profile?.organization?.id ?? null;
+  console.log("[Realtime hook] orgId resolved to:", orgId, "profile=", profile);
 
   const [threats, setThreats] = useState<RealtimeThreatRow[]>(initial);
   const [status, setStatus] = useState<RealtimeStatus>("connecting");
@@ -97,6 +100,8 @@ export function useRealtimeThreats(
     setStatus("connecting");
 
     // One channel per org. Supabase Realtime filter syntax requires `eq.<value>`.
+    console.log("[Realtime] About to create channel for orgId:", orgId, "table: threats");
+    console.log("[Realtime] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
     const channel = supabase
       .channel(`threats:org:${orgId}`)
       .on(
@@ -133,7 +138,8 @@ export function useRealtimeThreats(
           highlightTimersRef.current.set(row.id, timerId);
         }
       )
-      .subscribe((subStatus) => {
+      .subscribe((subStatus, err) => {
+        console.log("[Realtime] subscribe callback fired. subStatus=", subStatus, "err=", err);
         if (REALTIME_DEBUG) console.log(`[Realtime:threats] channel status → ${subStatus}`);
         if (subStatus === "SUBSCRIBED") setStatus("live");
         else if (subStatus === "CHANNEL_ERROR") setStatus("error");
@@ -207,6 +213,7 @@ interface UseRealtimeRowsResult<T> {
 export function useRealtimeRows<T extends RealtimeBaseRow>(
   options: UseRealtimeRowsOptions<T>
 ): UseRealtimeRowsResult<T> {
+  console.log("[Realtime hook] useRealtimeRows entered, options=", options);
   const {
     table,
     initial = [],
@@ -217,6 +224,7 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
 
   const profile = useUserStore((s) => s.profile);
   const orgId = profile?.organization?.id ?? null;
+  console.log("[Realtime hook] orgId resolved to:", orgId, "profile=", profile);
 
   const [rows, setRows] = useState<T[]>(initial);
   const [status, setStatus] = useState<RealtimeStatus>("connecting");
@@ -237,6 +245,8 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
 
     setStatus("connecting");
 
+    console.log(`[Realtime] About to create channel for orgId:`, orgId, `table: ${table}`);
+    console.log("[Realtime] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
     const channel = supabase
       .channel(`${table}:org:${orgId}`)
       .on(
@@ -266,7 +276,8 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
           highlightTimersRef.current.set(row.id, timerId);
         }
       )
-      .subscribe((subStatus) => {
+      .subscribe((subStatus, err) => {
+        console.log("[Realtime] subscribe callback fired. subStatus=", subStatus, "err=", err);
         if (REALTIME_DEBUG) console.log(`[Realtime:${table}] channel status → ${subStatus}`);
         if (subStatus === "SUBSCRIBED") setStatus("live");
         else if (subStatus === "CHANNEL_ERROR") setStatus("error");

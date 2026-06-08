@@ -11,6 +11,7 @@ export async function signIn(email: string, password: string) {
   if (data.session?.access_token) {
     setToken(data.session.access_token);
     await supabase.realtime.setAuth(data.session.access_token);
+    console.log("[Realtime auth] signIn setAuth token prefix:", data.session.access_token.slice(0, 20));
   }
   return data;
 }
@@ -28,6 +29,7 @@ export async function getSession() {
   if (data.session?.access_token) {
     setToken(data.session.access_token);
     await supabase.realtime.setAuth(data.session.access_token);
+    console.log("[Realtime auth] getSession setAuth token prefix:", data.session.access_token.slice(0, 20));
   }
   return data.session;
 }
@@ -37,6 +39,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
   if (session?.access_token) {
     setToken(session.access_token);
     supabase.realtime.setAuth(session.access_token);
+    console.log("[Realtime auth] onAuthStateChange setAuth token prefix:", session.access_token.slice(0, 20));
   } else {
     clearToken();
   }
