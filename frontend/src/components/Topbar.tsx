@@ -20,6 +20,7 @@ const labelMap: Record<string, string> = {
   agents: "Agents",
   incidents: "Incidents",
   runs: "Run history",
+  "attack-map": "Attack Map",
 };
 
 function getBreadcrumbs(pathname: string) {

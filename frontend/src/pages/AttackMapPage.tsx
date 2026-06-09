@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import * as L from "leaflet";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
@@ -34,6 +35,10 @@ const SEVERITY_TONE: Record<string, string> = {
 
 function dotRadius(count: number): number {
   return Math.min(24, Math.max(8, 8 + Math.sqrt(count) * 4));
+}
+
+function pointKey(p: GeoThreatPoint): string {
+  return `${p.country}::${p.city ?? ""}`;
 }
 
 function timeAgo(iso: string): string {
@@ -72,7 +77,8 @@ function LiveIndicator({
   );
 }
 
-// Map dot with pulsing SVG path class via ref
+// Two-layer map dot: a static anchor dot on top + an animating pulse ring beneath.
+// Only the ring animates — the anchor never moves, eliminating SVG-origin drift.
 function PulsingMarker({
   point,
   isNew,
@@ -80,68 +86,80 @@ function PulsingMarker({
   point: GeoThreatPoint;
   isNew: boolean;
 }) {
-  const markerRef = useRef<L.CircleMarker | null>(null);
+  const ringRef = useRef<L.CircleMarker | null>(null);
   const color = SEVERITY_HEX[point.severity] ?? SEVERITY_HEX.info;
   const radius = dotRadius(point.threat_count);
+  const location = point.city
+    ? `${point.city}, ${point.country_name}`
+    : point.country_name;
 
-  // Apply/remove CSS class on the underlying SVG path element
+  // Swap ring CSS class when isNew changes; also sets initial class on mount
   useEffect(() => {
-    const el = markerRef.current?.getElement();
+    const el = ringRef.current?.getElement();
     if (!el) return;
-    const cls = isNew ? "attack-pulse-new" : "attack-pulse";
-    const remove = isNew ? "attack-pulse" : "attack-pulse-new";
-    el.classList.remove(remove);
-    el.classList.add(cls);
+    el.classList.remove("attack-pulse-ring", "attack-pulse-ring-new");
+    el.classList.add(isNew ? "attack-pulse-ring-new" : "attack-pulse-ring");
   }, [isNew]);
 
   return (
-    <CircleMarker
-      ref={markerRef}
-      center={[point.latitude, point.longitude]}
-      radius={radius}
-      pathOptions={{
-        fillColor: color,
-        fillOpacity: 0.6,
-        color,
-        weight: 2,
-        opacity: 0.9,
-      }}
-    >
-      <Popup>
-        <div className="min-w-[200px] max-w-[280px]">
-          <div className="font-semibold text-[13px] mb-1">
-            {point.country_name}
-            {point.city ? ` — ${point.city}` : ""}
-          </div>
-          <div className="text-[11px] text-muted-foreground mb-2">
-            {point.threat_count} threat{point.threat_count !== 1 ? "s" : ""} from{" "}
-            {point.source_ips.length} source IP{point.source_ips.length !== 1 ? "s" : ""}
-          </div>
-          <div className="space-y-1.5">
-            {point.recent_threats.slice(0, 3).map((t) => (
-              <div key={t.short_id} className="flex items-start gap-1.5">
-                <span
-                  className={`inline-flex items-center px-1 py-0.5 rounded text-[9px] uppercase tracking-[0.05em] font-mono font-semibold border flex-shrink-0 mt-[1px] ${
-                    SEVERITY_TONE[t.severity] ?? SEVERITY_TONE.info
-                  }`}
-                >
-                  {t.severity}
-                </span>
-                <Link
-                  to={`/threats/${t.short_id}`}
-                  className="text-[11px] text-foreground hover:underline leading-tight"
-                >
-                  {t.title.length > 60 ? t.title.slice(0, 57) + "…" : t.title}
-                  <span className="font-mono text-[9px] text-muted-foreground ml-1 block">
-                    {t.short_id} · {timeAgo(t.detected_at)}
+    <>
+      {/* Pulse ring — rendered first so it sits underneath the anchor dot */}
+      <CircleMarker
+        ref={ringRef}
+        center={[point.latitude, point.longitude]}
+        radius={radius}
+        pathOptions={{
+          fillColor: color,
+          fillOpacity: 0.4,
+          color: color,
+          weight: 0,
+        }}
+      />
+      {/* Anchor dot — perfectly still, owns the popup */}
+      <CircleMarker
+        center={[point.latitude, point.longitude]}
+        radius={Math.round(radius * 0.55)}
+        pathOptions={{
+          fillColor: color,
+          fillOpacity: 1.0,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+        }}
+      >
+        <Popup>
+          <div className="min-w-[200px] max-w-[280px]">
+            <div className="font-semibold text-[13px] mb-1">{location}</div>
+            <div className="text-[11px] text-muted-foreground mb-2">
+              {point.threat_count} threat{point.threat_count !== 1 ? "s" : ""} from{" "}
+              {point.source_ips.length} source IP{point.source_ips.length !== 1 ? "s" : ""}
+            </div>
+            <div className="space-y-1.5">
+              {point.recent_threats.slice(0, 3).map((t) => (
+                <div key={t.short_id} className="flex items-start gap-1.5">
+                  <span
+                    className={`inline-flex items-center px-1 py-0.5 rounded text-[9px] uppercase tracking-[0.05em] font-mono font-semibold border flex-shrink-0 mt-[1px] ${
+                      SEVERITY_TONE[t.severity] ?? SEVERITY_TONE.info
+                    }`}
+                  >
+                    {t.severity}
                   </span>
-                </Link>
-              </div>
-            ))}
+                  <Link
+                    to={`/threats/${t.short_id}`}
+                    className="text-[11px] text-foreground hover:underline leading-tight"
+                  >
+                    {t.title.length > 60 ? t.title.slice(0, 57) + "…" : t.title}
+                    <span className="font-mono text-[9px] text-muted-foreground ml-1 block">
+                      {t.short_id} · {timeAgo(t.detected_at)}
+                    </span>
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </Popup>
-    </CircleMarker>
+        </Popup>
+      </CircleMarker>
+    </>
   );
 }
 
@@ -151,7 +169,7 @@ export default function AttackMapPage() {
   const [geoData, setGeoData] = useState<GeoThreatResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Countries that have new arrivals (set → 3s timeout → removed)
+  // Point keys ("CC::city") that have new arrivals (set → 3s timeout → removed)
   const [newCountries, setNewCountries] = useState<Set<string>>(new Set());
   // Banner for latest new arrival
   const [arrivalBanner, setArrivalBanner] = useState<string | null>(null);
@@ -194,13 +212,12 @@ export default function AttackMapPage() {
     const triggered = new Set<string>();
 
     for (const threat of newArrivals) {
-      // Check if any of this threat's source IPs match a known country on the map
       const matched = geoData.items.filter((p) =>
         p.source_ips.some((ip) => (threat.source_ips ?? []).includes(ip))
       );
 
       if (matched.length > 0) {
-        matched.forEach((p) => triggered.add(p.country));
+        matched.forEach((p) => triggered.add(pointKey(p)));
       } else {
         needsRefetch = true;
       }
@@ -209,20 +226,21 @@ export default function AttackMapPage() {
     if (triggered.size > 0) {
       setNewCountries((prev) => {
         const next = new Set(prev);
-        triggered.forEach((cc) => next.add(cc));
+        triggered.forEach((k) => next.add(k));
         return next;
       });
-      // Show banner for first matched country
-      const firstCountry = geoData.items.find((p) => triggered.has(p.country));
-      if (firstCountry) {
-        setArrivalBanner(`New attack from ${firstCountry.country_name}`);
+      const firstPoint = geoData.items.find((p) => triggered.has(pointKey(p)));
+      if (firstPoint) {
+        const loc = firstPoint.city
+          ? `${firstPoint.city}, ${firstPoint.country_name}`
+          : firstPoint.country_name;
+        setArrivalBanner(`New attack from ${loc}`);
         setTimeout(() => setArrivalBanner(null), 2000);
       }
-      // Revert pulse after 3 seconds
       setTimeout(() => {
         setNewCountries((prev) => {
           const next = new Set(prev);
-          triggered.forEach((cc) => next.delete(cc));
+          triggered.forEach((k) => next.delete(k));
           return next;
         });
       }, 3000);
@@ -275,7 +293,13 @@ export default function AttackMapPage() {
             },
             {
               label: "Highest risk region",
-              value: loading ? "—" : (highestRiskCountry?.country_name ?? "None"),
+              value: loading
+                ? "—"
+                : highestRiskCountry
+                  ? (highestRiskCountry.city
+                    ? `${highestRiskCountry.city}, ${highestRiskCountry.country_name}`
+                    : highestRiskCountry.country_name)
+                  : "None",
               caption: loading ? "" : highestRiskCountry ? `${highestRiskCountry.severity} · ${highestRiskCountry.threat_count} threats` : "no data",
               icon: MapPin,
               iconBg: "bg-severity-critical/10 text-severity-critical",
@@ -354,9 +378,9 @@ export default function AttackMapPage() {
               !error &&
               geoData?.items.map((point) => (
                 <PulsingMarker
-                  key={point.country}
+                  key={pointKey(point)}
                   point={point}
-                  isNew={newCountries.has(point.country)}
+                  isNew={newCountries.has(pointKey(point))}
                 />
               ))}
           </MapContainer>
