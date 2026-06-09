@@ -14,6 +14,9 @@ export type {
   ThreatDetail,
   ThreatListResponse,
   ListThreatsParams,
+  GeoThreatPoint,
+  GeoThreatSummary,
+  GeoThreatResponse,
 } from "./threats";
 export type {
   IncidentListItem,

@@ -7,6 +7,7 @@ import {
   AlertOctagon,
   Activity,
   ChevronLeft,
+  Globe,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ const navSections = [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/threats", label: "Threats", icon: ShieldAlert },
       { to: "/incidents", label: "Incidents", icon: AlertOctagon },
+      { to: "/attack-map", label: "Attack Map", icon: Globe },
     ],
   },
   {

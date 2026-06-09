@@ -13,11 +13,13 @@ import RunsPage from "./pages/RunsPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import ThreatsPage from "./pages/ThreatsPage";
 import ThreatDetailPage from "./pages/ThreatDetailPage";
+import AttackMapPage from "./pages/AttackMapPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import RequireAuth from "./components/RequireAuth";
 import AppLayout from "./components/AppLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 
+import "leaflet/dist/leaflet.css";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -47,6 +49,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="incidents/:identifier" element={<IncidentDetailPage />} />
               <Route path="runs" element={<RunsPage />} />
               <Route path="runs/:runId" element={<RunDetailPage />} />
+              <Route path="attack-map" element={<AttackMapPage />} />
             </Route>
 
             {/* 404 */}

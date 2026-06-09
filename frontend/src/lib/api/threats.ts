@@ -65,3 +65,35 @@ export async function getThreat(identifier: string): Promise<ThreatDetail> {
   const { data } = await http.get<ThreatDetail>(`/threats/${identifier}`);
   return data;
 }
+
+// ── Geo map types ────────────────────────────────────────────────────────────
+
+export interface GeoThreatSummary {
+  short_id: string;
+  title: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  detected_at: string;
+}
+
+export interface GeoThreatPoint {
+  country: string;
+  country_name: string;
+  city: string | null;
+  latitude: number;
+  longitude: number;
+  threat_count: number;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  source_ips: string[];
+  recent_threats: GeoThreatSummary[];
+}
+
+export interface GeoThreatResponse {
+  items: GeoThreatPoint[];
+  total_countries: number;
+  total_threats: number;
+}
+
+export async function getGeoThreats(): Promise<GeoThreatResponse> {
+  const { data } = await http.get<GeoThreatResponse>("/threats/geo");
+  return data;
+}
