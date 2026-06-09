@@ -20,6 +20,6 @@ export const supabase = createClient(url, anonKey, {
     params: {
       eventsPerSecond: 10,
     },
-    log_level: "info",
+    log_level: "error",
   },
 });

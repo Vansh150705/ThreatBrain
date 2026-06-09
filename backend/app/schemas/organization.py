@@ -37,6 +37,17 @@ def _validate_slug(slug: str) -> str:
         )
     return slug
 
+class OrganizationMini(BaseModel):
+    """Lightweight org summary embedded in /me responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    slug: str
+    plan: OrgPlan
+
+
 class OrganizationBase(BaseModel):
     """Fields shared by create/update/response."""
 

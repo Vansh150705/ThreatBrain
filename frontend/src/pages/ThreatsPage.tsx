@@ -67,7 +67,7 @@ function FilterPills({
   );
 }
 
-// ─────────── Live indicator (connection status pill) ───────────
+//  Live indicator (connection status pill) 
 function LiveIndicator({
   status,
 }: {
@@ -146,6 +146,7 @@ export default function ThreatsPage() {
   // - Show only live rows that match the active severity/status filters
   // - De-duplicate by id (the fetched page may already contain them after refresh)
   // - Live rows go first so freshly arrived threats appear at the top
+  
   const mergedItems = useMemo(() => {
     const baseItems = (data?.items ?? []) as RealtimeThreatRow[];
     if (liveArrivals.length === 0) return baseItems;

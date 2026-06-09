@@ -17,6 +17,7 @@ from app.schemas.common import (
 from app.schemas.organization import (
     OrganizationBase,
     OrganizationCreate,
+    OrganizationMini,
     OrganizationResponse,
     OrganizationUpdate,
     OrgPlan,
@@ -35,6 +36,7 @@ __all__ = [
     # organization
     "OrganizationBase",
     "OrganizationCreate",
+    "OrganizationMini",
     "OrganizationResponse",
     "OrganizationUpdate",
     "OrgPlan",
