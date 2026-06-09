@@ -14,7 +14,10 @@ export interface MeResponse {
   role: string;
   status: string | null;
   avatar_url: string | null;
-  organization: OrganizationMini;
+  /** Flat UUID returned by the current /me endpoint. */
+  organization_id?: string;
+  /** Nested object returned once the backend is updated to JOIN organizations. */
+  organization?: OrganizationMini;
 }
 
 // Fetch the current user's profile + organization

@@ -74,8 +74,18 @@ export function useRealtimeThreats(
   } = options;
 
   const profile = useUserStore((s) => s.profile);
-  const orgId = profile?.organization?.id ?? null;
-  console.log("[Realtime hook] orgId resolved to:", orgId, "profile=", profile);
+  const orgId =
+    profile?.organization?.id ??
+    (profile as { organization_id?: string })?.organization_id ??
+    (profile as { org?: { id?: string } })?.org?.id ??
+    (profile as { org_id?: string })?.org_id ??
+    null;
+  console.log(
+    "[Realtime hook] orgId resolution — profile keys:",
+    profile ? Object.keys(profile) : "no profile yet",
+    "resolved orgId:",
+    orgId
+  );
 
   const [threats, setThreats] = useState<RealtimeThreatRow[]>(initial);
   const [status, setStatus] = useState<RealtimeStatus>("connecting");
@@ -223,8 +233,18 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
   } = options;
 
   const profile = useUserStore((s) => s.profile);
-  const orgId = profile?.organization?.id ?? null;
-  console.log("[Realtime hook] orgId resolved to:", orgId, "profile=", profile);
+  const orgId =
+    profile?.organization?.id ??
+    (profile as { organization_id?: string })?.organization_id ??
+    (profile as { org?: { id?: string } })?.org?.id ??
+    (profile as { org_id?: string })?.org_id ??
+    null;
+  console.log(
+    "[Realtime hook] orgId resolution — profile keys:",
+    profile ? Object.keys(profile) : "no profile yet",
+    "resolved orgId:",
+    orgId
+  );
 
   const [rows, setRows] = useState<T[]>(initial);
   const [status, setStatus] = useState<RealtimeStatus>("connecting");
