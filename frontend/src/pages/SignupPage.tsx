@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,6 +120,22 @@ export default function SignupPage() {
               Get your own isolated SOC instance in 8 seconds. No email
               confirmation required.
             </p>
+
+            <ul className="mt-5 space-y-2">
+              {[
+                "Private workspace — your data is yours alone",
+                "Seeded threats, an incident, and a live attack map",
+                "Six AI agents pre-configured and ready to run",
+                "Instant access — no confirmation email to wait for",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-[1.5]">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-signal/10 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-2.5 h-2.5 text-signal" strokeWidth={3} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
@@ -163,8 +179,12 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="at least 8 characters"
                 required
+                minLength={8}
                 className="h-10 text-[14px] bg-white"
               />
+              <p className="text-[11.5px] text-muted-foreground">
+                Use at least 8 characters. This is a demo platform — don't reuse a real password.
+              </p>
             </div>
 
             {error && (
@@ -212,6 +232,11 @@ export default function SignupPage() {
               Try the demo account instead →
             </Button>
           </Link>
+
+          <p className="mt-6 font-mono text-[10.5px] text-muted-foreground/80 leading-[1.7]">
+            Portfolio demo · workspaces are isolated per account via Postgres
+            Row-Level Security and may be reset periodically.
+          </p>
         </motion.div>
       </div>
     </div>
