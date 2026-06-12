@@ -7,12 +7,14 @@ import {
   Loader2,
   ChevronRight,
   Globe,
+  Download,
 } from "lucide-react";
 
-import { api, type IncidentDetail, type IncidentThreatItem } from "@/lib/api";
+import { api, http, type IncidentDetail, type IncidentThreatItem } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
+import { Button } from "@/components/ui/button";
 
 type BottomTab = "timeline" | "playbook";
 
@@ -100,6 +102,29 @@ export default function IncidentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bottomTab, setBottomTab] = useState<BottomTab>("timeline");
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportReport = async () => {
+    if (!incident) return;
+    setExporting(true);
+    try {
+      const res = await http.get<string>(`/incidents/${incident.short_id}/report`, {
+        responseType: "text",
+        transformResponse: [(d) => d],
+      });
+      const blob = new Blob([res.data], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${incident.short_id}-report.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // surfaced via the button returning to idle; page error UI stays untouched
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!identifier) return;
@@ -182,6 +207,20 @@ export default function IncidentDetailPage() {
           <SeverityBadge severity={incident.severity} />
           <PriorityBadge priority={incident.priority} />
           <StatusBadge status={incident.status} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportReport}
+            disabled={exporting}
+            className="ml-auto h-8 px-3 text-[12px] border-border"
+          >
+            {exporting ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Export report
+          </Button>
         </div>
         <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
           {incident.title}
