@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
 
-  const [email, setEmail] = useState("test@acme.example");
+  const [email, setEmail] = useState(isDemo ? "test@acme.example" : "");
   const [password, setPassword] = useState(isDemo ? "ThreatBrain123!" : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,14 +144,6 @@ export default function LoginPage() {
             <Link to="/signup" className="lp-underline text-foreground font-medium">
               Sign up →
             </Link>
-          </div>
-
-          {/* Demo creds */}
-          <div className="mt-6 rounded-lg border border-border bg-muted/40 px-4 py-3.5">
-            <div className="font-mono text-[12px] text-muted-foreground">
-              <span className="text-signal">demo →</span>{" "}
-              <span className="text-foreground">test@acme.example · ThreatBrain123!</span>
-            </div>
           </div>
 
           <div className="mt-8 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">

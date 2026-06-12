@@ -658,7 +658,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-6 font-mono text-[12px] text-muted-foreground">
-              <span className="text-signal">demo →</span> test@acme.example · ThreatBrain123!
+              <span className="text-signal">free →</span> your own isolated workspace · no email confirmation
             </div>
 
             <div className="mt-12 hidden sm:flex flex-col items-center gap-2" aria-hidden>
@@ -932,9 +932,6 @@ export default function LandingPage() {
                   View on GitHub
                 </Button>
               </a>
-            </div>
-            <div className="mt-6 font-mono text-[12px] text-muted-foreground">
-              <span className="text-signal">demo →</span> test@acme.example · ThreatBrain123!
             </div>
           </Reveal>
         </div>

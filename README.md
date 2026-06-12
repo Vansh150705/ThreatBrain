@@ -5,7 +5,7 @@
 A production-deployed, multi-tenant AI-driven security operations platform. Seven specialized AI agents work together to triage, enrich, investigate, and respond to security alerts end-to-end - turning hours of analyst work into a 14-second automated pipeline.
 
 > 🌐 **Live demo:** [threat-brain.vercel.app](https://threat-brain.vercel.app)
-> 🔑 **Login:** `test@acme.example` / `ThreatBrain123!`
+> 🔑 **Access:** Create your own isolated workspace at `/signup` (no email confirmation), or use the one-click demo bypass on the signup page.
 > 💡 **Try the killer feature:** Click **"Trigger pipeline"** on the dashboard and watch the agents work in real time.
 
 ---
@@ -141,7 +141,7 @@ Security isn't a feature added later, it's the design center.
 ## 🚀 Live Demo
 
 **URL:** https://threat-brain.vercel.app
-**Login:** `test@acme.example` / `ThreatBrain123!`
+**Access:** Sign up at `/signup` for your own isolated workspace with seeded data, or take the one-click demo bypass from the signup page.
 
 Things to try:
 
