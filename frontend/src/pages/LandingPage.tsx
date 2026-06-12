@@ -72,50 +72,112 @@ const ARCS: Arc[] = [
   { d: "M 952 490 C 780 482, 460 462, 270 432", x: 952, y: 490, label: "Lagos", color: "var(--color-severity-medium)", dur: 7.5, begin: 2.3 },
 ];
 
+function CityChip({
+  x,
+  y,
+  label,
+  color,
+  anchorLeft,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  color: string;
+  anchorLeft?: boolean;
+}) {
+  const width = label.length * 7.2 + 34;
+  const rectX = anchorLeft ? x - 16 - width : x + 16;
+  return (
+    <g>
+      <rect
+        x={rectX}
+        y={y - 12}
+        width={width}
+        height={24}
+        rx={12}
+        fill="rgba(255,255,255,0.92)"
+        stroke={color}
+        strokeOpacity="0.4"
+        strokeWidth="1"
+      />
+      <circle cx={rectX + 14} cy={y} r="3" fill={color} />
+      <text
+        x={rectX + 25}
+        y={y + 4}
+        fontFamily="var(--font-mono)"
+        fontSize="11.5"
+        fontWeight="500"
+        fill="oklch(0.155 0.012 252 / 0.75)"
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
 function AttackArcs({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 1200 520" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
       {ARCS.map((a) => (
         <g key={a.label}>
+          {/* severity-tinted arc */}
           <path
             d={a.d}
-            stroke="oklch(0.155 0.012 252 / 0.22)"
-            strokeWidth="1.2"
-            strokeDasharray="3 6"
+            stroke={a.color}
+            strokeOpacity="0.35"
+            strokeWidth="1.4"
+            strokeDasharray="5 7"
             className="lp-dash"
             style={{ animationDuration: `${a.dur * 1.6}s` }}
           />
           {/* origin dot + pulse */}
           <circle cx={a.x} cy={a.y} r="4.5" fill={a.color} />
           <circle cx={a.x} cy={a.y} r="9" stroke={a.color} strokeWidth="1.2" fill="none" className="attack-pulse-ring" />
-          <text
-            x={a.labelLeft ? a.x - 14 : a.x + 14}
-            y={a.y + 4}
-            textAnchor={a.labelLeft ? "end" : "start"}
-            fontFamily="var(--font-mono)"
-            fontSize="12"
-            fill="oklch(0.155 0.012 252 / 0.55)"
-          >
-            {a.label}
-          </text>
-          {/* packet travelling toward HQ */}
-          <circle r="3" fill={a.color}>
+          <CityChip x={a.x} y={a.y} label={a.label} color={a.color} anchorLeft={a.labelLeft} />
+          {/* glowing packet travelling toward HQ */}
+          <g>
+            <circle r="7" fill={a.color} opacity="0.18" />
+            <circle r="3.2" fill={a.color} />
             <animateMotion dur={`${a.dur}s`} begin={`${a.begin}s`} repeatCount="indefinite" path={a.d} />
-          </circle>
+          </g>
         </g>
       ))}
-      {/* HQ target */}
-      <circle cx={HQ.x} cy={HQ.y} r="5.5" fill="var(--color-signal)" />
-      <circle cx={HQ.x} cy={HQ.y} r="11" stroke="var(--color-signal)" strokeWidth="1.2" fill="none" className="attack-pulse-ring" />
-      <text
-        x={HQ.x - 4}
-        y={HQ.y + 28}
-        fontFamily="var(--font-mono)"
-        fontSize="12"
-        fill="oklch(0.155 0.012 252 / 0.55)"
+
+      {/* HQ target — glow disc, rotating sentry ring, double pulse */}
+      <circle cx={HQ.x} cy={HQ.y} r="30" fill="var(--color-signal)" opacity="0.07" />
+      <circle
+        cx={HQ.x}
+        cy={HQ.y}
+        r="18"
+        stroke="var(--color-signal)"
+        strokeWidth="1"
+        strokeDasharray="4 9"
+        fill="none"
+        opacity="0.55"
       >
-        acme-corp · eu-central-1
-      </text>
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from={`0 ${HQ.x} ${HQ.y}`}
+          to={`360 ${HQ.x} ${HQ.y}`}
+          dur="14s"
+          repeatCount="indefinite"
+        />
+      </circle>
+      <circle cx={HQ.x} cy={HQ.y} r="6" fill="var(--color-signal)" />
+      <circle cx={HQ.x} cy={HQ.y} r="2.2" fill="#ffffff" />
+      <circle cx={HQ.x} cy={HQ.y} r="11" stroke="var(--color-signal)" strokeWidth="1.2" fill="none" className="attack-pulse-ring" />
+      <circle
+        cx={HQ.x}
+        cy={HQ.y}
+        r="11"
+        stroke="var(--color-signal)"
+        strokeWidth="1.2"
+        fill="none"
+        className="attack-pulse-ring"
+        style={{ animationDelay: "1.2s" }}
+      />
+      <CityChip x={HQ.x} y={HQ.y + 40} label="acme-corp · shielded" color="var(--color-signal)" anchorLeft />
     </svg>
   );
 }
@@ -625,7 +687,7 @@ export default function LandingPage() {
 
         {/* Soft white halo so the headline stays legible over the arcs */}
         <div
-          className="hidden md:block absolute inset-x-0 top-0 h-[640px] pointer-events-none bg-[radial-gradient(ellipse_54%_58%_at_50%_44%,white_38%,rgba(255,255,255,0)_76%)]"
+          className="hidden md:block absolute inset-x-0 top-0 h-[640px] pointer-events-none bg-[radial-gradient(ellipse_48%_52%_at_50%_44%,white_30%,rgba(255,255,255,0)_70%)]"
           aria-hidden
         />
 
