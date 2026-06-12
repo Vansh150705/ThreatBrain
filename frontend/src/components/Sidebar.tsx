@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Globe,
   ScrollText,
+  ShieldCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ const navSections = [
   {
     title: "Governance",
     items: [
+      { to: "/approvals", label: "Approvals", icon: ShieldCheck },
       { to: "/audit", label: "Audit trail", icon: ScrollText },
     ],
   },
