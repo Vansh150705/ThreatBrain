@@ -123,10 +123,10 @@ export default function SignupPage() {
 
             <ul className="mt-5 space-y-2">
               {[
-                "Private workspace — your data is yours alone",
+                "A private workspace where your data is yours alone",
                 "Seeded threats, an incident, and a live attack map",
                 "Six AI agents pre-configured and ready to run",
-                "Instant access — no confirmation email to wait for",
+                "Instant access with no confirmation email to wait for",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-[13px] text-muted-foreground leading-[1.5]">
                   <span className="mt-0.5 w-4 h-4 rounded-full bg-signal/10 flex items-center justify-center flex-shrink-0">
@@ -183,7 +183,7 @@ export default function SignupPage() {
                 className="h-10 text-[14px] bg-white"
               />
               <p className="text-[11.5px] text-muted-foreground">
-                Use at least 8 characters. This is a demo platform — don't reuse a real password.
+                Use at least 8 characters. This is a demo platform, so don't reuse a real password.
               </p>
             </div>
 

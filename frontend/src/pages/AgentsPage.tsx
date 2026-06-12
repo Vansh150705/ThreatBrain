@@ -174,7 +174,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
       })
       .catch((err) => {
         if (!cancelled) {
-          if (err instanceof ApiError) setError(`${err.status} — ${err.message}`);
+          if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
           else setError(String(err));
         }
       })
@@ -417,7 +417,7 @@ function AgentList() {
       .then((res) => { if (!cancelled) setAgents(res.items); })
       .catch((err) => {
         if (!cancelled) {
-          if (err instanceof ApiError) setError(`${err.status} — ${err.message}`);
+          if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
           else setError(String(err));
         }
       })

@@ -146,7 +146,7 @@ export default function RunsPage() {
             Run history
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
-            Every AI agent call — a full audit trail of every decision made.
+            Every AI agent call, with a full audit trail of every decision made.
           </p>
         </div>
         {data?.pagination && (

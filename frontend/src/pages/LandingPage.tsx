@@ -212,7 +212,7 @@ function SourceMarquee() {
 
 /* ─────────── Live showcase: console in, dossier out ─────────── */
 const DOSSIER = [
-  { label: "Triage", title: "High severity · OAuth consent abuse", body: "Mapped to MITRE ATT&CK T1550.001 — application access token abuse." },
+  { label: "Triage", title: "High severity · OAuth consent abuse", body: "Mapped to MITRE ATT&CK T1550.001, application access token abuse." },
   { label: "Threat intel", title: "185.220.101.42 flagged", body: "AbuseIPDB confidence 97% · known TOR exit node · 312 prior reports." },
   { label: "Investigation", title: "Correlated with 3 prior threats", body: "Same actor fingerprint seen across staging and prod tenants in 48h." },
   { label: "Response", title: "Playbook: revoke and contain", body: "Revoke the OAuth grant, rotate refresh tokens, notify the account owner." },
@@ -777,7 +777,7 @@ export default function LandingPage() {
               <p className="text-[15.5px] text-muted-foreground leading-[1.65]">
                 The console below runs the real six-agent sequence on a sample
                 alert. The dossier on the right fills in as each specialist
-                reports — exactly what lands in your dashboard.
+                reports. It is exactly what lands in your dashboard.
               </p>
             </Reveal>
           </div>
@@ -804,7 +804,7 @@ export default function LandingPage() {
             </Reveal>
             <Reveal delay={0.08} className="md:col-span-5">
               <p className="text-[15.5px] text-muted-foreground leading-[1.65]">
-                Every layer assumes a hostile reader — a regulator, a red team,
+                Every layer assumes a hostile reader: a regulator, a red team,
                 or a tenant trying to see another tenant's data.
               </p>
             </Reveal>
@@ -821,7 +821,7 @@ export default function LandingPage() {
               <div className="mt-5 rounded-lg border border-border bg-muted/30 p-4 font-mono text-[11.5px] leading-[1.9] overflow-x-auto">
                 <div className="text-muted-foreground">12:04:11 <span className="text-foreground">INSERT</span> audit_logs · triage.verdict · <span className="text-signal">ok</span></div>
                 <div className="text-muted-foreground">12:04:13 <span className="text-foreground">INSERT</span> audit_logs · intel.enrichment · <span className="text-signal">ok</span></div>
-                <div className="text-muted-foreground">12:05:02 <span className="text-foreground">UPDATE</span> audit_logs · — · <span className="text-severity-critical">rejected by trigger</span></div>
+                <div className="text-muted-foreground">12:05:02 <span className="text-foreground">UPDATE</span> audit_logs · n/a · <span className="text-severity-critical">rejected by trigger</span></div>
               </div>
             </BentoCard>
 
@@ -936,8 +936,8 @@ export default function LandingPage() {
 
           <div className="lg:col-span-8 lg:border-l lg:border-border lg:pl-14">
             {[
-              { num: "01", title: "An alert arrives", desc: "A SIEM, firewall, or cloud audit log fires an event. ThreatBrain ingests it through a single FastAPI endpoint — no connectors to babysit." },
-              { num: "02", title: "The crew investigates", desc: "Six specialized agents run in sequence — Triage, Threat Intel, Investigation, Response, Forensics, and Compliance — each passing a typed verdict to the next." },
+              { num: "01", title: "An alert arrives", desc: "A SIEM, firewall, or cloud audit log fires an event. ThreatBrain ingests it through a single FastAPI endpoint, with no connectors to babysit." },
+              { num: "02", title: "The crew investigates", desc: "Six specialized agents run in sequence: Triage, Threat Intel, Investigation, Response, Forensics, then Compliance. Each one passes a typed verdict to the next." },
               { num: "03", title: "An incident, documented", desc: "A complete incident lands in the dashboard with attribution, kill chain, recommended playbook, and a chain-of-custody timeline a regulator can read." },
             ].map((s, i) => (
               <Reveal key={s.num} delay={i * 0.06}>
@@ -971,8 +971,8 @@ export default function LandingPage() {
             </Reveal>
             <Reveal delay={0.08} className="md:col-span-5">
               <p className="text-[15.5px] text-muted-foreground leading-[1.65]">
-                Pick a scenario and watch the crew take it apart in real time —
-                the same sequence that runs against every alert in production.
+                Pick a scenario and watch the crew take it apart in real time.
+                The same sequence runs against every alert in production.
               </p>
             </Reveal>
           </div>
@@ -1004,7 +1004,7 @@ export default function LandingPage() {
 
             <p className="text-[16px] lg:text-[17px] text-muted-foreground mt-7 leading-[1.65] max-w-xl mx-auto">
               Spin up your own isolated workspace with seeded threat data and
-              six agents on duty — or read the code first.
+              six agents on duty, or read the code first.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

@@ -136,7 +136,7 @@ export default function DashboardPage() {
         setThreats(threatsRes);
       })
       .catch((err) => {
-        if (err instanceof ApiError) setError(`${err.status} — ${err.message}`);
+        if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
         else setError(String(err));
       })
       .finally(() => setLoading(false));
