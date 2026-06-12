@@ -218,7 +218,7 @@ export default function RunDetailPage() {
             {run.agent_key}
           </Link>
         </div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground">
+        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
           {agentLabel} run
         </h1>
         <p className="text-[13px] text-muted-foreground mt-1">

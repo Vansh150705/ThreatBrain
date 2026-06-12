@@ -184,7 +184,7 @@ export default function ThreatsPage() {
       >
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+            <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
               Threats
             </h1>
             <LiveIndicator status={liveStatus} />

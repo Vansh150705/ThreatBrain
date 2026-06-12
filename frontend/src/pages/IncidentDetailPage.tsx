@@ -183,7 +183,7 @@ export default function IncidentDetailPage() {
           <PriorityBadge priority={incident.priority} />
           <StatusBadge status={incident.status} />
         </div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground leading-[1.2]">
+        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
           {incident.title}
         </h1>
       </motion.div>

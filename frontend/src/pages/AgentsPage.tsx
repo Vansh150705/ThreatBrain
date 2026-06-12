@@ -252,7 +252,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
               {agent.enabled ? "active" : "disabled"}
             </span>
           </div>
-          <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground">
+          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
             {meta?.name ?? agent.name}
           </h1>
           {meta && (
@@ -433,7 +433,7 @@ function AgentList() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
           Agents
         </h1>
         <p className="text-[13.5px] text-muted-foreground mt-1">

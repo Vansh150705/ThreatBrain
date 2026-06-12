@@ -166,7 +166,7 @@ export default function DashboardPage() {
         className="flex items-start justify-between gap-6 flex-wrap"
       >
         <div>
-          <h1 className="text-[26px] tracking-[-0.025em] font-semibold text-foreground">
+          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
             Operations overview
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">

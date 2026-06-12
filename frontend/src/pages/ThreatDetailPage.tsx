@@ -151,7 +151,7 @@ export default function ThreatDetailPage() {
           <SeverityBadge severity={threat.severity} />
           <StatusBadge status={threat.status} />
         </div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground leading-[1.2]">
+        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
           {threat.title}
         </h1>
       </motion.div>
