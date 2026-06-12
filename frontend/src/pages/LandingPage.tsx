@@ -1048,7 +1048,7 @@ export default function LandingPage() {
               <LogoMark className="w-full h-full" />
             </div>
             <span className="font-semibold text-[14px] tracking-[-0.02em]">ThreatBrain</span>
-            <span className="text-[12px] text-muted-foreground ml-2">© 2026 · Portfolio project · MIT License</span>
+            <span className="text-[12px] text-muted-foreground ml-2">© 2026 · Built by Vansh Mahajan · MIT License</span>
           </div>
           <div className="flex items-center gap-7 text-[13px] text-muted-foreground">
             <a href="#showcase" className="lp-underline hover:text-foreground transition-colors">Live demo</a>
