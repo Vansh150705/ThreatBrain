@@ -1,30 +1,14 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, Navigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogoMark } from "@/components/Logo";
 import { signIn } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-
-function LogoMark({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M12 2 L20 5 L20 12 C20 17 16 21 12 22 C8 21 4 17 4 12 L4 5 Z"
-        fill="currentColor"
-      />
-      <circle cx="9" cy="9" r="1.4" fill="#ffffff" />
-      <circle cx="15" cy="9" r="1.4" fill="#ffffff" />
-      <circle cx="12" cy="14" r="1.4" fill="#ffffff" />
-      <line x1="9" y1="9" x2="15" y2="9" stroke="#ffffff" strokeWidth="0.6" />
-      <line x1="9" y1="9" x2="12" y2="14" stroke="#ffffff" strokeWidth="0.6" />
-      <line x1="15" y1="9" x2="12" y2="14" stroke="#ffffff" strokeWidth="0.6" />
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   const { session, loading: authLoading } = useAuth();
@@ -33,8 +17,12 @@ export default function LoginPage() {
   const redirectTo =
     (location.state as { from?: string } | null)?.from ?? "/dashboard";
 
+  // ?demo=1 (from the signup page's bypass button) pre-fills the demo creds.
+  const [searchParams] = useSearchParams();
+  const isDemo = searchParams.get("demo") === "1";
+
   const [email, setEmail] = useState("test@acme.example");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(isDemo ? "ThreatBrain123!" : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,37 +46,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      <div className="lp-grid absolute inset-0 pointer-events-none" aria-hidden />
+
       {/* Top nav */}
-      <header className="h-16 border-b border-border flex items-center justify-between px-8">
+      <header className="relative h-16 border-b border-border flex items-center justify-between px-6 sm:px-8">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-6 h-6 text-foreground">
+          <div className="w-7 h-7 text-foreground">
             <LogoMark className="w-full h-full" />
           </div>
           <span className="font-semibold text-[15px] tracking-[-0.02em]">ThreatBrain</span>
         </Link>
         <Link
           to="/"
-          className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+          className="lp-underline text-[13px] text-muted-foreground hover:text-foreground transition-colors"
         >
           Back to home
         </Link>
       </header>
 
       {/* Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="relative flex-1 flex items-center justify-center px-6 py-12">
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-[400px]"
         >
-          <div className="mb-8">
-            <h1 className="text-[28px] tracking-[-0.025em] font-semibold text-foreground">
-              Sign in
+          <div className="mb-9">
+            <div className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
+              SOC operational
+            </div>
+            <h1 className="title-serif text-[34px] tracking-[-0.03em] text-foreground leading-[1.05]">
+              Welcome{" "}
+              <em className="font-serif italic font-medium text-signal">back.</em>
             </h1>
-            <p className="text-[14px] text-muted-foreground mt-1.5">
-              Access your ThreatBrain operations console.
+            <p className="text-[14px] text-muted-foreground mt-3 leading-[1.6]">
+              Sign in to your ThreatBrain operations console.
             </p>
           </div>
 
@@ -103,7 +98,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-10 text-[14px]"
+                className="h-10 text-[14px] bg-white"
               />
             </div>
             <div className="space-y-1.5">
@@ -117,7 +112,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoFocus
-                className="h-10 text-[14px]"
+                className="h-10 text-[14px] bg-white"
               />
             </div>
 
@@ -144,15 +139,24 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <div className="mt-5 text-[13px] text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="/signup" className="lp-underline text-foreground font-medium">
+              Sign up →
+            </Link>
+          </div>
+
           {/* Demo creds */}
-          <div className="mt-6 p-4 rounded-lg bg-muted border border-border">
-            <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-muted-foreground mb-2 font-semibold">
-              Demo credentials
+          <div className="mt-6 rounded-lg border border-border bg-muted/40 px-4 py-3.5">
+            <div className="font-mono text-[12px] text-muted-foreground">
+              <span className="text-signal">demo →</span>{" "}
+              <span className="text-foreground">test@acme.example · ThreatBrain123!</span>
             </div>
-            <div className="font-mono text-[12px] text-foreground space-y-0.5">
-              <div>test@acme.example</div>
-              <div>ThreatBrain123!</div>
-            </div>
+          </div>
+
+          <div className="mt-8 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-signal" />
+            <span>all systems operational</span>
           </div>
         </motion.div>
       </div>
