@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     agents,
+    auth,
     incidents,
     meta,
     orchestrator,
@@ -16,6 +17,9 @@ api_router = APIRouter()
 
 # Meta endpoints (health, identity)
 api_router.include_router(meta.router)
+
+# Authentication (signup, login)
+api_router.include_router(auth.router)
 
 # Threats
 api_router.include_router(threats_endpoints.router)
