@@ -924,25 +924,55 @@ export default function LandingPage() {
       {/* ─────────── FINAL CTA ─────────── */}
       <section className="border-t border-border relative overflow-hidden">
         <div className="lp-grid absolute inset-0 pointer-events-none rotate-180" aria-hidden />
-        <div className="relative max-w-[1200px] mx-auto px-6 py-28">
+        <div
+          className="absolute inset-x-0 bottom-0 h-[420px] pointer-events-none bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,oklch(0.52_0.13_158/0.07),transparent_70%)]"
+          aria-hidden
+        />
+        <div className="relative max-w-[1200px] mx-auto px-6 py-28 lg:py-32 text-center">
           <Reveal>
-            <h2 className="title-serif text-[clamp(40px,5.5vw,68px)] tracking-[-0.035em] leading-[1.02] text-foreground max-w-3xl">
+            <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full border border-signal/25 bg-signal/[0.05] font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
+              <span className="text-foreground font-semibold">Get started</span>
+            </div>
+
+            <h2 className="title-serif text-[clamp(40px,6vw,76px)] tracking-[-0.035em] leading-[1.02] text-foreground max-w-4xl mx-auto">
               Your first investigation is{" "}
               <em className="font-serif italic font-medium text-signal">fifteen seconds away.</em>
             </h2>
-            <div className="mt-10 flex flex-wrap items-center gap-3">
+
+            <p className="text-[16px] lg:text-[17px] text-muted-foreground mt-7 leading-[1.65] max-w-xl mx-auto">
+              Spin up your own isolated workspace with seeded threat data and
+              six agents on duty — or read the code first.
+            </p>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Link to="/signup">
-                <Button size="lg" className="group bg-foreground text-background hover:bg-foreground/90 h-12 px-6 text-[14px] font-medium">
-                  Try the live demo
+                <Button size="lg" className="group bg-foreground text-background hover:bg-foreground/90 h-12 px-7 text-[14px] font-medium">
+                  Create your workspace
                   <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </Link>
               <a href="https://github.com/Vansh150705/ThreatBrain" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="h-12 px-6 text-[14px] font-medium border-border hover:border-foreground/25 bg-white">
+                <Button size="lg" variant="outline" className="h-12 px-7 text-[14px] font-medium border-border hover:border-foreground/25 bg-white">
                   <GithubIcon className="w-4 h-4 mr-2" />
                   View on GitHub
                 </Button>
               </a>
+            </div>
+
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 font-mono text-[11.5px] text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-signal" />
+                free
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-signal" />
+                isolated workspace
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-signal" />
+                no email confirmation
+              </span>
             </div>
           </Reveal>
         </div>
