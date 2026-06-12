@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     agents,
     audit,
     auth,
+    copilot,
     incidents,
     meta,
     orchestrator,
@@ -28,6 +29,9 @@ api_router.include_router(audit.router)
 
 # Playbook approvals (human-in-the-loop)
 api_router.include_router(playbooks.router)
+
+# Ask the SOC copilot
+api_router.include_router(copilot.router)
 
 # Threats
 api_router.include_router(threats_endpoints.router)
