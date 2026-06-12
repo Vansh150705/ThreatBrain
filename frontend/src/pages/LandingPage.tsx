@@ -546,21 +546,31 @@ export default function LandingPage() {
           scrolled ? "border-border shadow-[0_1px_2px_rgba(16,24,40,0.03)]" : "border-transparent"
         }`}
       >
-        <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 text-foreground">
+        <div className="max-w-[1200px] mx-auto px-6 h-[72px] flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 text-foreground">
               <LogoMark className="w-full h-full" />
             </div>
-            <span className="font-semibold text-[15px] tracking-[-0.02em]">ThreatBrain</span>
+            <span className="flex flex-col leading-none">
+              <span className="font-semibold text-[16.5px] tracking-[-0.02em]">ThreatBrain</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground mt-1">
+                Agentic SOC
+              </span>
+            </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-[13px] text-muted-foreground">
+          <div className="hidden md:flex items-center gap-8 text-[13.5px] text-muted-foreground">
             <a href="#showcase" className="lp-underline hover:text-foreground transition-colors">Live demo</a>
             <a href="#features" className="lp-underline hover:text-foreground transition-colors">Features</a>
             <a href="#how" className="lp-underline hover:text-foreground transition-colors">How it works</a>
+            <a href="#simulate" className="lp-underline hover:text-foreground transition-colors">Simulator</a>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full border border-border font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
+              Operational
+            </div>
             <a
               href="https://github.com/Vansh150705/ThreatBrain"
               target="_blank"
@@ -568,10 +578,10 @@ export default function LandingPage() {
               className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               aria-label="GitHub"
             >
-              <GithubIcon className="w-4 h-4" />
+              <GithubIcon className="w-[18px] h-[18px]" />
             </a>
             <Link to="/signup" className="hidden md:block">
-              <Button size="sm" className="group bg-foreground text-background hover:bg-foreground/90 h-9 px-4 text-[13px] font-medium">
+              <Button size="sm" className="group bg-foreground text-background hover:bg-foreground/90 h-10 px-5 text-[13.5px] font-medium">
                 Try the demo
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5 transition-transform group-hover:translate-x-0.5" />
               </Button>
@@ -592,6 +602,7 @@ export default function LandingPage() {
               <a href="#showcase" onClick={() => setMenuOpen(false)}>Live demo</a>
               <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
               <a href="#how" onClick={() => setMenuOpen(false)}>How it works</a>
+              <a href="#simulate" onClick={() => setMenuOpen(false)}>Simulator</a>
               <Link to="/signup">
                 <Button size="sm" className="w-full bg-foreground text-background">Try the demo</Button>
               </Link>
