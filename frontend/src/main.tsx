@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import App from "./App";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentsPage from "./pages/AgentsPage";
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")!).render(
             {/* Public routes */}
             <Route index element={<LandingPage />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="signup" element={<SignupPage />} />
 
             {/* Protected routes */}
             <Route
