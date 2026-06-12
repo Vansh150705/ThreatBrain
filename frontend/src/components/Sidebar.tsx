@@ -8,6 +8,7 @@ import {
   Activity,
   ChevronLeft,
   Globe,
+  ScrollText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,12 @@ const navSections = [
     items: [
       { to: "/agents", label: "Agents", icon: Bot },
       { to: "/runs", label: "Run history", icon: Activity },
+    ],
+  },
+  {
+    title: "Governance",
+    items: [
+      { to: "/audit", label: "Audit trail", icon: ScrollText },
     ],
   },
 ];

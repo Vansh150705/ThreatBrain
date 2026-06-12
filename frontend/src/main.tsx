@@ -15,6 +15,7 @@ import RunDetailPage from "./pages/RunDetailPage";
 import ThreatsPage from "./pages/ThreatsPage";
 import ThreatDetailPage from "./pages/ThreatDetailPage";
 import AttackMapPage from "./pages/AttackMapPage";
+import AuditPage from "./pages/AuditPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import RequireAuth from "./components/RequireAuth";
 import AppLayout from "./components/AppLayout";
@@ -52,6 +53,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="runs" element={<RunsPage />} />
               <Route path="runs/:runId" element={<RunDetailPage />} />
               <Route path="attack-map" element={<AttackMapPage />} />
+              <Route path="audit" element={<AuditPage />} />
             </Route>
 
             {/* 404 */}
