@@ -235,6 +235,27 @@ class ResponseAgent(BaseAgent):
                 recommended += 1
                 outcome = "recommended"
 
+            # Anything not auto-executed lands in the human approval queue.
+            # Wrapped separately so a missing table never breaks the run.
+            if outcome in ("simulated", "recommended"):
+                try:
+                    client.table("playbook_approvals").insert(
+                        {
+                            "organization_id": org_id,
+                            "incident_id": incident["id"],
+                            "incident_short_id": incident.get("short_id"),
+                            "incident_title": incident.get("title"),
+                            "playbook_name": action.playbook_name,
+                            "action_type": action.action_type,
+                            "target": action.target,
+                            "priority": action.priority,
+                            "rationale": action.rationale[:500],
+                            "requested_by": agent_run_id,
+                        }
+                    ).execute()
+                except Exception:
+                    log.exception("playbook_approval_insert_failed")
+
             # Write a single audit_log entry per action
           # Write a single audit_log entry per action
             try:

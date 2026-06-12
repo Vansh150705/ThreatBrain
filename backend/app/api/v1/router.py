@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     meta,
     orchestrator,
     organizations,
+    playbooks,
     stats,
     threats as threats_endpoints,
 )
@@ -24,6 +25,9 @@ api_router.include_router(auth.router)
 
 # Audit trail (read-only)
 api_router.include_router(audit.router)
+
+# Playbook approvals (human-in-the-loop)
+api_router.include_router(playbooks.router)
 
 # Threats
 api_router.include_router(threats_endpoints.router)
