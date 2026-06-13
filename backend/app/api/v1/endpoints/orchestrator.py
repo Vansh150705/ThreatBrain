@@ -45,10 +45,9 @@ async def handle_event(
     request: OrchestratorRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> OrchestratorResponse:
-    """End-to-end agent pipeline.
+    """Run an event through the full agent pipeline.
 
-    Triage → Threat Intel → Investigation → Response → Forensics → Compliance.
-
+    Order is triage, threat intel, investigation, response, forensics, compliance.
     """
     result = run_full_pipeline(
         organization_id=user.organization_id,
