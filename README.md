@@ -32,6 +32,8 @@ ThreatBrain turns one alert into a complete investigation in under 15 seconds - 
 
 Every decision is logged to an **append-only audit trail** enforced by Postgres triggers, so when this evidence is presented in court or to a regulator, it's verifiable.
 
+Beyond the pipeline, analysts get an **Ask the SOC copilot** that answers natural-language questions grounded in their own data, a **human-in-the-loop approval queue** where an admin signs off on every recommended action, and one-click **incident report export** to a Markdown dossier with full chain of custody. Anyone can spin up their own **fully isolated workspace** through self-service signup in about 8 seconds, no email confirmation required.
+
 ---
 
 ## 🏗️ Architecture
@@ -117,7 +119,7 @@ The orchestrator chains six reactive agents on every event. The seventh (Hunt) r
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 18 · TypeScript · Vite · Tailwind v4 · shadcn/ui · Framer Motion · Zustand |
+| **Frontend** | React 19 · TypeScript · Vite · Tailwind v4 · shadcn/ui · Motion · Zustand |
 | **Backend** | FastAPI · Python 3.11 · Pydantic v2 · LangChain · Tenacity |
 | **LLM** | Groq API · LLaMA 3.3 70B · JSON-mode structured outputs |
 | **Database** | Supabase (Postgres) · Row-Level Security · Postgres triggers |
@@ -145,7 +147,7 @@ Security isn't a feature added later, it's the design center.
 
 Things to try:
 
-1. **Browse threats** :- `/threats` shows 12 simulated detections with severity, MITRE codes, confidence scores
+1. **Browse threats** :- `/threats` shows a set of simulated detections with severity, MITRE codes, and confidence scores
 2. **Open an incident** :- `/incidents/INC-ACT001` is a simulated APT29 intrusion with kill chain, attribution, 4 linked threats, and lifecycle timestamps
 3. **Run the pipeline** :- From the dashboard, click `✨ Trigger pipeline`, pick a scenario (e.g. "S3 bucket made public"), and watch all six agents work in real time. About 15 seconds end-to-end. A brand new threat and incident appear in the database when it finishes.
 4. **Ask the SOC** :- Click the `✨ Ask the SOC` button (bottom-right of any console page) and ask questions like "summarize the most critical incident" or "which threats came from Russia?" The copilot answers only from your own organization's data.
@@ -203,7 +205,7 @@ and a symptom → cause table.
 
 ## 📈 Status
 
-**Active development.** Backend, frontend, and database are all production-deployed. Currently building out the run history inspector (Phase 9) and adding incident response automation. Open to feedback, contributions, and conversations about agentic AI in security.
+**Production-deployed and fully functional.** Frontend (Vercel), backend (Hugging Face Spaces), and database (Supabase) are all live and verified end to end. The complete agent pipeline, self-service multi-tenant signup, the Ask the SOC copilot, the human-in-the-loop approval queue, the append-only audit trail, run history, the live attack map, and incident report export all work in production. Open to feedback, contributions, and conversations about agentic AI in security.
 
 Built by [Vansh Mahajan](https://github.com/Vansh150705)
 
