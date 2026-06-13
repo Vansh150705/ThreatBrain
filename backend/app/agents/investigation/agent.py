@@ -174,7 +174,7 @@ class InvestigationAgent(BaseAgent):
         org_id = str(organization_id)
         created: list[dict[str, str]] = []
 
-        # Build short_id → id lookup for the threats we just analyzed
+        # map short_id to id for the threats we just analyzed
         threats_seen = getattr(self, "_last_threats", []) or []
         short_to_id = {t["short_id"]: t["id"] for t in threats_seen}
 

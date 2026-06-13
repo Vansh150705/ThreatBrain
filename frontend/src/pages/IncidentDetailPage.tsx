@@ -255,7 +255,7 @@ export default function IncidentDetailPage() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="grid grid-cols-1 lg:grid-cols-3 gap-6"
       >
-        {/* LEFT — 2 cols */}
+        {/* left column */}
         <div className="lg:col-span-2 space-y-5">
           {/* Description */}
           {incident.description && (
@@ -462,7 +462,7 @@ export default function IncidentDetailPage() {
           )}
         </div>
 
-        {/* RIGHT sidebar — 1 col */}
+        {/* right sidebar */}
         <div className="space-y-5">
           {/* Tags */}
           {incident.tags && incident.tags.length > 0 && (

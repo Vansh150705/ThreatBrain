@@ -188,7 +188,7 @@ export default function ThreatDetailPage() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="grid grid-cols-1 lg:grid-cols-3 gap-6"
       >
-        {/* LEFT — 2 cols */}
+        {/* left column */}
         <div className="lg:col-span-2 space-y-5">
           {/* Description */}
           {threat.description && (
@@ -362,7 +362,7 @@ export default function ThreatDetailPage() {
           )}
         </div>
 
-        {/* RIGHT sidebar — 1 col */}
+        {/* right sidebar */}
         <div className="space-y-5">
           {/* Tags */}
           {threat.tags.length > 0 && (

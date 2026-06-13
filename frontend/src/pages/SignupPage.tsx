@@ -64,8 +64,7 @@ export default function SignupPage() {
       });
       const { access_token, refresh_token } = res.data;
 
-      // Hand the session to supabase-js — this fires onAuthStateChange,
-      // which syncs the API token, realtime auth, and the profile store.
+      // set the session so the rest of the app picks up the login
       setToken(access_token);
       await supabase.auth.setSession({ access_token, refresh_token });
       await supabase.realtime.setAuth(access_token);

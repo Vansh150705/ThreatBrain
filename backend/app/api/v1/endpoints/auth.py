@@ -1,14 +1,4 @@
-"""Self-service signup and login.
-
-POST /auth/signup creates a Supabase auth user (auto-verified — email
-confirmation is disabled in the Supabase dashboard), provisions a fresh
-organization with starter data, and signs the user in. Every signup gets
-its own org, so the existing RLS policies isolate it from everyone else.
-
-POST /auth/login is a thin wrapper over Supabase password sign-in for
-clients that prefer a backend endpoint. The frontend currently signs in
-client-side via supabase-js; both paths produce the same Supabase session.
-"""
+"""Signup and login endpoints."""
 
 from __future__ import annotations
 
@@ -32,9 +22,7 @@ log = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-# ---------------------------------------------------------------------------
-# Schemas
-# ---------------------------------------------------------------------------
+# request and response models
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -53,13 +41,10 @@ class SignupResponse(BaseModel):
     user: MeResponse
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+# helpers
 
 def _get_anon_client() -> Client:
-    """Plain anon-key client used for password sign-in (never cached —
-    sign_in_with_password mutates client session state)."""
+    """Fresh anon client for password sign in. Not cached because sign in mutates session state."""
     settings = get_settings()
     return create_client(
         supabase_url=str(settings.SUPABASE_URL),
@@ -69,19 +54,13 @@ def _get_anon_client() -> Client:
 
 
 def _seed_starter_data(admin: Client, org_id: str) -> None:
-    """Seed 3 threats, 1 incident, and the matching IOCs so a fresh
-    workspace's dashboard and attack map aren't empty.
-
-    Column structure mirrors database/seeders/001_demo_data.sql. The org's
-    seven agents are created automatically by the on_organization_created
-    trigger, and short_ids default via generate_short_id().
-    """
+    """Give a new workspace some starter threats, an incident, and iocs so it isn't empty."""
     now = datetime.now(timezone.utc)
 
     def ago(**kwargs: int) -> str:
         return (now - timedelta(**kwargs)).isoformat()
 
-    # IOCs first — they power the attack map (Moscow dot for the brute force).
+    # iocs first so the attack map has points to plot
     admin.table("iocs").insert([
         {
             "organization_id": org_id,
@@ -117,7 +96,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
         },
     ]).execute()
 
-    # Incident first — threats reference it via incident_id.
+    # incident before threats since threats point at it
     incident_id = str(uuid.uuid4())
     admin.table("incidents").insert({
         "id": incident_id,
@@ -205,9 +184,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
 
 
 def _cleanup_failed_signup(admin: Client, user_id: str | None, org_id: str | None) -> None:
-    """Best-effort rollback so a half-finished signup leaves no orphans.
-    Deleting the org cascades to threats/incidents/iocs/agents; deleting
-    the auth user cascades to the public.users profile."""
+    """Roll back a half done signup so we don't leave orphan rows."""
     if org_id:
         try:
             admin.table("organizations").delete().eq("id", org_id).execute()
@@ -240,16 +217,14 @@ def _me_response(
     )
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
+# endpoints
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup(request: SignupRequest) -> SignupResponse:
-    """Create an auto-verified user with their own isolated workspace."""
+    """Create a verified user and set up their own workspace."""
     admin = get_supabase_admin()
 
-    # 1. Create the Supabase auth user (email_confirm=True skips the email).
+    # create the auth user, email_confirm skips the confirmation email
     try:
         auth_response = admin.auth.admin.create_user(
             {
@@ -275,8 +250,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
 
     org_id: str | None = None
     try:
-        # 2. Create a fresh organization. The on_organization_created trigger
-        #    seeds the seven default agents automatically.
+        # new org, a trigger seeds its default agents
         first_name = request.full_name.split()[0]
         org_name = f"{first_name}'s Workspace"
         org_slug = f"workspace-{user_id[:8]}"
@@ -286,15 +260,13 @@ async def signup(request: SignupRequest) -> SignupResponse:
                 "slug": org_slug,
                 "plan": "free",
                 "status": "active",
-                "is_demo_org": True,  # all self-signups are demo orgs for now
+                "is_demo_org": True,  # treat every signup as a demo org for now
             }
         ).execute()
         org_row = org_result.data[0]
         org_id = str(org_row["id"])
 
-        # 3. Link the profile to the org. The on_auth_user_created trigger
-        #    already created a public.users row (org_id NULL, role 'viewer'),
-        #    so we upsert on id to set ownership rather than insert a duplicate.
+        # a trigger already made the users row, so upsert to set the org and owner role
         admin.table("users").upsert(
             {
                 "id": user_id,
@@ -307,7 +279,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
             on_conflict="id",
         ).execute()
 
-        # 4. Starter data so the dashboard isn't empty.
+        # fill the dashboard with some starter data
         _seed_starter_data(admin, org_id)
     except Exception as exc:
         log.exception("signup_provisioning_failed", email=request.email)
@@ -317,7 +289,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
             detail=f"Signup failed while provisioning the workspace: {exc}",
         ) from exc
 
-    # 5. Sign the user in with the anon client to mint a real session.
+    # sign them in so we can hand back a session
     try:
         session_response = _get_anon_client().auth.sign_in_with_password(
             {"email": request.email, "password": request.password}
@@ -358,7 +330,7 @@ async def login(request: LoginRequest) -> SignupResponse:
             detail="Invalid email or password.",
         ) from exc
 
-    # Resolve profile + org the same way /me does.
+    # look up the profile and org like /me does
     admin = get_supabase_admin()
     profile_rows = (
         admin.table("users")

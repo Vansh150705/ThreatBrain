@@ -16,7 +16,7 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
-// Sign out — clear both Supabase and our API client token
+// sign out and clear the stored token
 export async function signOut() {
   await supabase.auth.signOut();
   clearToken();

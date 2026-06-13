@@ -1,9 +1,5 @@
--- ============================================================================
 -- 017_playbook_approvals.sql
--- Human-in-the-loop queue: the Response Agent recommends actions, humans
--- with admin/owner roles approve or reject them. Access goes through the
--- backend service role only (RLS enabled with no policies).
--- ============================================================================
+-- queue where the response agent's recommendations wait for a human to approve or reject
 
 CREATE TABLE IF NOT EXISTS public.playbook_approvals (
   id                 UUID         PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
@@ -41,11 +37,10 @@ COMMENT ON TABLE public.playbook_approvals IS
 CREATE INDEX IF NOT EXISTS idx_playbook_approvals_org_status
   ON public.playbook_approvals(organization_id, status, created_at DESC);
 
--- Backend-only access: RLS on, no policies. The service role bypasses RLS;
--- anon/authenticated PostgREST access is denied.
+-- rls on with no policies, so only the backend service role can touch this table
 ALTER TABLE public.playbook_approvals ENABLE ROW LEVEL SECURITY;
 
--- Seed two pending approvals for the Acme demo org so the queue demos instantly
+-- seed a couple of pending approvals for the demo org
 INSERT INTO public.playbook_approvals (
   organization_id, incident_id, incident_short_id, incident_title,
   playbook_name, action_type, target, priority, rationale

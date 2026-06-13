@@ -66,7 +66,7 @@ export async function getThreat(identifier: string): Promise<ThreatDetail> {
   return data;
 }
 
-// ── Geo map types ────────────────────────────────────────────────────────────
+// geo map types
 
 export interface GeoThreatSummary {
   short_id: string;

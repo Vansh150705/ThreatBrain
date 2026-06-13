@@ -235,8 +235,7 @@ class ResponseAgent(BaseAgent):
                 recommended += 1
                 outcome = "recommended"
 
-            # Anything not auto-executed lands in the human approval queue.
-            # Wrapped separately so a missing table never breaks the run.
+            # queue anything we didn't auto run for a human to approve
             if outcome in ("simulated", "recommended"):
                 try:
                     client.table("playbook_approvals").insert(

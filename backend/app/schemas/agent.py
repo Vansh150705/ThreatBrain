@@ -46,7 +46,7 @@ class AgentListResponse(BaseModel):
 # Agent run
 
 class AgentRunSummary(BaseModel):
-    """Compact summary for list views — no full input/output."""
+    """Compact summary for list views without the full input and output."""
 
     model_config = ConfigDict(from_attributes=True)
 

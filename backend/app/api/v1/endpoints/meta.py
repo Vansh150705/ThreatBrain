@@ -40,7 +40,7 @@ async def health() -> dict[str, object]:
 
 @router.get("/health/db")
 async def health_db() -> dict[str, object]:
-    """Deep health check — confirms Supabase connectivity."""
+    """Deep health check that confirms Supabase connectivity."""
     settings = get_settings()
     db_status = supabase_health_check()
     return {

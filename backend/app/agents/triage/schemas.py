@@ -40,7 +40,7 @@ class TriageInput(BaseModel):
         default=None, description="low | medium | high | crown_jewel"
     )
 
-    # Raw payload — anything else the source produced
+    # whatever else the source sent
     raw_data: dict[str, Any] = Field(default_factory=dict)
 
 

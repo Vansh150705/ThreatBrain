@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-# Incident list item — compact for the table view
+# compact incident shape for the table view
 class IncidentListItem(BaseModel):
     id: UUID
     short_id: str
@@ -41,7 +41,7 @@ class IncidentListResponse(BaseModel):
     has_more: bool
 
 
-# Full incident detail — adds the heavy jsonb fields
+# full incident detail with the heavy jsonb fields
 class IncidentDetail(IncidentListItem):
     description: str | None = None
     affected_asset_ids: list[str] = Field(default_factory=list)

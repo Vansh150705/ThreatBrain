@@ -79,12 +79,12 @@ class ThreatIntelAgent(BaseAgent):
             ).execute()
             log.info("ioc_cached", ip=ip, reputation=reputation)
         except Exception:
-            # Cache failures shouldn't block the agent — log and continue
+            # a cache miss shouldn't stop the agent, just log and keep going
             log.exception("ioc_cache_failed", ip=ip)
 
 
     def build_user_prompt(self, agent_input: AgentInput) -> str:
-        """Build the prompt — including live AbuseIPDB data as context."""
+        """Build the prompt with live AbuseIPDB data as context."""
         intel_input = ThreatIntelInput.model_validate(agent_input.payload)
         ip = intel_input.ip_address.strip()
 

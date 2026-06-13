@@ -1,9 +1,4 @@
-"""Read access to the append-only audit trail.
-
-The audit_logs table is insert-only at the database level (UPDATE and
-DELETE are physically rejected by a trigger). This endpoint exposes the
-org-scoped view of that trail for the console's Audit page.
-"""
+"""Read endpoints for the audit trail."""
 
 from __future__ import annotations
 
@@ -49,7 +44,7 @@ async def list_audit_logs(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ) -> AuditListResponse:
-    """Newest-first audit events for the caller's organization."""
+    """List audit events for the user's org, newest first."""
     admin = get_supabase_admin()
     query = (
         admin.table("audit_logs")

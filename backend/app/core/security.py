@@ -70,7 +70,7 @@ class TokenClaims(BaseModel):
 
     @property
     def user_id(self) -> str:
-        """Alias for `sub` — matches the column name in our users table."""
+        """Alias for sub, matches the column name in our users table."""
         return self.sub
 
     @property

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/Logo";
 import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
 
-/* ─────────── GitHub icon (lucide-react removed brand icons in v1) ─────────── */
+/* github icon (lucide-react removed brand icons in v1) */
 function GithubIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +17,7 @@ function GithubIcon({ className = "" }: { className?: string }) {
   );
 }
 
-/* ─────────── Scroll reveal ─────────── */
+/* scroll reveal */
 function Reveal({
   children,
   delay = 0,
@@ -40,7 +40,7 @@ function Reveal({
   );
 }
 
-/* ─────────── Crew data ─────────── */
+/* crew data */
 const CREW = [
   { name: "Olivia", role: "the Sorter", agent: "Triage", desc: "Classifies severity with MITRE ATT&CK.", portrait: Olivia, latency: "1.4s" },
   { name: "Henry", role: "the Investigator", agent: "Threat Intel", desc: "Enriches IPs against AbuseIPDB feeds.", portrait: Henry, latency: "0.8s" },
@@ -50,7 +50,7 @@ const CREW = [
   { name: "Claire", role: "the Compliance Officer", agent: "Compliance", desc: "Assesses GDPR, PCI-DSS, SOC 2.", portrait: Claire, latency: "2.5s" },
 ];
 
-/* ─────────── Attack arc visual (hero signature) ─────────── */
+/* attack arc visual (hero signature) */
 const HQ = { x: 268, y: 426 };
 
 type Arc = {
@@ -134,7 +134,7 @@ function AttackArcs({ className = "" }: { className?: string }) {
           <circle cx={a.x} cy={a.y} r="4.5" fill={a.color} />
           <circle cx={a.x} cy={a.y} r="9" stroke={a.color} strokeWidth="1.2" fill="none" className="attack-pulse-ring" />
           <CityChip x={a.x} y={a.y} label={a.label} color={a.color} anchorLeft={a.labelLeft} />
-          {/* glowing packet travelling toward HQ */}
+          {/* glowing packet travelling toward hq */}
           <g>
             <circle r="7" fill={a.color} opacity="0.18" />
             <circle r="3.2" fill={a.color} />
@@ -143,7 +143,7 @@ function AttackArcs({ className = "" }: { className?: string }) {
         </g>
       ))}
 
-      {/* HQ target — glow disc, rotating sentry ring, double pulse */}
+      {/* hq node */}
       <circle cx={HQ.x} cy={HQ.y} r="30" fill="var(--color-signal)" opacity="0.07" />
       <circle
         cx={HQ.x}
@@ -182,7 +182,7 @@ function AttackArcs({ className = "" }: { className?: string }) {
   );
 }
 
-/* ─────────── Integration marquee ─────────── */
+/* integration marquee */
 const SOURCES = [
   "SPLUNK", "CROWDSTRIKE", "OKTA", "AWS GUARDDUTY", "MICROSOFT SENTINEL",
   "DATADOG", "CLOUDFLARE", "PALO ALTO", "ELASTIC", "WIZ",
@@ -210,7 +210,7 @@ function SourceMarquee() {
   );
 }
 
-/* ─────────── Live showcase: console in, dossier out ─────────── */
+/* live showcase: console in, dossier out */
 const DOSSIER = [
   { label: "Triage", title: "High severity · OAuth consent abuse", body: "Mapped to MITRE ATT&CK T1550.001, application access token abuse." },
   { label: "Threat intel", title: "185.220.101.42 flagged", body: "AbuseIPDB confidence 97% · known TOR exit node · 312 prior reports." },
@@ -258,7 +258,7 @@ function PipelineShowcase() {
       ref={ref}
       className="grid lg:grid-cols-5 rounded-2xl border border-border bg-card overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04),0_16px_40px_-16px_rgba(16,24,40,0.1)]"
     >
-      {/* Left — agent console */}
+      {/* agent console */}
       <div className="lg:col-span-2 lg:border-r border-b lg:border-b-0 border-border flex flex-col">
         <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/40">
           <span className="font-mono text-[11px] text-muted-foreground">pipeline.run · INC-2041</span>
@@ -328,7 +328,7 @@ function PipelineShowcase() {
         </div>
       </div>
 
-      {/* Right — generated incident dossier */}
+      {/* generated dossier */}
       <div className="lg:col-span-3 bg-muted/20">
         <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/40">
           <span className="font-mono text-[11px] text-muted-foreground">incident dossier · auto-generated</span>
@@ -370,7 +370,7 @@ function PipelineShowcase() {
   );
 }
 
-/* ─────────── Bento features ─────────── */
+/* bento features */
 function BentoCard({
   children,
   className = "",
@@ -393,7 +393,7 @@ function BentoCard({
   );
 }
 
-/* ─────────── Interactive attack simulator ─────────── */
+/* interactive attack simulator */
 type SimLine = {
   t: string;
   tag: string;
@@ -488,7 +488,7 @@ function AttackSimulator() {
 
   return (
     <div ref={ref}>
-      {/* Scenario picker */}
+      {/* scenario picker */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground mr-2">
           Scenario
@@ -511,7 +511,7 @@ function AttackSimulator() {
         ))}
       </div>
 
-      {/* Terminal */}
+      {/* terminal */}
       <div className="rounded-2xl overflow-hidden border border-border shadow-[0_1px_2px_rgba(16,24,40,0.06),0_24px_48px_-20px_rgba(16,24,40,0.25)] bg-[oklch(0.165_0.012_252)]">
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07]">
           <div className="flex items-center gap-2">
@@ -580,7 +580,7 @@ function AttackSimulator() {
   );
 }
 
-/* ─────────── Main page ─────────── */
+/* main page */
 export default function LandingPage() {
   const { session, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -602,7 +602,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-foreground">
-      {/* ─────────── NAV ─────────── */}
+      {/* nav */}
       <nav
         className={`sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b transition-[border-color,box-shadow] duration-300 ${
           scrolled ? "border-border shadow-[0_1px_2px_rgba(16,24,40,0.03)]" : "border-transparent"
@@ -673,11 +673,11 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* ─────────── HERO ─────────── */}
+      {/* hero */}
       <section className="relative overflow-hidden">
         <div className="lp-grid absolute inset-0 pointer-events-none" aria-hidden />
 
-        {/* Attack arcs pinned behind the headline block */}
+        {/* attack arcs pinned behind the headline block */}
         <div
           className="hidden md:block absolute left-1/2 -translate-x-1/2 top-6 w-full max-w-[1280px] aspect-[1200/520] pointer-events-none"
           aria-hidden
@@ -685,7 +685,7 @@ export default function LandingPage() {
           <AttackArcs className="w-full h-full" />
         </div>
 
-        {/* Soft white halo so the headline stays legible over the arcs */}
+        {/* soft white halo so the headline stays legible over the arcs */}
         <div
           className="hidden md:block absolute inset-x-0 top-0 h-[640px] pointer-events-none bg-[radial-gradient(ellipse_48%_52%_at_50%_44%,white_30%,rgba(255,255,255,0)_70%)]"
           aria-hidden
@@ -741,7 +741,7 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Telemetry rail */}
+        {/* telemetry rail */}
         <div className="relative border-t border-border">
           <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-wrap items-center gap-x-10 gap-y-2 font-mono text-[11.5px] text-muted-foreground">
             <div>resolved today <span className="text-foreground font-semibold tabular">154</span></div>
@@ -757,10 +757,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── SOURCES MARQUEE ─────────── */}
+      {/* sources marquee */}
       <SourceMarquee />
 
-      {/* ─────────── SHOWCASE ─────────── */}
+      {/* showcase */}
       <section id="showcase" className="relative">
         <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-28">
           <div className="grid md:grid-cols-12 gap-8 mb-14 items-end">
@@ -782,14 +782,14 @@ export default function LandingPage() {
             </Reveal>
           </div>
 
-          {/* Panel breaks the grid to the right on wide screens */}
+          {/* panel breaks the grid to the right on wide screens */}
           <Reveal delay={0.05} className="lg:-mr-14 xl:-mr-20">
             <PipelineShowcase />
           </Reveal>
         </div>
       </section>
 
-      {/* ─────────── FEATURES (bento) ─────────── */}
+      {/* features (bento) */}
       <section id="features" className="border-t border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-28">
           <div className="grid md:grid-cols-12 gap-8 mb-14 items-end">
@@ -811,7 +811,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            {/* Audit trail — wide */}
+            {/* audit trail card */}
             <BentoCard className="md:col-span-4">
               <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Append-only audit trail</h3>
               <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65] max-w-md">
@@ -825,7 +825,7 @@ export default function LandingPage() {
               </div>
             </BentoCard>
 
-            {/* RLS */}
+            {/* rls */}
             <BentoCard className="md:col-span-2" delay={0.05}>
               <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Tenant isolation in the database</h3>
               <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65]">
@@ -838,7 +838,7 @@ export default function LandingPage() {
               </div>
             </BentoCard>
 
-            {/* MITRE */}
+            {/* mitre */}
             <BentoCard className="md:col-span-2" delay={0.05}>
               <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Speaks MITRE ATT&CK</h3>
               <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65]">
@@ -853,7 +853,7 @@ export default function LandingPage() {
               </div>
             </BentoCard>
 
-            {/* Human in the loop */}
+            {/* human in the loop */}
             <BentoCard className="md:col-span-2" delay={0.1}>
               <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Recommends, never executes</h3>
               <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65]">
@@ -868,7 +868,7 @@ export default function LandingPage() {
               </div>
             </BentoCard>
 
-            {/* Schemas */}
+            {/* schemas */}
             <BentoCard className="md:col-span-2" delay={0.1}>
               <h3 className="text-[16px] font-semibold tracking-[-0.015em]">No free-form LLM output</h3>
               <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65]">
@@ -882,7 +882,7 @@ export default function LandingPage() {
               </div>
             </BentoCard>
 
-            {/* Crew — full width */}
+            {/* crew card */}
             <BentoCard className="md:col-span-6" delay={0.12}>
               <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                 <div className="lg:w-72 flex-shrink-0">
@@ -913,7 +913,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── HOW IT WORKS ─────────── */}
+      {/* how it works */}
       <section id="how" className="border-t border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-28 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4">
@@ -956,7 +956,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── ATTACK SIMULATOR ─────────── */}
+      {/* attack simulator */}
       <section id="simulate" className="border-t border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-24 lg:py-28">
           <div className="grid md:grid-cols-12 gap-8 mb-12 items-end">
@@ -983,7 +983,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── FINAL CTA ─────────── */}
+      {/* final cta */}
       <section className="border-t border-border relative overflow-hidden">
         <div className="lp-grid absolute inset-0 pointer-events-none rotate-180" aria-hidden />
         <div
@@ -1040,7 +1040,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─────────── FOOTER ─────────── */}
+      {/* footer */}
       <footer className="border-t border-border">
         <div className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">

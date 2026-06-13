@@ -103,7 +103,7 @@ class OrganizationUpdate(BaseModel):
     status: OrgStatus | None = None
     billing_email: EmailStr | None = None
     settings: dict[str, Any] | None = None
-    # NOTE: slug intentionally NOT mutable — changing it breaks URLs / FKs.
+    # slug is intentionally not mutable, changing it breaks urls and fks
 
 
 class OrganizationResponse(OrganizationBase):

@@ -86,7 +86,7 @@ async def update_my_organization(
     diff = updates.model_dump(exclude_unset=True)
 
     if not diff:
-        # No-op PATCH — just return the current state
+        # nothing to change, return the current state
         row = organization_service.get_organization_by_id(user.organization_id)
     else:
         row = organization_service.update_organization(

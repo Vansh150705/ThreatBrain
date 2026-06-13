@@ -26,7 +26,7 @@ const http: AxiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Request interceptor — inject JWT on every call
+// attach the stored token to every request
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getToken();
   if (token) {
@@ -35,12 +35,12 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// Response interceptor — normalize errors into our custom classes
+// turn failed responses into our own error classes
 http.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (!error.response) {
-      // Network error — backend down, CORS, timeout
+      // no response means the backend is down, cors, or a timeout
       return Promise.reject(
         new ApiError(
           error.message || "Network error — is the backend running?",

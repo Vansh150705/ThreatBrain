@@ -109,13 +109,13 @@ def _md_list(values: Any) -> str:
     return str(values)
 
 
-# Exportable incident dossier (Markdown)
+# download an incident report as markdown
 @router.get("/{identifier}/report")
 async def export_incident_report(
     identifier: str,
     user: Annotated[CurrentUser, Depends(get_current_user)],
 ) -> Response:
-    """Generate a regulator-friendly Markdown dossier for an incident."""
+    """Build a markdown report for an incident."""
     incident = None
     try:
         uuid_value = UUID(identifier)

@@ -55,7 +55,7 @@ def get_supabase_user(access_token: str) -> Client:
     )
 
     # Set the auth session so PostgREST receives the JWT on every query.
-    # We don't have a refresh token here — that's the frontend's job.
+    # no refresh token here, the frontend handles that
     client.postgrest.auth(access_token)
 
     return client
@@ -76,7 +76,7 @@ def supabase_health_check() -> dict[str, object]:
             "ok": True,
             "rows_visible": result.count if result.count is not None else 0,
         }
-    except Exception as exc:  # noqa: BLE001 — we want broad catch in health check
+    except Exception as exc:  # noqa: BLE001  broad catch is fine in a health check
         log.error(
             "supabase_health_check_failed",
             exception_type=type(exc).__name__,

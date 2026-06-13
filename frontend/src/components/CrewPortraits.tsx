@@ -1,4 +1,4 @@
-/* Shared bitmoji crew portraits — canonical versions used across the app */
+/* crew portrait svgs used across the app */
 
 export const Olivia = ({ className = "" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 48 48" fill="none">

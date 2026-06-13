@@ -39,7 +39,7 @@ const PRIORITY_OPTS = [
   { value: "p4",  label: "P4" },
 ];
 
-// Row shape produced by Realtime — wider than the API's Incident, narrowed at render time.
+// the realtime row is wider than the api incident, we trim it at render time
 interface RealtimeIncidentRow extends RealtimeBaseRow {
   short_id: string;
   title: string;

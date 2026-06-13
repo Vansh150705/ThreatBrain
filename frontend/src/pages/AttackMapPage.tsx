@@ -9,7 +9,7 @@ import { api, type GeoThreatPoint, type GeoThreatResponse } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useRealtimeThreats } from "@/hooks/useRealtimeThreats";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// constants
 
 const SEVERITY_HEX: Record<string, string> = {
   critical: "#dc2626",
@@ -31,7 +31,7 @@ const SEVERITY_TONE: Record<string, string> = {
   info:     "text-severity-info border-severity-info/30 bg-severity-info/8",
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// helpers
 
 function dotRadius(count: number): number {
   return Math.min(24, Math.max(8, 8 + Math.sqrt(count) * 4));
@@ -50,7 +50,7 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// sub-components
 
 function LiveIndicator({
   status,
@@ -78,7 +78,7 @@ function LiveIndicator({
 }
 
 // Two-layer map dot: a static anchor dot on top + an animating pulse ring beneath.
-// Only the ring animates — the anchor never moves, eliminating SVG-origin drift.
+// only the ring animates so the anchor dot stays put
 function PulsingMarker({
   point,
   isNew,
@@ -103,7 +103,7 @@ function PulsingMarker({
 
   return (
     <>
-      {/* Pulse ring — rendered first so it sits underneath the anchor dot */}
+      {/* pulse ring, drawn under the anchor dot */}
       <CircleMarker
         ref={ringRef}
         center={[point.latitude, point.longitude]}
@@ -115,7 +115,7 @@ function PulsingMarker({
           weight: 0,
         }}
       />
-      {/* Anchor dot — perfectly still, owns the popup */}
+      {/* anchor dot, owns the popup */}
       <CircleMarker
         center={[point.latitude, point.longitude]}
         radius={Math.round(radius * 0.55)}
@@ -163,13 +163,13 @@ function PulsingMarker({
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// main page
 
 export default function AttackMapPage() {
   const [geoData, setGeoData] = useState<GeoThreatResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Point keys ("CC::city") that have new arrivals (set → 3s timeout → removed)
+  // point keys that just arrived, kept briefly then removed
   const [newCountries, setNewCountries] = useState<Set<string>>(new Set());
   // Banner for latest new arrival
   const [arrivalBanner, setArrivalBanner] = useState<string | null>(null);
@@ -177,7 +177,7 @@ export default function AttackMapPage() {
   const { threats, status: liveStatus } = useRealtimeThreats({ enabled: true });
   const prevThreatIds = useRef<Set<string>>(new Set());
 
-  // ── Initial fetch ──────────────────────────────────────────────────────────
+  // initial fetch
   const fetchGeo = () =>
     api.threats
       .getGeoThreats()
@@ -195,7 +195,7 @@ export default function AttackMapPage() {
     fetchGeo();
   }, []);
 
-  // ── Realtime arrivals ──────────────────────────────────────────────────────
+  // realtime arrivals
   useEffect(() => {
     if (!geoData) return;
 
@@ -252,7 +252,7 @@ export default function AttackMapPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threats]);
 
-  // ── Derived stats ──────────────────────────────────────────────────────────
+  // derived stats
   const highestRiskCountry = geoData?.items.reduce<GeoThreatPoint | null>((best, p) => {
     if (!best) return p;
     return SEVERITY_ORDER[p.severity] > SEVERITY_ORDER[best.severity] ? p : best;

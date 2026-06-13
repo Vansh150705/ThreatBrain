@@ -1,4 +1,4 @@
-/* Shared ThreatBrain logo mark — ink tile with a neural mesh, emerald apex node */
+/* ThreatBrain logo mark */
 export function LogoMark({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -15,7 +15,7 @@ export function LogoMark({ className = "" }: { className?: string }) {
       <circle cx="7.2" cy="11.2" r="1.5" fill="var(--background)" />
       <circle cx="16.8" cy="11.2" r="1.5" fill="var(--background)" />
       <circle cx="12" cy="17.2" r="1.5" fill="var(--background)" />
-      {/* apex — the signal */}
+      {/* top node */}
       <circle cx="12" cy="6.4" r="1.9" fill="var(--color-signal)" />
     </svg>
   );

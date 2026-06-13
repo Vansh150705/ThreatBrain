@@ -1,10 +1,4 @@
-"""Ask the SOC: a copilot grounded in the caller's own security data.
-
-Builds a compact context window from the org's recent threats, incidents,
-and approval queue (all org-scoped), then answers the analyst's question
-with the same Groq model the agents use. The model only sees this org's
-rows, so tenant isolation holds end to end.
-"""
+"""Copilot endpoint that answers questions about the user's own security data."""
 
 from __future__ import annotations
 
@@ -41,7 +35,7 @@ class AskResponse(BaseModel):
 
 
 def _gather_context(organization_id: Optional[str]) -> str:
-    """Fetch a compact, org-scoped snapshot for grounding."""
+    """Pull a small snapshot of the org's data to feed the model."""
     admin = get_supabase_admin()
 
     threats = (
@@ -112,7 +106,7 @@ async def ask(
     request: AskRequest,
     user: Annotated[CurrentUser, Depends(get_current_user)],
 ) -> AskResponse:
-    """Answer a natural-language question about the caller's org data."""
+    """Answer a question about the user's org data."""
     if not user.organization_id:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,

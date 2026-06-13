@@ -20,7 +20,7 @@ def setup_logging() -> None:
     settings = get_settings()
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 
-    # ── Shared processors run on every log call ─────────────
+    # shared processors run on every log call
     shared_processors: list[structlog.types.Processor] = [
         # Pull request_id / user_id (etc.) from contextvars
         merge_contextvars,
@@ -63,7 +63,7 @@ def setup_logging() -> None:
         cache_logger_on_first_use=True,
     )
 
-    # ── Wire stdlib logging through structlog formatter ─────
+    # wire stdlib logging through structlog formatter
     # This captures logs from FastAPI, uvicorn, supabase-py, httpx, etc.
     formatter = structlog.stdlib.ProcessorFormatter(
         foreign_pre_chain=shared_processors,

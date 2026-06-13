@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     BACKEND_URL: AnyHttpUrl = Field(default="http://localhost:8000")
 
-    # CORS — comma-separated list of allowed origins
+    # cors, comma separated list of allowed origins
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
     # Supabase

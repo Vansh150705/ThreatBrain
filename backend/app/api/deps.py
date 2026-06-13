@@ -206,7 +206,7 @@ def require_role(minimum: str):
     return _checker
 
 
-# Pre-built role gates — most endpoints use these
+# common role gates that most endpoints use
 require_viewer = require_role("viewer")
 require_analyst = require_role("analyst")
 require_admin = require_role("admin")

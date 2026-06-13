@@ -1,9 +1,4 @@
-"""Human-in-the-loop playbook authorization.
-
-The Response Agent only ever recommends actions; every recommendation
-lands in playbook_approvals as 'pending'. Admins and owners approve or
-reject here, and every decision is written to the append-only audit log.
-"""
+"""Playbook approval queue. Admins approve or reject what the response agent recommends."""
 
 from __future__ import annotations
 
@@ -56,7 +51,7 @@ async def list_approvals(
     approval_status: Optional[str] = Query(default=None, alias="status"),
     limit: int = Query(default=100, ge=1, le=500),
 ) -> ApprovalListResponse:
-    """List the org's playbook approval queue, newest first."""
+    """List the approval queue for the user's org, newest first."""
     admin = get_supabase_admin()
     query = (
         admin.table("playbook_approvals")
@@ -80,7 +75,7 @@ async def decide_approval(
     request: DecisionRequest,
     user: Annotated[CurrentUser, Depends(require_admin)],
 ) -> ApprovalItem:
-    """Approve or reject a pending recommendation. Admin or owner only."""
+    """Approve or reject one pending recommendation. Admin or owner only."""
     admin = get_supabase_admin()
 
     rows = (
@@ -115,7 +110,7 @@ async def decide_approval(
         .execute()
     ).data[0]
 
-    # Record the human decision in the append-only audit trail.
+    # log the decision to the audit trail
     try:
         admin.table("audit_logs").insert(
             {

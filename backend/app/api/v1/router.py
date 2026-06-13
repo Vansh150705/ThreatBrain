@@ -24,13 +24,13 @@ api_router.include_router(meta.router)
 # Authentication (signup, login)
 api_router.include_router(auth.router)
 
-# Audit trail (read-only)
+# Audit trail
 api_router.include_router(audit.router)
 
-# Playbook approvals (human-in-the-loop)
+# Playbook approvals
 api_router.include_router(playbooks.router)
 
-# Ask the SOC copilot
+# Copilot
 api_router.include_router(copilot.router)
 
 # Threats

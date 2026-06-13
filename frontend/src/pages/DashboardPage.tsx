@@ -64,7 +64,7 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-// ─────────── Live indicator (connection status pill) ───────────
+// live indicator (connection status pill)
 function LiveIndicator({
   status,
 }: {
@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* ─────── HEADER ─────── */}
+      {/* header */}
       <motion.section
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
@@ -182,7 +182,7 @@ export default function DashboardPage() {
         <TriggerPipelineDialog />
       </motion.section>
 
-      {/* ─────── KEY METRICS ─────── */}
+      {/* key metrics */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -262,7 +262,7 @@ export default function DashboardPage() {
         </div>
       </motion.section>
 
-      {/* ─────── TWO-COLUMN: THREATS + AGENTS ─────── */}
+      {/* two-column: threats + agents */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Recent threats (LIVE) */}
         <motion.section
@@ -456,7 +456,7 @@ export default function DashboardPage() {
         </motion.section>
       </div>
 
-      {/* ─────── AGENT ROSTER ─────── */}
+      {/* agent roster */}
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}

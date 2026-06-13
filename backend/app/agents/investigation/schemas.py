@@ -27,7 +27,7 @@ class InvestigationInput(BaseModel):
 
 
 class ThreatGroup(BaseModel):
-    """One correlated cluster — becomes an incident."""
+    """A correlated cluster that becomes an incident."""
 
     title: str = Field(..., min_length=1, max_length=300)
     summary: str = Field(..., min_length=1)

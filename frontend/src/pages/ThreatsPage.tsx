@@ -114,7 +114,7 @@ export default function ThreatsPage() {
   const [severity, setSeverity] = useState("all");
   const [threatStatus, setThreatStatus] = useState("all");
 
-  // Live arrivals stream — only the brand-new rows from Realtime.
+  // only the brand new rows coming in from realtime
   // We merge these into the table view, filtered to match the current filters.
   const { threats: liveArrivals, status: liveStatus } = useRealtimeThreats({
     maxItems: 50,

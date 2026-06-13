@@ -29,7 +29,7 @@ export interface ListAuditParams {
   offset?: number;
 }
 
-// Fetch the org's append-only audit trail, newest first
+// get the audit events for the current org, newest first
 export async function listAuditLogs(params: ListAuditParams = {}): Promise<AuditListResponse> {
   const { data } = await http.get<AuditListResponse>("/audit", { params });
   return data;
