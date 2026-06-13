@@ -7,7 +7,33 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-# Threat list item — compact shape for the table view
+# geo endpoint schemas
+class GeoThreatSummary(BaseModel):
+    short_id: str
+    title: str
+    severity: str
+    detected_at: datetime
+
+
+class GeoThreatPoint(BaseModel):
+    country: str
+    country_name: str
+    city: str | None
+    latitude: float
+    longitude: float
+    threat_count: int
+    severity: str
+    source_ips: list[str]
+    recent_threats: list[GeoThreatSummary]
+
+
+class GeoThreatResponse(BaseModel):
+    items: list[GeoThreatPoint]
+    total_countries: int
+    total_threats: int
+
+
+# compact threat shape for the table view
 class ThreatListItem(BaseModel):
     id: UUID
     short_id: str
@@ -36,7 +62,7 @@ class ThreatListResponse(BaseModel):
     has_more: bool
 
 
-# Full threat detail — includes everything
+# full threat detail with everything
 class ThreatDetail(ThreatListItem):
     description: str | None = None
     attack_chain: list[str] = Field(default_factory=list)
