@@ -175,8 +175,20 @@ ThreatBrain/
 │       ├── components/       # SeverityBadge, PipelineProgress, TriggerPipelineDialog, ...
 │       ├── lib/api/          # Typed API client
 │       └── store/            # Zustand (user + UI state)
+├── database/migrations/      # SQL, applied manually in the Supabase SQL editor
+├── DEPLOY.md                 # Deployment topology (Vercel + HF Spaces + Supabase)
 └── README.md
 ```
+
+---
+
+## 🚢 Deploying
+
+The frontend (Vercel) and backend (Hugging Face Spaces) deploy from two
+different git remotes, and database migrations are applied by hand. A backend
+change is not live until it is pushed to **both** `origin` and the `space`
+remote. See **[DEPLOY.md](DEPLOY.md)** for the full topology, the push checklist,
+and a symptom → cause table.
 
 ---
 
