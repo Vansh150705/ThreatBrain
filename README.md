@@ -148,6 +148,10 @@ Things to try:
 1. **Browse threats** :- `/threats` shows 12 simulated detections with severity, MITRE codes, confidence scores
 2. **Open an incident** :- `/incidents/INC-ACT001` is a simulated APT29 intrusion with kill chain, attribution, 4 linked threats, and lifecycle timestamps
 3. **Run the pipeline** :- From the dashboard, click `✨ Trigger pipeline`, pick a scenario (e.g. "S3 bucket made public"), and watch all six agents work in real time. About 15 seconds end-to-end. A brand new threat and incident appear in the database when it finishes.
+4. **Ask the SOC** :- Click the `✨ Ask the SOC` button (bottom-right of any console page) and ask questions like "summarize the most critical incident" or "which threats came from Russia?" The copilot answers only from your own organization's data.
+5. **Authorize a response** :- `/approvals` is the human-in-the-loop queue. The Response Agent recommends playbooks; an admin or owner approves or rejects each one. Every decision is written to the audit trail.
+6. **Read the audit trail** :- `/audit` is the append-only log of every agent decision and human action. UPDATE and DELETE are rejected at the database level.
+7. **Export a dossier** :- On any incident page, click `Export report` to download a Markdown incident dossier with attribution, linked threats, response authorizations, and full chain of custody.
 
 ---
 
