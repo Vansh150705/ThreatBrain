@@ -292,8 +292,10 @@ async def signup(request: SignupRequest) -> SignupResponse:
         org_row = org_result.data[0]
         org_id = str(org_row["id"])
 
-        # 3. Profile row linking auth user -> org.
-        admin.table("users").insert(
+        # 3. Link the profile to the org. The on_auth_user_created trigger
+        #    already created a public.users row (org_id NULL, role 'viewer'),
+        #    so we upsert on id to set ownership rather than insert a duplicate.
+        admin.table("users").upsert(
             {
                 "id": user_id,
                 "email": request.email,
@@ -301,7 +303,8 @@ async def signup(request: SignupRequest) -> SignupResponse:
                 "organization_id": org_id,
                 "role": "owner",
                 "status": "active",
-            }
+            },
+            on_conflict="id",
         ).execute()
 
         # 4. Starter data so the dashboard isn't empty.
