@@ -147,7 +147,7 @@ export default function SignupPage() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jane Doe"
+                placeholder="Vansh Mahajan"
                 required
                 autoFocus
                 className="h-10 text-[14px] bg-white"
@@ -162,7 +162,7 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jane@example.com"
+                placeholder="vansh@example.com"
                 required
                 className="h-10 text-[14px] bg-white"
               />
