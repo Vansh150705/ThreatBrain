@@ -64,7 +64,7 @@ function MetaSlot({ label, children }: { label: string; children: React.ReactNod
 
 function InfoCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-card border border-border rounded-xl p-5 ${className}`}>
+    <div className={`bg-card border border-border rounded-xl p-4 sm:p-5 ${className}`}>
       {children}
     </div>
   );
@@ -151,7 +151,7 @@ export default function ThreatDetailPage() {
           <SeverityBadge severity={threat.severity} />
           <StatusBadge status={threat.status} />
         </div>
-        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
+        <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
           {threat.title}
         </h1>
       </motion.div>
@@ -161,7 +161,7 @@ export default function ThreatDetailPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.06 }}
-        className="bg-card border border-border rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-5"
+        className="bg-card border border-border rounded-xl p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5"
       >
         <MetaSlot label="Confidence">
           <span className="font-mono tabular">{threat.confidence}%</span>
@@ -186,7 +186,7 @@ export default function ThreatDetailPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
       >
         {/* left column */}
         <div className="lg:col-span-2 space-y-5">
@@ -274,10 +274,10 @@ export default function ThreatDetailPage() {
           {hasIocs && (
             <InfoCard>
               <SectionLabel>Indicators of compromise</SectionLabel>
-              <div className="flex items-center border-b border-border gap-5 mb-4">
+              <div className="flex items-center border-b border-border gap-4 sm:gap-5 mb-4 overflow-x-auto">
                 <button
                   onClick={() => setIocTab("source")}
-                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     iocTab === "source"
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -287,7 +287,7 @@ export default function ThreatDetailPage() {
                 </button>
                 <button
                   onClick={() => setIocTab("targets")}
-                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     iocTab === "targets"
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -297,7 +297,7 @@ export default function ThreatDetailPage() {
                 </button>
                 <button
                   onClick={() => setIocTab("users")}
-                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     iocTab === "users"
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
