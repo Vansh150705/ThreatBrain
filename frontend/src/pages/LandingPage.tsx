@@ -346,7 +346,7 @@ function PipelineShowcase() {
           {DOSSIER.map((d, i) => {
             const visible = step >= i;
             return (
-              <div key={d.label} className="grid grid-cols-[110px_1fr] gap-4 items-baseline">
+              <div key={d.label} className="grid grid-cols-[84px_1fr] sm:grid-cols-[110px_1fr] gap-4 items-baseline">
                 <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground pt-0.5">
                   {d.label}
                 </div>
@@ -762,7 +762,7 @@ export default function LandingPage() {
 
       {/* showcase */}
       <section id="showcase" className="relative">
-        <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-28">
+        <div className="max-w-[1200px] mx-auto px-6 pt-16 pb-20 sm:pt-24 sm:pb-28">
           <div className="grid md:grid-cols-12 gap-8 mb-14 items-end">
             <Reveal className="md:col-span-7">
               <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-signal font-semibold mb-4">
@@ -791,7 +791,7 @@ export default function LandingPage() {
 
       {/* features (bento) */}
       <section id="features" className="border-t border-border">
-        <div className="max-w-[1200px] mx-auto px-6 py-28">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 sm:py-24 lg:py-28">
           <div className="grid md:grid-cols-12 gap-8 mb-14 items-end">
             <Reveal className="md:col-span-7">
               <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-signal font-semibold mb-4">
@@ -915,7 +915,7 @@ export default function LandingPage() {
 
       {/* how it works */}
       <section id="how" className="border-t border-border">
-        <div className="max-w-[1200px] mx-auto px-6 py-28 grid lg:grid-cols-12 gap-12">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 sm:py-24 lg:py-28 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-28">
               <Reveal>
@@ -958,7 +958,7 @@ export default function LandingPage() {
 
       {/* attack simulator */}
       <section id="simulate" className="border-t border-border">
-        <div className="max-w-[1200px] mx-auto px-6 py-24 lg:py-28">
+        <div className="max-w-[1200px] mx-auto px-6 py-16 sm:py-24 lg:py-28">
           <div className="grid md:grid-cols-12 gap-8 mb-12 items-end">
             <Reveal className="md:col-span-7">
               <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-signal font-semibold mb-4">
@@ -990,7 +990,7 @@ export default function LandingPage() {
           className="absolute inset-x-0 bottom-0 h-[420px] pointer-events-none bg-[radial-gradient(ellipse_60%_70%_at_50%_100%,oklch(0.52_0.13_158/0.07),transparent_70%)]"
           aria-hidden
         />
-        <div className="relative max-w-[1200px] mx-auto px-6 py-28 lg:py-32 text-center">
+        <div className="relative max-w-[1200px] mx-auto px-6 py-20 sm:py-28 lg:py-32 text-center">
           <Reveal>
             <div className="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full border border-signal/25 bg-signal/[0.05] font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
