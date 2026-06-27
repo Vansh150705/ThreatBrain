@@ -93,11 +93,11 @@ export default function AuditPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start justify-between gap-6 flex-wrap"
+        className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap"
       >
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+            <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
               Audit trail
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
@@ -179,7 +179,7 @@ export default function AuditPage() {
           className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card"
         >
           {items.map((log) => (
-            <div key={log.id} className="px-5 py-3.5 flex items-start gap-4 hover:bg-muted/30 transition-colors">
+            <div key={log.id} className="px-4 sm:px-5 py-3.5 flex items-start gap-3 sm:gap-4 hover:bg-muted/30 transition-colors">
               <div className="pt-1 flex-shrink-0">
                 <SeverityBadge severity={log.severity} />
               </div>
