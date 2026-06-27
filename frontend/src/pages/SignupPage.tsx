@@ -111,7 +111,7 @@ export default function SignupPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-signal animate-pulse" />
               SOC operational
             </div>
-            <h1 className="title-serif text-[34px] tracking-[-0.03em] text-foreground leading-[1.05]">
+            <h1 className="title-serif text-[28px] sm:text-[34px] tracking-[-0.03em] text-foreground leading-[1.05]">
               Create your{" "}
               <em className="font-serif italic font-medium text-signal">workspace.</em>
             </h1>
