@@ -79,11 +79,11 @@ export default function ApprovalsPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start justify-between gap-6 flex-wrap"
+        className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap"
       >
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+            <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
               Approvals
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
@@ -142,7 +142,7 @@ export default function ApprovalsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: i * 0.04 }}
-                  className="rounded-xl border border-severity-medium/30 bg-severity-medium/[0.03] p-5"
+                  className="rounded-xl border border-severity-medium/30 bg-severity-medium/[0.03] p-4 sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="min-w-0">
@@ -224,7 +224,7 @@ export default function ApprovalsPage() {
               </div>
               <div className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-card">
                 {decided.map((a) => (
-                  <div key={a.id} className="px-5 py-3 flex items-center gap-4">
+                  <div key={a.id} className="px-4 sm:px-5 py-3 flex items-center gap-3 sm:gap-4 flex-wrap">
                     <span
                       className={`inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.08em] px-2 py-0.5 rounded border flex-shrink-0 ${
                         a.status === "approved"
