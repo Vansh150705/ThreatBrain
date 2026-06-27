@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Activity, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
-import { api } from "@/lib/api";
+import { api, withColdStartRetry } from "@/lib/api";
 import type { AgentRunSummary, PaginatedResponse } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 const STATUS_OPTS = [
   { value: "all",       label: "All" },
@@ -108,6 +109,7 @@ export default function RunsPage() {
   const [data, setData] = useState<PaginatedResponse<AgentRunSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 25;
@@ -117,17 +119,20 @@ export default function RunsPage() {
     setLoading(true);
     setError(null);
 
-    api.agents
-      .listRecentRuns({
-        page,
-        page_size: pageSize,
-        run_status: statusFilter === "all" ? undefined : statusFilter,
-      })
+    withColdStartRetry(
+      () =>
+        api.agents.listRecentRuns({
+          page,
+          page_size: pageSize,
+          run_status: statusFilter === "all" ? undefined : statusFilter,
+        }),
+      { onRetry: () => { if (!cancelled) setWaking(true); } }
+    )
       .then((res) => { if (!cancelled) setData(res); })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [page, statusFilter]);
@@ -172,8 +177,11 @@ export default function RunsPage() {
         />
       </motion.div>
 
+      {/* Cold-start notice */}
+      {waking && !error && <ColdStartNotice />}
+
       {/* Loading */}
-      {loading && (
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading runs...

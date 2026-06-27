@@ -10,11 +10,12 @@ import {
   Download,
 } from "lucide-react";
 
-import { api, http, type IncidentDetail, type IncidentThreatItem } from "@/lib/api";
+import { api, http, withColdStartRetry, type IncidentDetail, type IncidentThreatItem } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
 import { Button } from "@/components/ui/button";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 type BottomTab = "timeline" | "playbook";
 
@@ -101,6 +102,7 @@ export default function IncidentDetailPage() {
   const [threats, setThreats] = useState<IncidentThreatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [bottomTab, setBottomTab] = useState<BottomTab>("timeline");
   const [exporting, setExporting] = useState(false);
 
@@ -132,10 +134,14 @@ export default function IncidentDetailPage() {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      api.incidents.getIncident(identifier),
-      api.incidents.getIncidentThreats(identifier),
-    ])
+    withColdStartRetry(
+      () =>
+        Promise.all([
+          api.incidents.getIncident(identifier),
+          api.incidents.getIncidentThreats(identifier),
+        ]),
+      { onRetry: () => { if (!cancelled) setWaking(true); } }
+    )
       .then(([inc, thr]) => {
         if (cancelled) return;
         setIncident(inc);
@@ -144,7 +150,7 @@ export default function IncidentDetailPage() {
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [identifier]);
@@ -163,10 +169,14 @@ export default function IncidentDetailPage() {
     return (
       <div className="space-y-5">
         {backLink}
-        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading incident...
-        </div>
+        {waking ? (
+          <ColdStartNotice />
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading incident...
+          </div>
+        )}
       </div>
     );
   }

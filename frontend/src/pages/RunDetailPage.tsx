@@ -13,8 +13,9 @@ import {
   Check,
 } from "lucide-react";
 
-import { api } from "@/lib/api";
+import { api, withColdStartRetry } from "@/lib/api";
 import type { AgentRunDetail } from "@/lib/api/types";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 const AGENT_LABELS: Record<string, string> = {
   triage:        "Triage Agent",
@@ -141,6 +142,7 @@ export default function RunDetailPage() {
   const [run, setRun] = useState<AgentRunDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
     if (!runId) return;
@@ -148,13 +150,14 @@ export default function RunDetailPage() {
     setLoading(true);
     setError(null);
 
-    api.agents
-      .getAgentRun(runId)
+    withColdStartRetry(() => api.agents.getAgentRun(runId), {
+      onRetry: () => { if (!cancelled) setWaking(true); },
+    })
       .then((res) => { if (!cancelled) setRun(res); })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [runId]);
@@ -173,10 +176,14 @@ export default function RunDetailPage() {
     return (
       <div className="space-y-5">
         {backLink}
-        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading run...
-        </div>
+        {waking ? (
+          <ColdStartNotice />
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading run...
+          </div>
+        )}
       </div>
     );
   }

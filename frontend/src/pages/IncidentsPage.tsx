@@ -5,11 +5,13 @@ import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
 import {
   api,
+  withColdStartRetry,
   type IncidentListResponse,
 } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
+import ColdStartNotice from "@/components/ColdStartNotice";
 import {
   useRealtimeRows,
   type RealtimeBaseRow,
@@ -124,6 +126,7 @@ export default function IncidentsPage() {
   const [data, setData] = useState<IncidentListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [severity, setSeverity] = useState("all");
   const [incidentStatus, setIncidentStatus] = useState("all");
   const [priority, setPriority] = useState("all");
@@ -140,19 +143,22 @@ export default function IncidentsPage() {
     setLoading(true);
     setError(null);
 
-    api.incidents
-      .listIncidents({
-        page: 1,
-        page_size: 25,
-        severity: severity === "all" ? undefined : severity,
-        status: incidentStatus === "all" ? undefined : incidentStatus,
-        priority: priority === "all" ? undefined : priority,
-      })
+    withColdStartRetry(
+      () =>
+        api.incidents.listIncidents({
+          page: 1,
+          page_size: 25,
+          severity: severity === "all" ? undefined : severity,
+          status: incidentStatus === "all" ? undefined : incidentStatus,
+          priority: priority === "all" ? undefined : priority,
+        }),
+      { onRetry: () => { if (!cancelled) setWaking(true); } }
+    )
       .then((res) => { if (!cancelled) setData(res); })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [severity, incidentStatus, priority]);
@@ -237,8 +243,11 @@ export default function IncidentsPage() {
         </div>
       </motion.div>
 
+      {/* Cold-start notice */}
+      {waking && !error && <ColdStartNotice />}
+
       {/* Loading */}
-      {loading && (
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading incidents...

@@ -11,9 +11,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { api, type ThreatDetail } from "@/lib/api";
+import { api, withColdStartRetry, type ThreatDetail } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 type IocTab = "source" | "targets" | "users";
 
@@ -75,6 +76,7 @@ export default function ThreatDetailPage() {
   const [threat, setThreat] = useState<ThreatDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [iocTab, setIocTab] = useState<IocTab>("source");
 
   useEffect(() => {
@@ -83,13 +85,14 @@ export default function ThreatDetailPage() {
     setLoading(true);
     setError(null);
 
-    api.threats
-      .getThreat(identifier)
+    withColdStartRetry(() => api.threats.getThreat(identifier), {
+      onRetry: () => { if (!cancelled) setWaking(true); },
+    })
       .then((res) => { if (!cancelled) setThreat(res); })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [identifier]);
@@ -108,10 +111,14 @@ export default function ThreatDetailPage() {
     return (
       <div className="space-y-5">
         {backLink}
-        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading threat...
-        </div>
+        {waking ? (
+          <ColdStartNotice />
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading threat...
+          </div>
+        )}
       </div>
     );
   }

@@ -4,9 +4,10 @@ import { motion } from "motion/react";
 import { Loader2, AlertCircle, Check, X, ShieldCheck } from "lucide-react";
 
 import { listApprovals, decideApproval, type ApprovalItem } from "@/lib/api/approvals";
-import { ApiError } from "@/lib/api";
+import { ApiError, withColdStartRetry } from "@/lib/api";
 import { useUserStore } from "@/store/useUserStore";
 import { Button } from "@/components/ui/button";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -34,6 +35,7 @@ export default function ApprovalsPage() {
   const [items, setItems] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [actingOn, setActingOn] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -41,13 +43,16 @@ export default function ApprovalsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await listApprovals();
+      const res = await withColdStartRetry(() => listApprovals(), {
+        onRetry: () => setWaking(true),
+      });
       setItems(res.items);
     } catch (err) {
       if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
       else setError(String(err));
     } finally {
       setLoading(false);
+      setWaking(false);
     }
   }, []);
 
@@ -103,7 +108,9 @@ export default function ApprovalsPage() {
         )}
       </motion.div>
 
-      {loading && (
+      {waking && !error && <ColdStartNotice />}
+
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading approval queue...

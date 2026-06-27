@@ -3,9 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { Loader2, AlertCircle, ArrowUpRight, ArrowLeft, Activity } from "lucide-react";
 
-import { api, type Agent, ApiError } from "@/lib/api";
+import { api, type Agent, ApiError, withColdStartRetry } from "@/lib/api";
 import type { AgentRunSummary } from "@/lib/api/types";
 import { CREW_PORTRAITS, CREW_META } from "@/components/CrewPortraits";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 function formatLatency(ms: number | null): string {
   if (ms == null) return "—";
@@ -157,16 +158,21 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
   const [runs, setRuns] = useState<AgentRunSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      api.agents.getAgent(agentKey),
-      api.agents.listAgentRuns(agentKey, { page_size: 10 }),
-    ])
+    withColdStartRetry(
+      () =>
+        Promise.all([
+          api.agents.getAgent(agentKey),
+          api.agents.listAgentRuns(agentKey, { page_size: 10 }),
+        ]),
+      { onRetry: () => { if (!cancelled) setWaking(true); } }
+    )
       .then(([a, r]) => {
         if (cancelled) return;
         setAgent(a);
@@ -178,7 +184,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
           else setError(String(err));
         }
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [agentKey]);
@@ -197,10 +203,14 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
     return (
       <div className="space-y-5">
         {backLink}
-        <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading agent...
-        </div>
+        {waking ? (
+          <ColdStartNotice />
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading agent...
+          </div>
+        )}
       </div>
     );
   }
@@ -408,14 +418,16 @@ function AgentList() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    api.agents
-      .listAgents()
+    withColdStartRetry(() => api.agents.listAgents(), {
+      onRetry: () => { if (!cancelled) setWaking(true); },
+    })
       .then((res) => { if (!cancelled) setAgents(res.items); })
       .catch((err) => {
         if (!cancelled) {
@@ -423,7 +435,7 @@ function AgentList() {
           else setError(String(err));
         }
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, []);
@@ -443,7 +455,9 @@ function AgentList() {
         </p>
       </motion.div>
 
-      {loading && (
+      {waking && !error && <ColdStartNotice />}
+
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading agents...

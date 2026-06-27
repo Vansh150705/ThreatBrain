@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ShieldAlert, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
 
-import { api, type ThreatListResponse } from "@/lib/api";
+import { api, withColdStartRetry, type ThreatListResponse } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
+import ColdStartNotice from "@/components/ColdStartNotice";
 import {
   useRealtimeThreats,
   type RealtimeThreatRow,
@@ -111,6 +112,7 @@ export default function ThreatsPage() {
   const [data, setData] = useState<ThreatListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [severity, setSeverity] = useState("all");
   const [threatStatus, setThreatStatus] = useState("all");
 
@@ -126,18 +128,21 @@ export default function ThreatsPage() {
     setLoading(true);
     setError(null);
 
-    api.threats
-      .listThreats({
-        page: 1,
-        page_size: 25,
-        severity: severity === "all" ? undefined : severity,
-        status: threatStatus === "all" ? undefined : threatStatus,
-      })
+    withColdStartRetry(
+      () =>
+        api.threats.listThreats({
+          page: 1,
+          page_size: 25,
+          severity: severity === "all" ? undefined : severity,
+          status: threatStatus === "all" ? undefined : threatStatus,
+        }),
+      { onRetry: () => { if (!cancelled) setWaking(true); } }
+    )
       .then((res) => { if (!cancelled) setData(res); })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) { setLoading(false); setWaking(false); } });
 
     return () => { cancelled = true; };
   }, [severity, threatStatus]);
@@ -221,8 +226,11 @@ export default function ThreatsPage() {
         </div>
       </motion.div>
 
+      {/* Cold-start notice */}
+      {waking && !error && <ColdStartNotice />}
+
       {/* Loading */}
-      {loading && (
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading threats...

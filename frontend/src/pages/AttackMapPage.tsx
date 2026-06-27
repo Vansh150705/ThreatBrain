@@ -6,8 +6,9 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import { Loader2, AlertCircle, Globe, ShieldAlert, MapPin } from "lucide-react";
 
 import { api, type GeoThreatPoint, type GeoThreatResponse } from "@/lib/api";
-import { ApiError } from "@/lib/api";
+import { ApiError, withColdStartRetry } from "@/lib/api";
 import { useRealtimeThreats } from "@/hooks/useRealtimeThreats";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 // constants
 
@@ -169,6 +170,7 @@ export default function AttackMapPage() {
   const [geoData, setGeoData] = useState<GeoThreatResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   // point keys that just arrived, kept briefly then removed
   const [newCountries, setNewCountries] = useState<Set<string>>(new Set());
   // Banner for latest new arrival
@@ -179,8 +181,9 @@ export default function AttackMapPage() {
 
   // initial fetch
   const fetchGeo = () =>
-    api.threats
-      .getGeoThreats()
+    withColdStartRetry(() => api.threats.getGeoThreats(), {
+      onRetry: () => setWaking(true),
+    })
       .then((data) => {
         setGeoData(data);
         setError(null);
@@ -189,7 +192,10 @@ export default function AttackMapPage() {
         if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
         else setError(String(err));
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setWaking(false);
+      });
 
   useEffect(() => {
     fetchGeo();
@@ -325,6 +331,13 @@ export default function AttackMapPage() {
           })}
         </div>
       </section>
+
+      {/* Cold-start notice */}
+      {waking && !error && (
+        <section>
+          <ColdStartNotice />
+        </section>
+      )}
 
       {/* Map card */}
       <section>

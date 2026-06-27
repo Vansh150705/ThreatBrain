@@ -3,9 +3,10 @@ import { motion } from "motion/react";
 import { Loader2, AlertCircle, RefreshCw, Lock } from "lucide-react";
 
 import { listAuditLogs, type AuditLogItem } from "@/lib/api/audit";
-import { ApiError } from "@/lib/api";
+import { ApiError, withColdStartRetry } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import { Button } from "@/components/ui/button";
+import ColdStartNotice from "@/components/ColdStartNotice";
 
 const SEVERITY_OPTS = ["all", "info", "low", "medium", "high", "critical"];
 const ACTOR_OPTS = ["all", "user", "agent", "system"];
@@ -60,6 +61,7 @@ export default function AuditPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [severity, setSeverity] = useState("all");
   const [actorType, setActorType] = useState("all");
 
@@ -67,11 +69,15 @@ export default function AuditPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await listAuditLogs({
-        severity: severity === "all" ? undefined : severity,
-        actor_type: actorType === "all" ? undefined : actorType,
-        limit: 200,
-      });
+      const res = await withColdStartRetry(
+        () =>
+          listAuditLogs({
+            severity: severity === "all" ? undefined : severity,
+            actor_type: actorType === "all" ? undefined : actorType,
+            limit: 200,
+          }),
+        { onRetry: () => setWaking(true) }
+      );
       setItems(res.items);
       setTotal(res.total);
     } catch (err) {
@@ -79,6 +85,7 @@ export default function AuditPage() {
       else setError(String(err));
     } finally {
       setLoading(false);
+      setWaking(false);
     }
   }, [severity, actorType]);
 
@@ -147,7 +154,9 @@ export default function AuditPage() {
         </div>
       </motion.div>
 
-      {loading && (
+      {waking && !error && <ColdStartNotice />}
+
+      {loading && !waking && (
         <div className="flex items-center gap-2 text-muted-foreground text-[13px] py-8">
           <Loader2 className="w-4 h-4 animate-spin" />
           Loading audit trail...
