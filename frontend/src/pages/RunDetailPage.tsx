@@ -81,7 +81,7 @@ function CopyableJson({ label, icon: Icon, data, emptyText = "Empty" }: Copyable
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-border">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-muted-foreground" />
           <span className="text-[13px] font-semibold text-foreground">{label}</span>
@@ -105,7 +105,7 @@ function CopyableJson({ label, icon: Icon, data, emptyText = "Empty" }: Copyable
           </button>
         )}
       </div>
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {isEmpty ? (
           <p className="text-[12.5px] text-muted-foreground italic">{emptyText}</p>
         ) : (
@@ -218,7 +218,7 @@ export default function RunDetailPage() {
             {run.agent_key}
           </Link>
         </div>
-        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+        <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
           {agentLabel} run
         </h1>
         <p className="text-[13px] text-muted-foreground mt-1">
@@ -231,7 +231,7 @@ export default function RunDetailPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.06 }}
-        className="bg-card border border-border rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-5"
+        className="bg-card border border-border rounded-xl p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5"
       >
         <MetaSlot label="Latency">
           <span className="font-mono">{formatLatency(run.latency_ms)}</span>
@@ -252,9 +252,9 @@ export default function RunDetailPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="bg-card border border-border rounded-xl p-5"
+        className="bg-card border border-border rounded-xl p-4 sm:p-5"
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-1">
               Trigger type
@@ -307,7 +307,7 @@ export default function RunDetailPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.14 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-5"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5"
       >
         <CopyableJson
           label="Input"
@@ -329,7 +329,7 @@ export default function RunDetailPage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.18 }}
-          className="bg-card border border-border rounded-xl p-6"
+          className="bg-card border border-border rounded-xl p-4 sm:p-6"
         >
           <SectionLabel>Agent reasoning</SectionLabel>
           <div className="flex gap-2 items-start">

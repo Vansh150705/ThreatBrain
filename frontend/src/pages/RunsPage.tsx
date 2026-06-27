@@ -133,16 +133,16 @@ export default function RunsPage() {
   }, [page, statusFilter]);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start justify-between gap-6 flex-wrap"
+        className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap"
       >
         <div>
-          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+          <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
             Run history
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
@@ -212,13 +212,13 @@ export default function RunsPage() {
               <table className="w-full">
                 <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
-                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Agent</th>
-                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Run ID</th>
-                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Trigger</th>
-                    <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Tokens</th>
-                    <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Latency</th>
-                    <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">When</th>
+                    <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
+                    <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Agent</th>
+                    <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Run ID</th>
+                    <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Trigger</th>
+                    <th className="px-4 sm:px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Tokens</th>
+                    <th className="px-4 sm:px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Latency</th>
+                    <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">When</th>
                     <th className="px-2 py-3 w-8" />
                   </tr>
                 </thead>
@@ -231,10 +231,10 @@ export default function RunsPage() {
                       transition={{ delay: i * 0.03 }}
                       className="hover:bg-accent/40 transition-colors group"
                     >
-                      <td className="px-5 py-3.5">
+                      <td className="px-4 sm:px-5 py-3.5">
                         <StatusDot status={run.status} />
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-4 sm:px-5 py-3.5">
                         <Link
                           to={`/runs/${run.id}`}
                           className="text-[13px] font-medium text-foreground hover:text-foreground/70 transition-colors"
@@ -242,23 +242,23 @@ export default function RunsPage() {
                           {AGENT_LABELS[run.agent_key] ?? run.agent_key}
                         </Link>
                       </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
+                      <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell">
                         <span className="font-mono text-[11px] text-muted-foreground">
                           {run.id.slice(0, 8)}...
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 hidden md:table-cell">
+                      <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell">
                         <span className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
                           {run.trigger_type}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
+                      <td className="px-4 sm:px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden lg:table-cell">
                         {run.total_tokens > 0 ? run.total_tokens.toLocaleString() : "—"}
                       </td>
-                      <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular">
+                      <td className="px-4 sm:px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular">
                         {formatLatency(run.latency_ms)}
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-4 sm:px-5 py-3.5">
                         <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">
                           {timeAgo(run.created_at)}
                         </span>
