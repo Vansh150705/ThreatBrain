@@ -9,10 +9,11 @@ import {
   ShieldAlert,
   AlertOctagon,
   CheckCircle2,
+  Coffee,
 } from "lucide-react";
 
 import { api, type Agent, type DashboardStats } from "@/lib/api";
-import { ApiError } from "@/lib/api";
+import { ApiError, withColdStartRetry } from "@/lib/api";
 import { useUserStore } from "@/store/useUserStore";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
@@ -110,6 +111,7 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
@@ -122,24 +124,34 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      api.agents.listAgents(),
-      api.stats.getDashboardStats(),
-      api.threats
-        .listThreats({ page: 1, page_size: 10 })
-        .then((r) => r.items as RealtimeThreatRow[])
-        .catch(() => [] as RealtimeThreatRow[]),
-    ])
+    // The free-tier backend may be asleep; retry cold-start failures (503 /
+    // dropped connection) with backoff and surface a "waking up" banner.
+    withColdStartRetry(
+      () =>
+        Promise.all([
+          api.agents.listAgents(),
+          api.stats.getDashboardStats(),
+          api.threats
+            .listThreats({ page: 1, page_size: 10 })
+            .then((r) => r.items as RealtimeThreatRow[])
+            .catch(() => [] as RealtimeThreatRow[]),
+        ]),
+      { onRetry: () => setWaking(true) }
+    )
       .then(([agentsRes, statsRes, threatsRes]) => {
         setAgents(agentsRes.items);
         setStats(statsRes);
         setThreats(threatsRes);
+        setError(null);
       })
       .catch((err) => {
         if (err instanceof ApiError) setError(`${err.status}: ${err.message}`);
         else setError(String(err));
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setWaking(false);
+      });
   }, [setThreats]);
 
   const totalRuns = agents.reduce((sum, a) => sum + a.total_runs, 0);
@@ -181,6 +193,28 @@ export default function DashboardPage() {
         </div>
         <TriggerPipelineDialog />
       </motion.section>
+
+      {/* cold-start notice: the free-tier backend is waking up */}
+      {waking && !error && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 rounded-xl border border-severity-medium/30 bg-severity-medium/[0.06] px-4 py-3.5"
+        >
+          <Coffee className="w-4 h-4 text-severity-medium flex-shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+              Backend is waking up
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            </div>
+            <p className="text-[12.5px] text-muted-foreground mt-0.5 leading-[1.55]">
+              The demo backend sleeps when idle to save resources. This first
+              request can take up to a minute — hang tight, it'll load
+              automatically.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* key metrics */}
       <motion.section

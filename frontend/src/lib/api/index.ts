@@ -8,6 +8,7 @@ import * as stats from "./stats";
 export { default as http } from "./client";
 export { ApiError, AuthError, ForbiddenError, NotFoundError } from "./errors";
 export { getToken, setToken, clearToken } from "./client";
+export { withColdStartRetry, isColdStartError } from "./retry";
 export type { MeResponse, OrganizationMini } from "./me";
 export type {
   ThreatListItem,
