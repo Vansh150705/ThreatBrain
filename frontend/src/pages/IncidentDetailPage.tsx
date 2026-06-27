@@ -89,7 +89,7 @@ function MetaSlot({ label, children }: { label: string; children: React.ReactNod
 
 function InfoCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-card border border-border rounded-xl p-5 ${className}`}>
+    <div className={`bg-card border border-border rounded-xl p-4 sm:p-5 ${className}`}>
       {children}
     </div>
   );
@@ -222,7 +222,7 @@ export default function IncidentDetailPage() {
             Export report
           </Button>
         </div>
-        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
+        <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground leading-[1.2]">
           {incident.title}
         </h1>
       </motion.div>
@@ -232,7 +232,7 @@ export default function IncidentDetailPage() {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.06 }}
-        className="bg-card border border-border rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-5"
+        className="bg-card border border-border rounded-xl p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5"
       >
         <MetaSlot label="Confidence">
           <span className="font-mono tabular">{incident.confidence}%</span>
@@ -253,7 +253,7 @@ export default function IncidentDetailPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6"
       >
         {/* left column */}
         <div className="lg:col-span-2 space-y-5">
@@ -345,7 +345,7 @@ export default function IncidentDetailPage() {
           {/* Threats in this incident */}
           {threats.length > 0 && (
             <InfoCard className="p-0 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-border">
+              <div className="px-4 sm:px-5 py-3.5 border-b border-border">
                 <SectionLabel>Threats in this incident</SectionLabel>
                 <span className="font-mono text-[11px] text-muted-foreground">{threats.length} total</span>
               </div>
@@ -354,7 +354,7 @@ export default function IncidentDetailPage() {
                   <Link
                     key={threat.id}
                     to={`/threats/${threat.short_id}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-accent/40 transition-colors group"
+                    className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-accent/40 transition-colors group"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -378,10 +378,10 @@ export default function IncidentDetailPage() {
           {/* Timeline + Playbook */}
           {hasBottomContent && (
             <InfoCard>
-              <div className="flex items-center border-b border-border gap-5 mb-4">
+              <div className="flex items-center border-b border-border gap-4 sm:gap-5 mb-4 overflow-x-auto">
                 <button
                   onClick={() => setBottomTab("timeline")}
-                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     bottomTab === "timeline"
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -391,7 +391,7 @@ export default function IncidentDetailPage() {
                 </button>
                 <button
                   onClick={() => setBottomTab("playbook")}
-                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors ${
+                  className={`pb-2 text-[12.5px] font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     bottomTab === "playbook"
                       ? "border-foreground text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"

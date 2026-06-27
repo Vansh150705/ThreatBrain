@@ -184,17 +184,17 @@ export default function IncidentsPage() {
   }, [liveArrivals]);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start justify-between gap-6 flex-wrap"
+        className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap"
       >
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+            <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
               Incidents
             </h1>
             <LiveIndicator status={liveStatus} />
@@ -279,14 +279,14 @@ export default function IncidentsPage() {
             <table className="w-full">
               <thead className="bg-muted/40 border-b border-border">
                 <tr>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Sev</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Pri</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">ID</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Title</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
-                  <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Threats</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Kill chain</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Last seen</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Sev</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Pri</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">ID</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Title</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
+                  <th className="px-4 sm:px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Threats</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden lg:table-cell">Kill chain</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Last seen</th>
                   <th className="px-2 py-3 w-8" />
                 </tr>
               </thead>
@@ -308,7 +308,7 @@ export default function IncidentsPage() {
                             : "hover:bg-accent/40"
                         }`}
                       >
-                        <td className="px-5 py-3.5 relative">
+                        <td className="px-4 sm:px-5 py-3.5 relative">
                           {isNew && (
                             <motion.span
                               initial={{ opacity: 0, scaleY: 0.5 }}
@@ -318,10 +318,10 @@ export default function IncidentsPage() {
                           )}
                           <SeverityBadge severity={incident.severity} />
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 sm:px-5 py-3.5">
                           <PriorityBadge priority={incident.priority} />
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 sm:px-5 py-3.5">
                           <Link
                             to={`/incidents/${incident.short_id}`}
                             className="font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
@@ -329,7 +329,7 @@ export default function IncidentsPage() {
                             {incident.short_id}
                           </Link>
                         </td>
-                        <td className="px-5 py-3.5 max-w-sm">
+                        <td className="px-4 sm:px-5 py-3.5 max-w-sm">
                           <Link
                             to={`/incidents/${incident.short_id}`}
                             className="text-[13.5px] font-medium text-foreground hover:text-foreground/70 transition-colors truncate block"
@@ -337,13 +337,13 @@ export default function IncidentsPage() {
                             {incident.title}
                           </Link>
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 sm:px-5 py-3.5">
                           <StatusBadge status={incident.status} />
                         </td>
-                        <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden md:table-cell">
+                        <td className="px-4 sm:px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular hidden md:table-cell">
                           {incident.threat_count}
                         </td>
-                        <td className="px-5 py-3.5 hidden lg:table-cell">
+                        <td className="px-4 sm:px-5 py-3.5 hidden lg:table-cell">
                           <div className="flex flex-wrap gap-1">
                             {incident.kill_chain.slice(0, 2).map((stage) => (
                               <span
@@ -360,7 +360,7 @@ export default function IncidentsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 sm:px-5 py-3.5">
                           {isNew ? (
                             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-severity-low font-semibold whitespace-nowrap">
                               new
