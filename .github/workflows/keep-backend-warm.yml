@@ -1,0 +1,39 @@
+name: Keep backend warm
+
+# The backend runs on a free Hugging Face Space that sleeps after inactivity and
+# answers 503 while it cold-starts. Pinging the health endpoint on a schedule
+# keeps it awake so users rarely hit a cold start.
+#
+# Notes:
+# - GitHub's cron is UTC and the minimum interval is 5 minutes; runs can be
+#   delayed under load, so treat ~10 min as approximate.
+# - Scheduled workflows are auto-disabled after 60 days with no repo activity.
+# - For tighter/guaranteed timing, an external pinger (cron-job.org,
+#   UptimeRobot) hitting the same URL works too.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every ~10 minutes (UTC)
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-backend-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          URL="https://vansh150705-threatbrain-backend.hf.space/api/v1/health"
+          # Retry so a sleeping Space gets time to boot; the first hit wakes it.
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            --retry 5 --retry-all-errors --retry-delay 15 --max-time 120 "$URL" || true)
+          echo "health -> $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::Backend health check returned $code (expected 200)"
+          fi
