@@ -259,11 +259,11 @@ export default function AttackMapPage() {
   }, null);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       {/* Header */}
-      <section className="flex items-start justify-between gap-6 flex-wrap">
+      <section className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap">
         <div>
-          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+          <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
             Attack Map
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
@@ -307,14 +307,14 @@ export default function AttackMapPage() {
           ].map((s) => {
             const Icon = s.icon;
             return (
-              <div key={s.label} className="bg-card border border-border rounded-xl p-5">
+              <div key={s.label} className="bg-card border border-border rounded-xl p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
                     <Icon className="w-4 h-4" strokeWidth={2} />
                   </div>
                 </div>
                 <div className="text-[12px] text-muted-foreground font-medium mb-1.5">{s.label}</div>
-                <div className="text-[28px] leading-[1] tracking-[-0.025em] font-semibold text-foreground tabular truncate">
+                <div className="text-[24px] sm:text-[28px] leading-[1] tracking-[-0.025em] font-semibold text-foreground tabular truncate">
                   {s.value}
                 </div>
                 <div className="font-mono text-[11px] text-muted-foreground mt-3 tracking-tight">
@@ -368,7 +368,7 @@ export default function AttackMapPage() {
             scrollWheelZoom
             doubleClickZoom
             dragging
-            style={{ height: "600px", width: "100%" }}
+            className="h-[420px] sm:h-[520px] lg:h-[600px] w-full"
           >
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -389,7 +389,7 @@ export default function AttackMapPage() {
 
       {/* Legend */}
       <section>
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-3">
             Severity legend
           </div>
