@@ -157,16 +157,16 @@ export default function DashboardPage() {
   }, [agents]);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       {/* header */}
       <motion.section
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start justify-between gap-6 flex-wrap"
+        className="flex items-start justify-between gap-4 sm:gap-6 flex-wrap"
       >
         <div>
-          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+          <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
             Operations overview
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
@@ -188,7 +188,7 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             {
               label: "Active agents",
@@ -231,7 +231,7 @@ export default function DashboardPage() {
           ].map((s) => {
             const Icon = s.icon;
             const inner = (
-              <div className="bg-card border border-border rounded-xl p-5 hover:border-foreground/20 transition-colors group h-full">
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-5 hover:border-foreground/20 transition-colors group h-full">
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.iconBg}`}>
                     <Icon className="w-4 h-4" strokeWidth={2} />
@@ -243,7 +243,7 @@ export default function DashboardPage() {
                 <div className="text-[12px] text-muted-foreground font-medium mb-1.5">
                   {s.label}
                 </div>
-                <div className="text-[32px] leading-[1] tracking-[-0.025em] font-semibold text-foreground tabular">
+                <div className="text-[26px] sm:text-[32px] leading-[1] tracking-[-0.025em] font-semibold text-foreground tabular">
                   {s.value}
                 </div>
                 <div className="font-mono text-[11px] text-muted-foreground mt-3 tracking-tight">
@@ -263,7 +263,7 @@ export default function DashboardPage() {
       </motion.section>
 
       {/* two-column: threats + agents */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
         {/* Recent threats (LIVE) */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
@@ -335,7 +335,7 @@ export default function DashboardPage() {
                     >
                       <Link
                         to={`/threats/${t.short_id}`}
-                        className={`relative flex items-center gap-3 px-5 py-3.5 transition-colors group ${
+                        className={`relative flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3.5 transition-colors group ${
                           t._isNew
                             ? "bg-severity-low/5 hover:bg-severity-low/10"
                             : "hover:bg-accent/40"
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                         >
                           {t.severity}
                         </span>
-                        <span className="font-mono text-[11px] text-muted-foreground w-20 flex-shrink-0 tabular">
+                        <span className="font-mono text-[11px] text-muted-foreground w-20 flex-shrink-0 tabular hidden sm:inline">
                           {t.short_id}
                         </span>
                         <span className="text-[13.5px] text-foreground font-medium flex-1 truncate group-hover:text-foreground/70 transition-colors">
@@ -487,7 +487,7 @@ export default function DashboardPage() {
             Loading agents…
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {agents.slice(0, 6).map((agent, i) => {
               const crew = getCrew(agent.agent_key);
               const displayKey = agent.agent_key.toLowerCase().replace(/-/g, "_");
