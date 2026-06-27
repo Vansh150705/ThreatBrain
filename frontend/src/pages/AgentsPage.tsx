@@ -65,7 +65,7 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="bg-card border border-border rounded-xl p-5"
+      className="bg-card border border-border rounded-xl p-4 sm:p-5"
     >
       <div className="flex items-start gap-4 mb-4">
         <div className="shrink-0">
@@ -229,7 +229,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-start gap-6"
+        className="flex items-start gap-4 sm:gap-6"
       >
         <div className="shrink-0">
           {Portrait ? (
@@ -252,7 +252,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
               {agent.enabled ? "active" : "disabled"}
             </span>
           </div>
-          <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+          <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
             {meta?.name ?? agent.name}
           </h1>
           {meta && (
@@ -270,7 +270,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.06 }}
-        className="bg-card border border-border rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-5"
+        className="bg-card border border-border rounded-xl p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5"
       >
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-1">
@@ -312,7 +312,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-card border border-border rounded-xl p-5"
+          className="bg-card border border-border rounded-xl p-4 sm:p-5"
         >
           <SectionLabel>About this agent</SectionLabel>
           <p className="text-[13.5px] text-foreground/80 leading-[1.65]">
@@ -335,14 +335,15 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted/40 border-b border-border">
                 <tr>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Run ID</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Trigger</th>
-                  <th className="px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Latency</th>
-                  <th className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">When</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Status</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Run ID</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground hidden md:table-cell">Trigger</th>
+                  <th className="px-4 sm:px-5 py-3 text-right font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">Latency</th>
+                  <th className="px-4 sm:px-5 py-3 text-left font-mono text-[10px] uppercase tracking-[0.1em] font-semibold text-muted-foreground">When</th>
                   <th className="px-2 py-3 w-8" />
                 </tr>
               </thead>
@@ -355,23 +356,23 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
                     transition={{ delay: i * 0.03 }}
                     className="hover:bg-accent/40 transition-colors group"
                   >
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5">
                       <StatusDot status={run.status} />
                     </td>
-                    <td className="px-5 py-3.5 hidden md:table-cell">
+                    <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell">
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {run.id.slice(0, 8)}...
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 hidden md:table-cell">
+                    <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell">
                       <span className="font-mono text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
                         {run.trigger_type}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular">
+                    <td className="px-4 sm:px-5 py-3.5 text-right font-mono text-[11px] text-muted-foreground tabular">
                       {formatLatency(run.latency_ms)}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5">
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {timeAgo(run.created_at)}
                       </span>
@@ -385,6 +386,7 @@ function AgentDetail({ agentKey }: { agentKey: string }) {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </motion.div>
@@ -427,13 +429,13 @@ function AgentList() {
   }, []);
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="title-serif text-[28px] tracking-[-0.03em] text-foreground">
+        <h1 className="title-serif text-[22px] sm:text-[28px] tracking-[-0.03em] text-foreground">
           Agents
         </h1>
         <p className="text-[13.5px] text-muted-foreground mt-1">
@@ -456,7 +458,7 @@ function AgentList() {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {agents.map((agent, i) => (
             <AgentCard key={agent.id} agent={agent} index={i} />
           ))}
