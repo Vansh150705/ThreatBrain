@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, LogOut, User } from "lucide-react";
+import { ChevronRight, LogOut, Menu, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/lib/supabase";
 import { useUserStore } from "@/store/useUserStore";
+import { useUIStore } from "@/store/useUIStore";
 
 const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
@@ -35,6 +36,7 @@ function getBreadcrumbs(pathname: string) {
 export default function Topbar() {
   const location = useLocation();
   const profile = useUserStore((s) => s.profile);
+  const openMobileNav = useUIStore((s) => s.openMobileNav);
   const crumbs = getBreadcrumbs(location.pathname);
 
   const initials = profile?.full_name
@@ -47,9 +49,17 @@ export default function Topbar() {
     : profile?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <header className="h-14 bg-background border-b border-border flex items-center justify-between px-8 sticky top-0 z-10">
-      {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-[13px]">
+    <header className="h-14 bg-background border-b border-border flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-10">
+      {/* Mobile nav trigger + breadcrumbs */}
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={openMobileNav}
+          aria-label="Open navigation"
+          className="lg:hidden -ml-1 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <nav className="flex items-center gap-2 text-[13px] min-w-0 overflow-hidden">
         {crumbs.length === 0 && (
           <span className="text-muted-foreground">ThreatBrain</span>
         )}
@@ -75,10 +85,11 @@ export default function Topbar() {
             </div>
           );
         })}
-      </nav>
+        </nav>
+      </div>
 
       {/* User menu */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {profile?.organization && (
           <Badge
             variant="outline"
