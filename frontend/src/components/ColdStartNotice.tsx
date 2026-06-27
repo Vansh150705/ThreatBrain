@@ -29,7 +29,7 @@ export default function ColdStartNotice({ className = "" }: { className?: string
           </div>
           <p className="text-[12.5px] text-muted-foreground mt-1 leading-[1.55] max-w-2xl">
             The demo backend sleeps when idle to conserve resources. The first
-            request can take up to a minute — this view refreshes automatically
+            request can take up to a minute. This view refreshes automatically
             the moment it responds.
           </p>
           {/* indeterminate progress, echoing the pipeline-health bars */}
