@@ -109,6 +109,9 @@ export function useRealtimeThreats(
 
     setStatus("connecting");
 
+    // Capture the timer map for use in cleanup (the ref object is stable).
+    const highlightTimers = highlightTimersRef.current;
+
     // One channel per org. Supabase Realtime filter syntax requires `eq.<value>`.
     if (REALTIME_DEBUG) console.log("[Realtime] About to create channel for orgId:", orgId, "table: threats");
     if (REALTIME_DEBUG) console.log("[Realtime] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
@@ -161,10 +164,10 @@ export function useRealtimeThreats(
 
     return () => {
       // Cancel pending highlight clears.
-      for (const timerId of highlightTimersRef.current.values()) {
+      for (const timerId of highlightTimers.values()) {
         window.clearTimeout(timerId);
       }
-      highlightTimersRef.current.clear();
+      highlightTimers.clear();
 
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -255,6 +258,9 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
 
     setStatus("connecting");
 
+    // Capture the timer map for use in cleanup (the ref object is stable).
+    const highlightTimers = highlightTimersRef.current;
+
     if (REALTIME_DEBUG) console.log(`[Realtime] About to create channel for orgId:`, orgId, `table: ${table}`);
     if (REALTIME_DEBUG) console.log("[Realtime] Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
     const channel = supabase
@@ -298,10 +304,10 @@ export function useRealtimeRows<T extends RealtimeBaseRow>(
     channelRef.current = channel;
 
     return () => {
-      for (const timerId of highlightTimersRef.current.values()) {
+      for (const timerId of highlightTimers.values()) {
         window.clearTimeout(timerId);
       }
-      highlightTimersRef.current.clear();
+      highlightTimers.clear();
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;

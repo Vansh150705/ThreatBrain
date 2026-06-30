@@ -18,5 +18,13 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // shadcn/ui components export variant helpers alongside the component;
+      // this only affects dev-time Fast Refresh, never production.
+      'react-refresh/only-export-components': 'warn',
+      // Setting loading/error state at the start of a data-fetching effect is
+      // idiomatic here; keep it visible as a hint rather than a hard error.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])
