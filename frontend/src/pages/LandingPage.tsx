@@ -350,17 +350,25 @@ function PipelineShowcase() {
                 <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground pt-0.5">
                   {d.label}
                 </div>
-                {visible ? (
-                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                {/* Real content is always mounted so its height is reserved from the
+                    start; the skeleton is overlaid and cross-fades out on reveal. This
+                    keeps the row height stable and prevents the page from shifting while
+                    the timed reveal runs as the user scrolls. */}
+                <div className="relative">
+                  <motion.div
+                    animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 6 }}
+                    transition={{ duration: 0.4 }}
+                  >
                     <div className="text-[14px] font-medium tracking-[-0.01em] text-foreground">{d.title}</div>
                     <p className="text-[13px] text-muted-foreground mt-1 leading-[1.6]">{d.body}</p>
                   </motion.div>
-                ) : (
-                  <div className="space-y-2 py-1" aria-hidden>
-                    <div className="h-2 w-2/3 rounded bg-foreground/[0.05]" />
-                    <div className="h-2 w-5/6 rounded bg-foreground/[0.04]" />
-                  </div>
-                )}
+                  {!visible && (
+                    <div className="absolute inset-0 flex flex-col justify-center gap-2 py-1" aria-hidden>
+                      <div className="h-2 w-2/3 rounded bg-foreground/[0.05]" />
+                      <div className="h-2 w-5/6 rounded bg-foreground/[0.04]" />
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
