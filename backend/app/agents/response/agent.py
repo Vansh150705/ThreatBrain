@@ -184,6 +184,48 @@ class ResponseAgent(BaseAgent):
 
         return "\n".join(lines)
 
+    @staticmethod
+    def _coerce_priority(value: Any) -> int:
+        """Normalize a priority into an int in [1, 10]."""
+        if isinstance(value, bool):
+            return 3
+        if isinstance(value, int):
+            return max(1, min(10, value))
+        if isinstance(value, str):
+            words = {"critical": 1, "high": 1, "medium": 2, "low": 3, "info": 4}
+            token = value.strip().lower()
+            if token in words:
+                return words[token]
+            try:
+                return max(1, min(10, int(float(token))))
+            except ValueError:
+                return 3
+        return 3
+
+    def post_process_output(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        """Normalize action field types before validation.
+
+        Smaller models occasionally return a non-string ``target`` (or omit it)
+        and a worded ``priority`` like "high" instead of an int. Coerce those so
+        a stray type slip doesn't fail the whole stage; drop actions that have no
+        usable target rather than fabricate one.
+        """
+        actions = parsed.get("actions")
+        if isinstance(actions, list):
+            cleaned: list[dict[str, Any]] = []
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                target = action.get("target")
+                if target is None or (isinstance(target, str) and not target.strip()):
+                    continue
+                if not isinstance(target, str):
+                    action["target"] = str(target)
+                action["priority"] = self._coerce_priority(action.get("priority"))
+                cleaned.append(action)
+            parsed["actions"] = cleaned
+        return parsed
+
     def validate_output(self, parsed: dict[str, Any]) -> None:
         ResponseOutput.model_validate(parsed)
 
