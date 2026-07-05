@@ -25,7 +25,7 @@ class OrchestratorRequest(BaseModel):
     run_response: bool = Field(default=True)
     run_forensics: bool = Field(default=True)
     run_compliance: bool = Field(default=True)
-    investigation_lookback_hours: int = Field(default=168, ge=1, le=720)
+    investigation_lookback_hours: int = Field(default=72, ge=1, le=720)
 
 
 class OrchestratorResponse(BaseModel):

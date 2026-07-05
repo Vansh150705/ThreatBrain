@@ -33,7 +33,7 @@ def run_full_pipeline(
     run_response: bool = True,
     run_forensics: bool = True,
     run_compliance: bool = True,
-    investigation_lookback_hours: int = 168,
+    investigation_lookback_hours: int = 72,
 ) -> dict[str, Any]:
 
 
@@ -120,7 +120,7 @@ def run_full_pipeline(
                     trigger_type="chained",
                     payload=InvestigationInput(
                         lookback_hours=investigation_lookback_hours,
-                        max_threats=30,
+                        max_threats=15,
                         min_severity="low",
                     ).model_dump(),
                 )
