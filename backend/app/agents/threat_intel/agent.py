@@ -92,8 +92,9 @@ class ThreatIntelAgent(BaseAgent):
         abuse_data = self._fetch_abuseipdb(ip)
 
         # Stash the raw data on the instance so we can pull it again in
-        # validate_output / outer endpoint without a second API call.
+        # post_process_output / outer endpoint without a second API call.
         self._last_abuse_data = abuse_data
+        self._last_ip = ip
 
         # Cache to iocs if we got data and the agent_input contains org context
         org_id = str(agent_input.organization_id)
@@ -154,24 +155,19 @@ class ThreatIntelAgent(BaseAgent):
             [
                 "",
                 "TASK:",
-                "Synthesize this into a single JSON object with exactly these fields:",
+                "Analyze the IP and respond with a single JSON object containing ONLY",
+                "the analytical fields below. The factual feed fields (country, ISP,",
+                "usage type, scores, report counts, and the raw feed) are attached",
+                "server-side automatically — do NOT echo them back, it wastes tokens.",
                 "",
                 "{",
-                f'  "ip_address":        "{ip}",',
-                '  "reputation":        one of "benign","unknown","suspicious","malicious",',
-                '  "confidence":        integer 0-100 (how sure you are in the verdict),',
-                '  "threat_score":      integer 0-100 (aggregate threat severity),',
-                '  "severity":          one of "info","low","medium","high","critical",',
-                '  "summary":           1-2 sentence analyst-style summary,',
-                '  "reasoning":         why you classified it this way, citing the data,',
-                '  "country_code":      ISO-2 country code or null,',
-                '  "isp":               ISP name or null,',
-                '  "usage_type":        e.g. "Data Center/Web Hosting" or null,',
-                '  "abuse_score":       integer 0-100 (echo abuseConfidenceScore),',
-                '  "total_reports":     integer (echo totalReports),',
-                '  "last_reported_at":  string or null (echo lastReportedAt),',
-                '  "tags":              array of short labels (["botnet","scanner",...]),',
-                '  "raw_feeds":         {"abuseipdb": ...the full data object...}',
+                '  "reputation":    one of "benign","unknown","suspicious","malicious",',
+                '  "confidence":    integer 0-100 (how sure you are in the verdict),',
+                '  "threat_score":  integer 0-100 (aggregate threat severity),',
+                '  "severity":      one of "info","low","medium","high","critical",',
+                '  "summary":       1-2 sentence analyst-style summary,',
+                '  "reasoning":     why you classified it this way, citing the data,',
+                '  "tags":          array of short labels (["botnet","scanner",...])',
                 "}",
                 "",
                 "GUIDELINES:",
@@ -180,11 +176,41 @@ class ThreatIntelAgent(BaseAgent):
                 "- abuseConfidenceScore 1-39  → reputation=unknown, severity~low/info",
                 "- abuseConfidenceScore 0     → reputation=benign, severity=info",
                 "- Hosting/Datacenter IPs warrant higher suspicion than residential",
-                "- Be precise — do not invent fields that the feed didn't return.",
+                "- Be precise — do not invent details the feed didn't return.",
             ]
         )
 
         return "\n".join(lines)
+
+    def post_process_output(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        """Attach the factual AbuseIPDB fields server-side.
+
+        The LLM is only asked for the analytical verdict; the country, ISP,
+        usage type, scores, report counts and the raw feed are filled in here
+        from the data we already fetched. This saves the completion tokens the
+        model would spend echoing the feed, and makes those fields verbatim-
+        accurate instead of transcribed by the model.
+        """
+        ip = getattr(self, "_last_ip", None)
+        if ip:
+            parsed["ip_address"] = ip
+
+        abuse = getattr(self, "_last_abuse_data", None)
+        if abuse:
+            def _clean(value: Any) -> Any:
+                return value if value not in (None, "", "Unknown") else None
+
+            parsed["country_code"] = _clean(abuse.get("countryCode"))
+            parsed["isp"] = _clean(abuse.get("isp"))
+            parsed["usage_type"] = _clean(abuse.get("usageType"))
+            parsed["abuse_score"] = int(abuse.get("abuseConfidenceScore") or 0)
+            parsed["total_reports"] = int(abuse.get("totalReports") or 0)
+            parsed["last_reported_at"] = _clean(abuse.get("lastReportedAt"))
+            parsed["raw_feeds"] = {"abuseipdb": abuse}
+        else:
+            parsed.setdefault("raw_feeds", {})
+
+        return parsed
 
     def validate_output(self, parsed: dict[str, Any]) -> None:
         """Reject responses that don't conform to ThreatIntelOutput."""

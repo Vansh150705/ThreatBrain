@@ -127,6 +127,9 @@ class BaseAgent(ABC):
             )
             raise
 
+        # 3b. Post-process (subclasses may inject server-side facts)
+        parsed_output = self.post_process_output(parsed_output)
+
         # 4. Validate
         try:
             self.validate_output(parsed_output)
@@ -188,6 +191,14 @@ class BaseAgent(ABC):
     def validate_output(self, parsed: dict[str, Any]) -> None:
         """Subclasses may raise to reject bad LLM output."""
         return None
+
+    def post_process_output(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        """Enrich/rewrite the parsed LLM output before validation.
+
+        Default is a no-op. Used e.g. by Threat Intel to attach factual
+        feed data server-side instead of spending LLM tokens echoing it back.
+        """
+        return parsed
 
     def extract_reasoning(self, parsed: dict[str, Any]) -> str | None:
         """Pull a 'reasoning' string from the parsed JSON (for display)."""
