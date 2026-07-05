@@ -1,9 +1,9 @@
-"""Apply the per-agent LLM model routing (migration 018).
+"""Apply per-agent LLM model + completion-budget routing (migrations 019 & 020).
 
-Groq's daily token limit is enforced per model, so splitting the pipeline
-across two models spreads the load across separate quota buckets. Deterministic
-/ low-stakes agents run on the faster llama-3.1-8b-instant; reasoning-heavy
-agents stay on llama-3.3-70b-versatile.
+All agents run on llama-3.1-8b-instant to maximize free-tier throughput. That
+model's free tier caps a single request at 6000 tokens/minute (TPM), counting
+prompt + reserved max_tokens, so max_tokens is capped at 2048 — comfortably above
+the largest real completion while leaving room for the prompt under the ceiling.
 
 Idempotent — safe to re-run. Reads Supabase creds from backend/.env.
 
@@ -18,34 +18,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.services.supabase_client import get_supabase_admin
 
-# agent_key -> model. Keep this in sync with the latest migration under
-# database/migrations/ (currently 019_all_agents_8b.sql).
-#
-# All agents run on llama-3.1-8b-instant to maximize free-tier throughput: 8b has
-# a much larger daily token allowance than 70b, so demo visitors can run many more
-# pipelines. Every agent was verified to produce schema-valid output on 8b; the
-# quality gap vs 70b (severity nuance, MITRE precision) is not material for the demo.
-AGENT_MODELS: dict[str, str] = {
-    "triage": "llama-3.1-8b-instant",
-    "threat_intel": "llama-3.1-8b-instant",
-    "investigation": "llama-3.1-8b-instant",
-    "response": "llama-3.1-8b-instant",
-    "forensics": "llama-3.1-8b-instant",
-    "compliance": "llama-3.1-8b-instant",
-    "hunt": "llama-3.1-8b-instant",
-}
+AGENT_MODEL = "llama-3.1-8b-instant"
+AGENT_MAX_TOKENS = 2048
+
+AGENT_KEYS = [
+    "triage",
+    "threat_intel",
+    "investigation",
+    "response",
+    "forensics",
+    "compliance",
+    "hunt",
+]
 
 
 def main() -> None:
     client = get_supabase_admin()
-    for agent_key, model in AGENT_MODELS.items():
+    for agent_key in AGENT_KEYS:
         result = (
             client.table("agents")
-            .update({"model": model})
+            .update({"model": AGENT_MODEL, "max_tokens": AGENT_MAX_TOKENS})
             .eq("agent_key", agent_key)
             .execute()
         )
-        print(f"{agent_key:14s} -> {model:24s} ({len(result.data or [])} rows)")
+        print(
+            f"{agent_key:14s} -> {AGENT_MODEL}  max_tokens={AGENT_MAX_TOKENS}  "
+            f"({len(result.data or [])} rows)"
+        )
 
 
 if __name__ == "__main__":
