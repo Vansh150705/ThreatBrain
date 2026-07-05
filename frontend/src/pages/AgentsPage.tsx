@@ -222,37 +222,41 @@ function AgentCard({ agent, index, step }: { agent: Agent; index: number; step: 
         </div>
       </div>
 
-      {agent.description && (
-        <p className="text-[12.5px] text-foreground/70 leading-[1.6] mt-4 line-clamp-2">
-          {agent.description}
-        </p>
-      )}
+      {/* Reserve two lines so cards sitting side by side keep their stat rows aligned. */}
+      <p className="text-[12.5px] text-foreground/70 leading-[1.6] mt-4 line-clamp-2 min-h-[2.5rem]">
+        {agent.description}
+      </p>
 
-      <div className="grid grid-cols-3 gap-4 pt-4 mt-4 border-t border-border">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
-            Runs
+      <div className="pt-4 mt-4 border-t border-border">
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
+              Runs
+            </div>
+            <div className="text-[16px] font-semibold text-foreground tabular">
+              {agent.total_runs.toLocaleString()}
+            </div>
           </div>
-          <div className="text-[16px] font-semibold text-foreground tabular">
-            {agent.total_runs.toLocaleString()}
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
+              Success
+            </div>
+            <div className="text-[16px] font-semibold text-foreground tabular">
+              {rate == null ? "—" : `${rate}%`}
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
+              Latency
+            </div>
+            <div className="text-[16px] font-semibold text-foreground tabular">
+              {formatLatency(agent.avg_latency_ms)}
+            </div>
           </div>
         </div>
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1.5">
-            Success
-          </div>
-          <div className="text-[16px] font-semibold text-foreground tabular leading-none mb-2">
-            {rate == null ? "—" : `${rate}%`}
-          </div>
+        {/* Full-width success meter keeps the three stats visually balanced. */}
+        <div className="mt-3.5">
           <SuccessMeter rate={rate} accent={accent} />
-        </div>
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
-            Latency
-          </div>
-          <div className="text-[16px] font-semibold text-foreground tabular">
-            {formatLatency(agent.avg_latency_ms)}
-          </div>
         </div>
       </div>
 
