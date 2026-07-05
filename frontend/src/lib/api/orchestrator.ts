@@ -13,13 +13,19 @@ export interface HandleEventRequest {
   investigation_lookback_hours?: number;
 }
 
-// Run an event through the full agent pipeline
+// Run an event through the full agent pipeline.
+// The full 6-stage run can take 60-90s (the LLM tier is rate-limited per
+// minute), well past the client's default 60s timeout, so extend it here to
+// avoid a false "timeout" failure while the backend is still working.
+const PIPELINE_TIMEOUT_MS = 180_000;
+
 export async function handleEvent(
   request: HandleEventRequest
 ): Promise<OrchestratorResponse> {
   const { data } = await http.post<OrchestratorResponse>(
     "/orchestrator/handle-event",
-    request
+    request,
+    { timeout: PIPELINE_TIMEOUT_MS }
   );
   return data;
 }
