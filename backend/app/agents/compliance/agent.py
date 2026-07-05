@@ -167,9 +167,13 @@ class ComplianceAgent(BaseAgent):
                 "- PCI-DSS applies only if payment card data is involved.",
                 "- SOC 2 and ISO 27001 apply to most security incidents at SaaS companies.",
                 "- Be conservative — don't claim applicability without basis from the data.",
-                "- Always include the affected_data_categories array.",
-                "- Keep notification_template under 500 characters.",
-                "- Total response should be under 2000 words.",
+                "- For regulations that do NOT apply: set applies=false, give a one-sentence",
+                "  reason, and leave every list empty and every optional field null. Do not",
+                "  elaborate on regulations that don't apply — it only wastes tokens.",
+                "- Populate the full analysis (data categories, actions, deadlines) ONLY for",
+                "  regulations that apply.",
+                "- Draft notification_template ONLY when notification_required is true;",
+                "  otherwise set it to null. Keep it under 500 characters.",
             ]
         )
 
