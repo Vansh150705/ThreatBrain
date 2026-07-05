@@ -120,7 +120,7 @@ def run_full_pipeline(
                     trigger_type="chained",
                     payload=InvestigationInput(
                         lookback_hours=investigation_lookback_hours,
-                        max_threats=15,
+                        max_threats=10,
                         min_severity="low",
                     ).model_dump(),
                 )

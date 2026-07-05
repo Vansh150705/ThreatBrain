@@ -100,17 +100,17 @@ class InvestigationAgent(BaseAgent):
         ]
 
         for t in threats:
-            ips = (t.get("source_ips") or [])[:3]
-            users = (t.get("affected_users") or [])[:3]
-            mitre_techs = (t.get("mitre_techniques") or [])[:5]
+            ips = (t.get("source_ips") or [])[:2]
+            users = (t.get("affected_users") or [])[:2]
+            mitre_techs = (t.get("mitre_techniques") or [])[:3]
             lines.append(
                 f"- [{t['short_id']}] severity={t.get('severity')} "
                 f"confidence={t.get('confidence')}  "
                 f"detected={t.get('detected_at', '?')[:19]}"
             )
-            lines.append(f"    title: {t.get('title', '')[:200]}")
+            lines.append(f"    title: {t.get('title', '')[:140]}")
             if t.get("description"):
-                lines.append(f"    desc:  {t['description'][:200]}")
+                lines.append(f"    desc:  {t['description'][:120]}")
             if ips:
                 lines.append(f"    source_ips: {ips}")
             if users:

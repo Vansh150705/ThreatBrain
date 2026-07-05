@@ -94,16 +94,16 @@ class ForensicsAgent(BaseAgent):
             lines.append("")
             lines.append("ASSOCIATED THREATS (CHRONOLOGICAL):")
             for t in threats:
-                ips = (t.get("source_ips") or [])[:3]
-                users = (t.get("affected_users") or [])[:3]
-                mitre_techs = (t.get("mitre_techniques") or [])[:5]
+                ips = (t.get("source_ips") or [])[:2]
+                users = (t.get("affected_users") or [])[:2]
+                mitre_techs = (t.get("mitre_techniques") or [])[:3]
                 lines.append(
                     f"- [{t['short_id']}] {t.get('detected_at', '?')[:19]}  "
                     f"severity={t.get('severity')} confidence={t.get('confidence')}"
                 )
-                lines.append(f"    title: {t.get('title', '')[:200]}")
+                lines.append(f"    title: {t.get('title', '')[:160]}")
                 if t.get("description"):
-                    lines.append(f"    desc:  {t['description'][:300]}")
+                    lines.append(f"    desc:  {t['description'][:180]}")
                 if ips:
                     lines.append(f"    source_ips: {ips}")
                 if users:
@@ -112,7 +112,8 @@ class ForensicsAgent(BaseAgent):
                     lines.append(f"    mitre: {mitre_techs}")
                 iocs = t.get("iocs") or {}
                 if iocs:
-                    lines.append(f"    iocs: {iocs}")
+                    # keys only — the full IOC payload can be large and rarely adds signal
+                    lines.append(f"    iocs: {list(iocs)[:8]}")
 
         lines.extend(
             [
