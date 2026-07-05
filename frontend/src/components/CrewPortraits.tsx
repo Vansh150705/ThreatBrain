@@ -81,6 +81,21 @@ export const Claire = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+export const Diana = ({ className = "" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="22" r="11" fill="#e6c9a8" />
+    <path d="M13 17 Q13 9 24 9 Q35 9 35 17 L35 20 Q31 13 24 13 Q17 13 13 20 Z" fill="#3b2f2f" />
+    <path d="M34 18 Q39 22 37 30 Q35.5 26 33 24 Z" fill="#3b2f2f" />
+    <circle cx="20" cy="22" r="1.2" fill="#1a1a1f" />
+    <circle cx="28" cy="22" r="1.2" fill="#1a1a1f" />
+    <path d="M21 28 Q24 29 27 28" stroke="#1a1a1f" strokeWidth="1" strokeLinecap="round" fill="none" />
+    <path d="M14 35 Q24 30 34 35 L34 48 L14 48 Z" fill="#2f4538" />
+    <circle cx="24" cy="41" r="2.4" fill="none" stroke="#7fc6a3" strokeWidth="0.8" />
+    <line x1="24" y1="38.2" x2="24" y2="43.8" stroke="#7fc6a3" strokeWidth="0.6" />
+    <line x1="21.2" y1="41" x2="26.8" y2="41" stroke="#7fc6a3" strokeWidth="0.6" />
+  </svg>
+);
+
 export const CREW_PORTRAITS: Record<string, (props: { className?: string }) => React.JSX.Element> = {
   triage: Olivia,
   threat_intel: Henry,
@@ -88,6 +103,7 @@ export const CREW_PORTRAITS: Record<string, (props: { className?: string }) => R
   response: Rachel,
   forensics: Frank,
   compliance: Claire,
+  hunt: Diana,
 };
 
 export const CREW_META: Record<string, { name: string; role: string; desc: string }> = {
@@ -97,4 +113,5 @@ export const CREW_META: Record<string, { name: string; role: string; desc: strin
   response: { name: "Rachel", role: "the Responder", desc: "Recommends remediation playbooks." },
   forensics: { name: "Frank", role: "the Forensicist", desc: "Reconstructs chain-of-custody timelines." },
   compliance: { name: "Claire", role: "the Compliance Officer", desc: "Assesses GDPR, PCI-DSS, SOC 2." },
+  hunt: { name: "Diana", role: "the Hunter", desc: "Proactively hunts threats from AI-generated hypotheses." },
 };

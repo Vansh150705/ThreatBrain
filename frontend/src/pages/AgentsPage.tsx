@@ -26,9 +26,99 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function successRate(agent: Agent): string {
-  if (agent.total_runs === 0) return "—";
-  return `${Math.round((agent.successful_runs / agent.total_runs) * 100)}%`;
+function successRateNum(agent: Agent): number | null {
+  if (agent.total_runs === 0) return null;
+  return Math.round((agent.successful_runs / agent.total_runs) * 100);
+}
+
+// Canonical order alerts flow through the pipeline; `hunt` runs proactively, so
+// it trails the linear stages. Agents not listed fall to the end.
+const PIPELINE_ORDER = [
+  "triage",
+  "threat_intel",
+  "investigation",
+  "response",
+  "forensics",
+  "compliance",
+  "hunt",
+];
+
+function pipelineRank(key: string): number {
+  const i = PIPELINE_ORDER.indexOf(key);
+  return i === -1 ? PIPELINE_ORDER.length : i;
+}
+
+// Restrained per-agent accents drawn from the SOC severity palette, so the crew
+// reads as distinct specialists without turning the grid into a rainbow.
+const AGENT_ACCENTS: Record<string, string> = {
+  triage: "oklch(0.68 0.155 75)", // amber
+  threat_intel: "oklch(0.55 0.155 245)", // blue
+  investigation: "oklch(0.55 0.16 292)", // violet
+  response: "oklch(0.52 0.13 158)", // signal green
+  forensics: "oklch(0.60 0.11 218)", // cyan
+  compliance: "oklch(0.62 0.18 35)", // rose
+  hunt: "oklch(0.60 0.12 190)", // teal
+};
+const DEFAULT_ACCENT = "oklch(0.55 0.02 250)";
+
+// Mix an accent with transparency for tinted fills/rings without extra tokens.
+function tint(accent: string, pct: number): string {
+  return `color-mix(in oklch, ${accent} ${pct}%, transparent)`;
+}
+
+function SuccessMeter({ rate, accent }: { rate: number | null; accent: string }) {
+  return (
+    <div className="h-1 rounded-full bg-muted overflow-hidden">
+      <motion.div
+        className="h-full rounded-full"
+        style={{ backgroundColor: accent }}
+        initial={{ width: 0 }}
+        animate={{ width: rate == null ? "0%" : `${rate}%` }}
+        transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+      />
+    </div>
+  );
+}
+
+function FleetSummary({ agents }: { agents: Agent[] }) {
+  const active = agents.filter((a) => a.enabled).length;
+  const totalRuns = agents.reduce((s, a) => s + a.total_runs, 0);
+  const totalOk = agents.reduce((s, a) => s + a.successful_runs, 0);
+  const overall = totalRuns ? Math.round((totalOk / totalRuns) * 100) : null;
+
+  // Latency weighted by run count, so busy agents count for more.
+  const withLat = agents.filter((a) => a.avg_latency_ms != null && a.total_runs > 0);
+  const latRuns = withLat.reduce((s, a) => s + a.total_runs, 0);
+  const avgLat = latRuns
+    ? Math.round(withLat.reduce((s, a) => s + (a.avg_latency_ms as number) * a.total_runs, 0) / latRuns)
+    : null;
+
+  const tiles = [
+    { label: "Agents online", value: `${active}/${agents.length}` },
+    { label: "Pipeline runs", value: totalRuns.toLocaleString() },
+    { label: "Success rate", value: overall == null ? "—" : `${overall}%` },
+    { label: "Avg latency", value: formatLatency(avgLat) },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.04 }}
+      className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
+    >
+      {tiles.map((t) => (
+        <div key={t.label} className="bg-card border border-border rounded-xl p-4 sm:p-5">
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mb-1.5">
+            {t.label}
+          </div>
+          <div className="text-[22px] sm:text-[24px] font-semibold text-foreground tabular tracking-[-0.02em]">
+            {t.value}
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  );
 }
 
 function StatusDot({ status }: { status: string }) {
@@ -57,82 +147,108 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AgentCard({ agent, index }: { agent: Agent; index: number }) {
+function AgentCard({ agent, index, step }: { agent: Agent; index: number; step: number }) {
   const Portrait = CREW_PORTRAITS[agent.agent_key];
   const meta = CREW_META[agent.agent_key];
+  const accent = AGENT_ACCENTS[agent.agent_key] ?? DEFAULT_ACCENT;
+  const name = meta?.name ?? agent.name;
+  const rate = successRateNum(agent);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="bg-card border border-border rounded-xl p-4 sm:p-5"
+      transition={{ delay: index * 0.05, duration: 0.35 }}
+      className="group relative bg-card border border-border rounded-xl p-4 sm:p-5 transition-all hover:border-foreground/15 hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_14px_30px_-16px_rgba(16,24,40,0.14)]"
     >
-      <div className="flex items-start gap-4 mb-4">
-        <div className="shrink-0">
-          {Portrait ? (
-            <Portrait className="w-14 h-14" />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Activity className="w-6 h-6 text-muted-foreground" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-[15px] font-semibold text-foreground tracking-[-0.01em]">
-                {meta?.name ?? agent.name}
-              </div>
-              {meta && (
-                <div className="text-[12px] text-muted-foreground">{meta.role}</div>
-              )}
-            </div>
-            <span
-              className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded border ${
-                agent.enabled
-                  ? "bg-severity-low/8 text-severity-low border-severity-low/30"
-                  : "bg-muted text-muted-foreground border-border"
-              }`}
-            >
-              {agent.enabled ? "active" : "disabled"}
-            </span>
-          </div>
-          <div className="font-mono text-[11px] text-muted-foreground mt-1">
-            {agent.agent_key}
-            {agent.model && (
-              <span className="ml-2 opacity-60">{agent.model}</span>
+      {/* accent hairline bleeding in from the left edge */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-xl"
+        style={{ background: `linear-gradient(90deg, ${tint(accent, 60)}, transparent 65%)` }}
+      />
+
+      <div className="flex items-start gap-4">
+        {/* portrait with pipeline step badge */}
+        <div className="relative shrink-0">
+          <div
+            className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+            style={{ backgroundColor: tint(accent, 10), boxShadow: `inset 0 0 0 1.5px ${tint(accent, 32)}` }}
+          >
+            {Portrait ? (
+              <Portrait className="w-14 h-14" />
+            ) : (
+              <span className="font-mono text-[18px] font-semibold" style={{ color: accent }}>
+                {name.charAt(0)}
+              </span>
             )}
+          </div>
+          <span
+            className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[9px] font-semibold text-white ring-2 ring-card"
+            style={{ backgroundColor: accent }}
+          >
+            {String(step).padStart(2, "0")}
+          </span>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold text-foreground tracking-[-0.01em] truncate">
+                {name}
+              </div>
+              <div className="text-[12px] text-muted-foreground truncate">
+                {meta?.role ?? "SOC agent"}
+              </div>
+            </div>
+            {agent.enabled ? (
+              <span
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] px-2 py-0.5 rounded-full border shrink-0"
+                style={{ color: accent, borderColor: tint(accent, 32), backgroundColor: tint(accent, 8) }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
+                active
+              </span>
+            ) : (
+              <span className="inline-flex items-center font-mono text-[10px] px-2 py-0.5 rounded-full border border-border bg-muted text-muted-foreground shrink-0">
+                disabled
+              </span>
+            )}
+          </div>
+          <div className="font-mono text-[10.5px] text-muted-foreground mt-1.5 truncate">
+            {agent.agent_key}
+            {agent.model && <span className="opacity-50"> · {agent.model}</span>}
           </div>
         </div>
       </div>
 
       {agent.description && (
-        <p className="text-[13px] text-foreground/70 leading-[1.6] mb-4">
+        <p className="text-[12.5px] text-foreground/70 leading-[1.6] mt-4 line-clamp-2">
           {agent.description}
         </p>
       )}
 
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
+      <div className="grid grid-cols-3 gap-4 pt-4 mt-4 border-t border-border">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
-            Total runs
+            Runs
           </div>
           <div className="text-[16px] font-semibold text-foreground tabular">
             {agent.total_runs.toLocaleString()}
           </div>
         </div>
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
-            Success rate
+          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1.5">
+            Success
           </div>
-          <div className="text-[16px] font-semibold text-foreground tabular">
-            {successRate(agent)}
+          <div className="text-[16px] font-semibold text-foreground tabular leading-none mb-2">
+            {rate == null ? "—" : `${rate}%`}
           </div>
+          <SuccessMeter rate={rate} accent={accent} />
         </div>
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold mb-1">
-            Avg latency
+            Latency
           </div>
           <div className="text-[16px] font-semibold text-foreground tabular">
             {formatLatency(agent.avg_latency_ms)}
@@ -140,12 +256,15 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border">
+      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+        <span className="font-mono text-[10.5px] text-muted-foreground">
+          {agent.last_run_at ? `last run ${timeAgo(agent.last_run_at)}` : "no runs yet"}
+        </span>
         <Link
           to={`/agents/${agent.agent_key}`}
-          className="inline-flex items-center gap-1 text-[12.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-muted-foreground group-hover:text-foreground transition-colors"
         >
-          View run history
+          Run history
           <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -451,7 +570,7 @@ function AgentList() {
           Agents
         </h1>
         <p className="text-[13.5px] text-muted-foreground mt-1">
-          Six specialized AI agents that make up the SOC pipeline.
+          Seven specialized AI agents power the SOC pipeline — each an expert at a single job.
         </p>
       </motion.div>
 
@@ -471,12 +590,21 @@ function AgentList() {
         </div>
       )}
 
-      {!loading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-          {agents.map((agent, i) => (
-            <AgentCard key={agent.id} agent={agent} index={i} />
-          ))}
-        </div>
+      {!loading && !error && agents.length > 0 && (
+        <>
+          <FleetSummary agents={agents} />
+
+          <div>
+            <SectionLabel>The crew · in execution order</SectionLabel>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              {[...agents]
+                .sort((a, b) => pipelineRank(a.agent_key) - pipelineRank(b.agent_key))
+                .map((agent, i) => (
+                  <AgentCard key={agent.id} agent={agent} index={i} step={i + 1} />
+                ))}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
