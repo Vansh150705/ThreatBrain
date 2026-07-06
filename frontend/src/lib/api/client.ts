@@ -52,15 +52,19 @@ http.interceptors.response.use(
 
     const { status, data } = error.response;
     const body = (data as Record<string, unknown>) || {};
+    const rawMessage =
+      body.message ?? body.detail ?? `Request failed with status ${status}`;
+    // FastAPI returns a structured `detail` (object/array) for validation and
+    // some auth errors; coerce so it never renders as "[object Object]".
     const message =
-      (body.message as string) ||
-      (body.detail as string) ||
-      `Request failed with status ${status}`;
+      typeof rawMessage === "string" ? rawMessage : JSON.stringify(rawMessage);
     const code = body.error as string | undefined;
 
     if (status === 401) {
       clearToken();
-      return Promise.reject(new AuthError(message));
+      return Promise.reject(
+        new AuthError("Your session has expired. Please sign in again.")
+      );
     }
     if (status === 403) {
       return Promise.reject(new ForbiddenError(message));
