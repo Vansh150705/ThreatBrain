@@ -1,0 +1,14 @@
+[Unit]
+Description=ThreatBrain log collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tb-collector
+ExecStart=/opt/tb-collector/venv/bin/python -m tb_collector --config /opt/tb-collector/collector.yaml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
