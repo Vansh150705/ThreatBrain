@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     auth,
     copilot,
     incidents,
+    ingest,
     meta,
     orchestrator,
     organizations,
@@ -32,6 +33,9 @@ api_router.include_router(playbooks.router)
 
 # Copilot
 api_router.include_router(copilot.router)
+
+# Ingest (universal collector front door)
+api_router.include_router(ingest.router)
 
 # Threats
 api_router.include_router(threats_endpoints.router)
