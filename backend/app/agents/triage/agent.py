@@ -94,7 +94,7 @@ class TriageAgent(BaseAgent):
                 "- Weight severity by asset criticality (crown_jewel >> medium).",
                 "- Be conservative with 'critical'; reserve for confirmed-active attacks.",
                 "- If asset_criticality is 'crown_jewel' and severity >= 'medium', set promote_to_threat=true.",
-                "- If you see brute-force patterns (>20 failed auths from one IP), promote_to_threat=true.",
+                "- If you see repeated failed auths (>=10 from one IP) or active scanning, set promote_to_threat=true and severity to at least 'high'.",
                 "- For routine info/low events with no IOCs, promote_to_threat=false.",
                 "- Always include at least one MITRE tactic and technique if applicable.",
             ]
