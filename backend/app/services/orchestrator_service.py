@@ -11,6 +11,7 @@ from app.agents.response import ResponseAgent, ResponseInput
 from app.agents.threat_intel import ThreatIntelAgent, ThreatIntelInput
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
 from app.core.logging import get_logger
+from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
 
@@ -150,6 +151,50 @@ def run_full_pipeline(
         except Exception as exc:
             log.exception("orchestrator_investigation_failed")
             stages["investigation"] = _stage("failed", error=str(exc))
+
+    # Fallback: a promoted high/critical standalone threat that Investigation did
+    # not fold into a multi-threat incident still deserves a response, so make it
+    # its own single-threat incident. This lets a lone real attack (e.g. one SSH
+    # brute-force source) reach the Response/Forensics/Compliance stages.
+    if (
+        incident_short_id is None
+        and promoted_threat_id
+        and triage_verdict is not None
+        and triage_verdict.severity.value in ("high", "critical")
+    ):
+        try:
+            client = get_supabase_admin()
+            inc = (
+                client.table("incidents")
+                .insert(
+                    {
+                        "organization_id": org_id,
+                        "title": triage_verdict.title,
+                        "description": triage_verdict.description,
+                        "severity": triage_verdict.severity.value,
+                        "status": "open",
+                        "confidence": triage_verdict.confidence,
+                        "threat_count": 1,
+                        "ai_summary": {
+                            "source": "single_threat_fallback",
+                            "triage_run_id": triage_run_id,
+                        },
+                    }
+                )
+                .execute()
+            ).data[0]
+            incident_id = inc["id"]
+            incident_short_id = inc["short_id"]
+            client.table("threats").update({"incident_id": incident_id}).eq(
+                "id", promoted_threat_id
+            ).execute()
+            log.info(
+                "orchestrator_single_threat_incident_created",
+                incident_short_id=incident_short_id,
+                threat_id=promoted_threat_id,
+            )
+        except Exception:
+            log.exception("orchestrator_incident_fallback_failed")
 
     # Stages 4-6 need an incident to act on
     if incident_short_id is None:
