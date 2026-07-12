@@ -1,0 +1,10 @@
+# Copy to collector.yaml and fill in. Then: chmod 600 collector.yaml
+base_url: https://vansh150705-threatbrain-backend.hf.space/api/v1
+email: you@example.com
+password: your-threatbrain-password
+collector_id: kali-lab-01
+asset_name: kali-box
+log_path: /var/log/auth.log
+threshold: 10
+window_seconds: 60
+cooldown_seconds: 300
