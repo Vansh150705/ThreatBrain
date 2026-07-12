@@ -5,3 +5,5 @@ __pycache__/
 # real credentials — never commit
 collector.yaml
 collector.local.yaml
+executor.yaml
+executor.local.yaml

@@ -1,0 +1,16 @@
+[Unit]
+Description=ThreatBrain response executor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tb-collector
+ExecStart=/opt/tb-collector/venv/bin/python -m tb_executor --config /opt/tb-collector/executor.yaml
+Restart=always
+RestartSec=5
+# needs root to run iptables
+User=root
+
+[Install]
+WantedBy=multi-user.target

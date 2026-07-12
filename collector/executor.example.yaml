@@ -1,0 +1,15 @@
+# Copy to executor.yaml and fill in. Then: chmod 600 executor.yaml
+base_url: https://vansh150705-threatbrain-backend.hf.space/api/v1
+email: you@example.com
+password: your-threatbrain-password
+poll_interval: 10
+# dry_run: true logs intended blocks without touching iptables.
+# Set false to really add iptables DROP rules (needs root).
+dry_run: true
+firewall: iptables
+# allow_private: block private/LAN IPs too. Keep false in production; set true in
+# a LAN lab where the attacker box is on a private IP (e.g. 192.168.x / 10.x).
+allow_private: false
+# Never block these (your own IP / management hosts):
+allowlist:
+  - 203.0.113.9
