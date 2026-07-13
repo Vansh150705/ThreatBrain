@@ -4,7 +4,14 @@ email: you@example.com
 password: your-threatbrain-password
 collector_id: kali-lab-01
 asset_name: kali-box
+# Watch one log:
 log_path: /var/log/auth.log
+# ...or watch several at once (SSH + web + mail + FTP) — all feed one detector set:
+# log_paths:
+#   - /var/log/auth.log            # SSH / sudo / su / PAM (ftp, imap via PAM)
+#   - /var/log/nginx/access.log    # web-app login brute force / credential stuffing
+#   - /var/log/mail.log            # postfix SASL / dovecot
+#   - /var/log/vsftpd.log          # FTP
 threshold: 10
 window_seconds: 60
 cooldown_seconds: 300
