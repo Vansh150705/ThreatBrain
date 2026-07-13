@@ -95,6 +95,8 @@ class TriageAgent(BaseAgent):
                 "- Be conservative with 'critical'; reserve for confirmed-active attacks.",
                 "- If asset_criticality is 'crown_jewel' and severity >= 'medium', set promote_to_threat=true.",
                 "- If you see repeated failed auths (>=10 from one IP) or active scanning, set promote_to_threat=true and severity to at least 'high'.",
+                "- A successful login following repeated failures (event_type 'authentication.brute_force_success') is a CONFIRMED account compromise: severity='critical', promote_to_threat=true.",
+                "- Password spraying, credential stuffing, distributed/botnet brute-force, or username enumeration are active attacks: severity>='high', promote_to_threat=true.",
                 "- For routine info/low events with no IOCs, promote_to_threat=false.",
                 "- Always include at least one MITRE tactic and technique if applicable.",
             ]
