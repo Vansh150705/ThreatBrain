@@ -6,7 +6,9 @@ poll_interval: 10
 # dry_run: true logs intended blocks without touching iptables.
 # Set false to really add iptables DROP rules (needs root).
 dry_run: true
-firewall: iptables
+# firewall: auto picks iptables on Linux and Windows Firewall on Windows.
+# Force it with "iptables" or "windows" if you prefer.
+firewall: auto
 # allow_private: block private/LAN IPs too. Keep false in production; set true in
 # a LAN lab where the attacker box is on a private IP (e.g. 192.168.x / 10.x).
 allow_private: false

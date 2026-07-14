@@ -12,7 +12,7 @@ class ExecutorConfig:
     password: str
     poll_interval: int = 10
     dry_run: bool = True
-    firewall: str = "iptables"
+    firewall: str = "auto"          # auto | iptables | windows | dry-run
     allow_private: bool = False
     allowlist: tuple[str, ...] = field(default_factory=tuple)
 
@@ -26,7 +26,7 @@ def load_executor_config(path: str) -> ExecutorConfig:
         password=data["password"],
         poll_interval=int(data.get("poll_interval", 10)),
         dry_run=bool(data.get("dry_run", True)),
-        firewall=data.get("firewall", "iptables"),
+        firewall=data.get("firewall", "auto"),
         allow_private=bool(data.get("allow_private", False)),
         allowlist=tuple(data.get("allowlist", []) or []),
     )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from tb_executor.blocker import DryRunBlocker, IptablesBlocker
+from tb_executor.blocker import DryRunBlocker, select_blocker
 from tb_executor.client import ExecutorClient
 from tb_executor.config import ExecutorConfig
 from tb_executor.guard import is_blockable_ip
@@ -13,9 +13,9 @@ def run(config: ExecutorConfig, *, client=None, blocker=None, iterations=None) -
     if client is None:
         client = ExecutorClient(config.base_url, config.email, config.password)
     if blocker is None:
-        blocker = DryRunBlocker() if config.dry_run else IptablesBlocker()
+        blocker = select_blocker(dry_run=config.dry_run, firewall=config.firewall)
 
-    mode = "DRY-RUN" if isinstance(blocker, DryRunBlocker) else "LIVE"
+    mode = "DRY-RUN" if isinstance(blocker, DryRunBlocker) else f"LIVE ({type(blocker).__name__})"
     print(f"[tb-executor] polling {config.base_url} every {config.poll_interval}s ({mode})")
 
     i = 0
