@@ -12,6 +12,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
+const GuidePage = lazy(() => import("./pages/GuidePage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AgentsPage = lazy(() => import("./pages/AgentsPage"));
 const IncidentsPage = lazy(() => import("./pages/IncidentsPage"));
@@ -47,6 +48,7 @@ createRoot(document.getElementById("root")!).render(
               <Route index element={<LandingPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="signup" element={<SignupPage />} />
+              <Route path="guide" element={<GuidePage />} />
 
               {/* Protected routes */}
               <Route

@@ -650,6 +650,12 @@ export default function LandingPage() {
             >
               <GithubIcon className="w-[18px] h-[18px]" />
             </a>
+            <Link
+              to="/guide"
+              className="hidden md:block text-[13.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Setup guide
+            </Link>
             <Link to="/signup" className="hidden md:block">
               <Button size="sm" className="group bg-foreground text-background hover:bg-foreground/90 h-10 px-5 text-[13.5px] font-medium">
                 Try the demo
@@ -673,6 +679,7 @@ export default function LandingPage() {
               <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
               <a href="#how" onClick={() => setMenuOpen(false)}>How it works</a>
               <a href="#simulate" onClick={() => setMenuOpen(false)}>Simulator</a>
+              <Link to="/guide" onClick={() => setMenuOpen(false)}>Setup guide</Link>
               <Link to="/signup">
                 <Button size="sm" className="w-full bg-foreground text-background">Try the demo</Button>
               </Link>
