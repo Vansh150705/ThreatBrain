@@ -18,7 +18,7 @@ from tb_collector.parsing import parse_auth_line, parse_web_request
 from tb_collector.signatures import scan_line
 
 # rsyslog collapses floods: "message repeated 43 times: [ Failed password ... ]"
-_REPEAT = re.compile(r"message repeated (?P<n>\d+) times:\s*\[\s*(?P<inner>.*?)\s*\]\s*$")
+_REPEAT = re.compile(r"(?:last )?message repeated (?P<n>\d+) times:\s*\[\s*(?P<inner>.*?)\s*\]\s*$")
 _WEB_FIRST_IP = re.compile(r"^\s*(?P<ip>\d{1,3}(?:\.\d{1,3}){3})")
 _ANY_IP = re.compile(r"(?P<ip>\d{1,3}(?:\.\d{1,3}){3})")
 

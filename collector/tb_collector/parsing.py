@@ -12,10 +12,16 @@ _IP = r"(?P<ip>\d{1,3}(?:\.\d{1,3}){3})"
 _USER_KV = re.compile(r"user=(?P<user>\S+)")
 
 # --- SSH (sshd) ---
+# `from (?P<ip>\S+)` captures IPv4, IPv6, or a hostname (the executor's guard
+# validates it before any block). Failed matches password / publickey / keyboard-
+# interactive so key-based and interactive brute force are counted too.
 _SSH_ACCEPTED = re.compile(
-    rf"Accepted (?:password|publickey|keyboard-interactive/\S+) for (?P<user>\S+) from {_IP}"
+    r"Accepted (?:password|publickey|keyboard-interactive/\S+) for (?P<user>\S+) from (?P<ip>\S+)"
 )
-_SSH_FAILED = re.compile(rf"Failed password for (?P<invalid>invalid user )?(?P<user>\S+) from {_IP}")
+_SSH_FAILED = re.compile(
+    r"Failed (?:password|publickey|keyboard-interactive/\S+) for "
+    r"(?P<invalid>invalid user )?(?P<user>\S+) from (?P<ip>\S+)"
+)
 
 
 def _p_ssh(line: str, now: float) -> AuthEvent | None:

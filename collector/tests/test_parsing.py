@@ -22,6 +22,23 @@ def test_parse_ssh_success():
     assert ev.outcome == "success" and ev.username == "jane" and ev.source_ip == "9.9.9.9"
 
 
+def test_parse_ssh_publickey_fail():
+    ev = parse_auth_line("sshd[1]: Failed publickey for root from 1.2.3.4 port 22 ssh2", now=1.0)
+    assert ev.service == "ssh" and ev.outcome == "fail" and ev.source_ip == "1.2.3.4"
+
+
+def test_parse_ssh_keyboard_interactive_fail():
+    ev = parse_auth_line(
+        "sshd[1]: Failed keyboard-interactive/pam for admin from 5.6.7.8 port 1 ssh2", now=1.0
+    )
+    assert ev.outcome == "fail" and ev.username == "admin"
+
+
+def test_parse_ssh_ipv6():
+    ev = parse_auth_line("sshd[1]: Failed password for root from 2001:db8::1 port 22 ssh2", now=1.0)
+    assert ev.source_ip == "2001:db8::1" and ev.outcome == "fail"
+
+
 # --- sudo/su ---
 def test_parse_sudo_fail():
     ev = parse_auth_line(
