@@ -97,6 +97,8 @@ class TriageAgent(BaseAgent):
                 "- If you see repeated failed auths (>=10 from one IP) or active scanning, set promote_to_threat=true and severity to at least 'high'.",
                 "- A successful login following repeated failures (event_type 'authentication.brute_force_success') is a CONFIRMED account compromise: severity='critical', promote_to_threat=true.",
                 "- Password spraying, credential stuffing, distributed/botnet brute-force, or username enumeration are active attacks: severity>='high', promote_to_threat=true.",
+                "- Web exploitation attempts (SQL injection, XSS, path traversal, command injection, Log4Shell; event_type 'web.*') are attacks: severity>='high' (severity='critical' for Log4Shell / remote code execution), promote_to_threat=true.",
+                "- A detected attack or vulnerability-scanning tool (event_type 'recon.scanner') is active reconnaissance: severity>='medium', promote_to_threat=true.",
                 "- For routine info/low events with no IOCs, promote_to_threat=false.",
                 "- Always include at least one MITRE tactic and technique if applicable.",
             ]
