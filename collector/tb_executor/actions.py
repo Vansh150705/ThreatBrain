@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from tb_executor.blocker import DryRunBlocker, select_blocker
-from tb_executor.guard import is_blockable_ip
+from tb_executor.guard import is_blockable_ip, is_blockable_network
 from tb_executor.user_control import is_disableable_user, select_user_disabler
 
 
@@ -44,6 +44,15 @@ class ActionDispatcher:
 
         if action_type == "block_ip":
             ok, reason = is_blockable_ip(target or "", self.ip_allowlist, allow_private=self.allow_private)
+            if not ok:
+                return "failed", f"guard refused: {reason}"
+            try:
+                return "executed", self.blocker.block(target)
+            except Exception as exc:
+                return "failed", str(exc)
+
+        if action_type == "block_range":
+            ok, reason = is_blockable_network(target or "", self.ip_allowlist, allow_private=self.allow_private)
             if not ok:
                 return "failed", f"guard refused: {reason}"
             try:

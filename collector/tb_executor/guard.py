@@ -34,3 +34,38 @@ def is_blockable_ip(
     if addr.is_private and not allow_private:
         return False, "private/RFC1918 address (set allow_private for lab use)"
     return True, "ok"
+
+
+def is_blockable_network(
+    cidr: str,
+    allowlist: Iterable[str] = (),
+    *,
+    allow_private: bool = False,
+    min_prefix_v4: int = 16,
+    min_prefix_v6: int = 32,
+) -> tuple[bool, str]:
+    """Return (blockable, reason) for a CIDR range (for blocking IP-rotating attackers).
+
+    Refuses ranges that are too broad, special-use, private (unless allowed), or
+    that contain an allowlisted IP — so a range block can't take out half the
+    internet or your own hosts.
+    """
+    try:
+        net = ipaddress.ip_network(cidr, strict=False)
+    except ValueError:
+        return False, f"not a valid CIDR range: {cidr!r}"
+    if net.version == 4 and net.prefixlen < min_prefix_v4:
+        return False, f"range too broad (/{net.prefixlen}); minimum is /{min_prefix_v4}"
+    if net.version == 6 and net.prefixlen < min_prefix_v6:
+        return False, f"range too broad (/{net.prefixlen}); minimum is /{min_prefix_v6}"
+    if net.is_loopback or net.is_link_local or net.is_multicast or net.is_unspecified:
+        return False, "special-use range"
+    if net.is_private and not allow_private:
+        return False, "private range (set allow_private for lab use)"
+    for entry in allowlist:
+        try:
+            if ipaddress.ip_address(entry) in net:
+                return False, f"range contains allowlisted IP {entry}"
+        except ValueError:
+            continue
+    return True, "ok"
