@@ -23,3 +23,17 @@ def test_success_after_failures_flags_compromise():
 
 def test_non_auth_line_yields_nothing():
     assert _engine().process_line("nothing to see here", now=1.0) == []
+
+
+def test_web_sqli_signature_detected():
+    e = _engine()
+    line = '203.0.113.5 - - [t] "GET /?id=1\' OR 1=1-- HTTP/1.1" 200 10 "-" "curl/8"'
+    dets = e.process_line(line, now=1.0)
+    assert any(d.kind == "web_sqli" and d.source_ip == "203.0.113.5" for d in dets)
+
+
+def test_signature_cooldown_dedupes():
+    e = _engine()
+    line = '203.0.113.5 - - [t] "GET /?id=1\' OR 1=1-- HTTP/1.1" 200 10 "-" "curl/8"'
+    assert e.process_line(line, now=1.0)  # fires
+    assert e.process_line(line, now=2.0) == []  # same ip+kind within cooldown -> quiet

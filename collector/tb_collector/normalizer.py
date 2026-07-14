@@ -57,6 +57,26 @@ def _describe(d: Detection) -> tuple[str, str, str]:
             f"{d.count} failed {svc} logins from {ip} over an extended window "
             f"(low-and-slow brute-force designed to evade rate limits).",
         )
+    if k == "web_sqli":
+        return (f"SQL injection attempt from {ip}", "web.sql_injection",
+                f"{ip} sent a SQL injection payload to the web application (MITRE T1190).")
+    if k == "web_xss":
+        return (f"Cross-site scripting (XSS) attempt from {ip}", "web.xss",
+                f"{ip} sent a cross-site scripting payload to the web application.")
+    if k == "web_traversal":
+        return (f"Path traversal / file-read attempt from {ip}", "web.path_traversal",
+                f"{ip} tried to read files outside the web root (path traversal / local file inclusion).")
+    if k == "web_cmdi":
+        return (f"Command injection attempt from {ip}", "web.command_injection",
+                f"{ip} tried to run operating-system commands through the web app (command injection).")
+    if k == "web_log4shell":
+        return (f"Log4Shell (JNDI) exploit attempt from {ip}", "web.log4shell",
+                f"CRITICAL: {ip} sent a Log4Shell / JNDI payload — a remote-code-execution attempt.")
+    if k == "scanner_tool":
+        sig = d.extra.get("signature", "scanner")
+        return (f"Attack/scanning tool detected from {ip}", "recon.scanner",
+                f"{ip} is using an attack or vulnerability-scanning tool ({sig}) against this host "
+                f"(active reconnaissance).")
     return (
         f"Suspicious auth activity from {ip}",
         "authentication.suspicious",

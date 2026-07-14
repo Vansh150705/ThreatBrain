@@ -44,6 +44,21 @@ def test_distributed_titles_by_user():
     assert "admin" in p["event"]["title"]
 
 
+def test_web_sqli_event_type_and_title():
+    d = _det("web_sqli", severity="high", mitre=["T1190"],
+             extra={"service": "web", "signature": "SQL injection"})
+    p = detection_to_ingest_payload(d, collector_id="k")
+    assert p["event"]["event_type"] == "web.sql_injection"
+    assert "sql injection" in p["event"]["title"].lower()
+
+
+def test_scanner_event_type():
+    d = _det("scanner_tool", severity="medium", mitre=["T1595"],
+             extra={"service": "web", "signature": "sqlmap"})
+    p = detection_to_ingest_payload(d, collector_id="k")
+    assert p["event"]["event_type"] == "recon.scanner"
+
+
 def test_asset_name_optional():
     p = detection_to_ingest_payload(_det("brute_force"), collector_id="k")
     assert p["event"]["asset_name"] is None
