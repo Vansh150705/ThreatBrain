@@ -52,6 +52,13 @@ def test_web_sqli_event_type_and_title():
     assert "sql injection" in p["event"]["title"].lower()
 
 
+def test_web_scanning_event_type():
+    d = _det("web_scanning", severity="high", mitre=["T1595"],
+             extra={"service": "web", "distinct_paths": 20})
+    p = detection_to_ingest_payload(d, collector_id="k")
+    assert p["event"]["event_type"] == "recon.web_scanning"
+
+
 def test_scanner_event_type():
     d = _det("scanner_tool", severity="medium", mitre=["T1595"],
              extra={"service": "web", "signature": "sqlmap"})

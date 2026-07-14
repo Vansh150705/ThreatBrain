@@ -11,9 +11,10 @@ from tb_collector.detectors import (
     PerSourceGuessing,
     SuccessAfterFailure,
     UsernameEnumeration,
+    WebScanning,
 )
 from tb_collector.models import Detection
-from tb_collector.parsing import parse_auth_line
+from tb_collector.parsing import parse_auth_line, parse_web_request
 from tb_collector.signatures import scan_line
 
 # rsyslog collapses floods: "message repeated 43 times: [ Failed password ... ]"
@@ -43,10 +44,16 @@ class DetectionEngine:
     """Runs both paths on each line: rate/behaviour detectors (auth events) and
     signature scanning (web exploits / scanner tools)."""
 
-    def __init__(self, detectors: list[Detector] | None = None, sig_cooldown: int = 300) -> None:
+    def __init__(
+        self,
+        detectors: list[Detector] | None = None,
+        sig_cooldown: int = 300,
+        web_scanner: WebScanning | None = None,
+    ) -> None:
         self.detectors = detectors if detectors is not None else default_detectors()
         self.sig_cooldown = sig_cooldown
         self._sig_cool: dict[tuple, float] = {}
+        self.web_scanner = web_scanner if web_scanner is not None else WebScanning()
 
     def process_line(self, line: str, *, now: float) -> list[Detection]:
         results: list[Detection] = []
@@ -67,6 +74,13 @@ class DetectionEngine:
 
         # 2. Signature path: attack payloads / scanner tools in the raw line.
         results.extend(self._scan_signatures(line, now))
+
+        # 3. Behavioural web-scanning path: many URLs / errors from one IP.
+        wr = parse_web_request(line, now=now)
+        if wr is not None:
+            det = self.web_scanner.feed_web(wr[0], wr[1], wr[2], now)
+            if det is not None:
+                results.append(det)
         return results
 
     def _scan_signatures(self, line: str, now: float) -> list[Detection]:

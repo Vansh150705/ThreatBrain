@@ -184,6 +184,54 @@ class DistributedBruteForce(Detector):
         return None
 
 
+class WebScanning(Detector):
+    """T1595 — one IP requests many distinct URLs or triggers many errors.
+
+    Catches directory brute-forcing and vulnerability scanners (gobuster, nikto,
+    nuclei, ...) by BEHAVIOUR, so it works even when the tool spoofs a normal
+    browser User-Agent. Fed via ``feed_web`` (not the AuthEvent path).
+    """
+
+    def __init__(
+        self,
+        distinct_paths: int = 15,
+        error_threshold: int = 20,
+        window: int = 60,
+        cooldown: int = 600,
+    ) -> None:
+        self.distinct_paths = distinct_paths
+        self.error_threshold = error_threshold
+        self.window = window
+        self.cooldown = cooldown
+        self._req: dict[str, deque] = defaultdict(deque)
+        self._cool: dict[str, float] = {}
+
+    def feed_web(self, ip: str | None, path: str, status: int, now: float) -> Detection | None:
+        if not ip:
+            return None
+        if now < self._cool.get(ip, 0.0):
+            return None
+        w = self._req[ip]
+        is_error = status in (400, 401, 403, 404, 405, 500)
+        w.append((now, path, is_error))
+        cut = now - self.window
+        while w and w[0][0] < cut:
+            w.popleft()
+        distinct = {p for _, p, _ in w}
+        errors = sum(1 for _, _, e in w if e)
+        if len(distinct) >= self.distinct_paths or errors >= self.error_threshold:
+            first = w[0][0]
+            self._cool[ip] = now + self.cooldown
+            w.clear()
+            return Detection(
+                kind="web_scanning", source_ip=ip, username=None, count=len(distinct),
+                window_seconds=self.window, first_seen=_dt(first), last_seen=_dt(now),
+                sample_lines=[path[:200]], severity="high", mitre=["T1595"],
+                extra={"service": "web", "distinct_paths": len(distinct), "errors": errors},
+            )
+        return None
+
+
 class LowAndSlow(Detector):
     """T1110.001 — a source IP reaches a modest count over a long (hours) window."""
 

@@ -6,6 +6,7 @@ from tb_collector.detectors import (
     PerSourceGuessing,
     SuccessAfterFailure,
     UsernameEnumeration,
+    WebScanning,
 )
 
 
@@ -81,3 +82,19 @@ def test_low_and_slow_uses_long_window():
     d.feed(ev(ts=40000))
     out = d.feed(ev(ts=80000))
     assert out and out.kind == "brute_force_slow"
+
+
+def test_web_scanning_distinct_paths():
+    d = WebScanning(distinct_paths=3, window=60)
+    assert d.feed_web("1.1.1.1", "/a", 404, 0.0) is None
+    assert d.feed_web("1.1.1.1", "/b", 404, 1.0) is None
+    out = d.feed_web("1.1.1.1", "/c", 404, 2.0)
+    assert out and out.kind == "web_scanning"
+
+
+def test_web_scanning_error_burst_same_path():
+    d = WebScanning(distinct_paths=999, error_threshold=3, window=60)
+    assert d.feed_web("2.2.2.2", "/x", 404, 0.0) is None
+    assert d.feed_web("2.2.2.2", "/x", 403, 1.0) is None
+    out = d.feed_web("2.2.2.2", "/x", 500, 2.0)
+    assert out and out.kind == "web_scanning"

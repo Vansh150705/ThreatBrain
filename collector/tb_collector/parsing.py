@@ -160,3 +160,11 @@ def parse_auth_line(line: str, *, now: float) -> AuthEvent | None:
         if ev is not None:
             return ev
     return None
+
+
+def parse_web_request(line: str, *, now: float) -> tuple[str, str, int] | None:
+    """Return (ip, path, status) for any web access-log line, else None."""
+    m = _WEB.search(line)
+    if not m:
+        return None
+    return m.group("ip"), m.group("path"), int(m.group("status"))

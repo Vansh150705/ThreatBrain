@@ -72,6 +72,11 @@ def _describe(d: Detection) -> tuple[str, str, str]:
     if k == "web_log4shell":
         return (f"Log4Shell (JNDI) exploit attempt from {ip}", "web.log4shell",
                 f"CRITICAL: {ip} sent a Log4Shell / JNDI payload — a remote-code-execution attempt.")
+    if k == "web_scanning":
+        n = d.extra.get("distinct_paths", d.count)
+        return (f"Web vulnerability scanning from {ip}", "recon.web_scanning",
+                f"{ip} requested {n} distinct URLs / triggered many errors within "
+                f"{d.window_seconds}s (directory brute-forcing or vulnerability scanning).")
     if k == "scanner_tool":
         sig = d.extra.get("signature", "scanner")
         return (f"Attack/scanning tool detected from {ip}", "recon.scanner",
