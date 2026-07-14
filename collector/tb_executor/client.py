@@ -35,10 +35,11 @@ class ExecutorClient:
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._token}", "Content-Type": "application/json"}
 
-    def list_pending_blocks(self) -> list[dict[str, Any]]:
+    def list_pending_actions(self) -> list[dict[str, Any]]:
+        """All approved-but-not-yet-executed actions (any action_type)."""
         if self._token is None:
             self._login()
-        params = {"pending_execution": "true", "action_type": "block_ip"}
+        params = {"pending_execution": "true"}
         resp = self.http.get(
             f"{self.base_url}/playbooks/approvals",
             params=params,

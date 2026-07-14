@@ -2,44 +2,45 @@ from __future__ import annotations
 
 import time
 
-from tb_executor.blocker import DryRunBlocker, select_blocker
+from tb_executor.actions import ActionDispatcher
 from tb_executor.client import ExecutorClient
 from tb_executor.config import ExecutorConfig
-from tb_executor.guard import is_blockable_ip
 
 
-def run(config: ExecutorConfig, *, client=None, blocker=None, iterations=None) -> None:
-    """Poll for approved block_ip actions, guard, block, and report."""
+def run(config: ExecutorConfig, *, client=None, dispatcher=None, iterations=None) -> None:
+    """Poll for approved actions, guard + carry each out, and report the result."""
     if client is None:
         client = ExecutorClient(config.base_url, config.email, config.password)
-    if blocker is None:
-        blocker = select_blocker(dry_run=config.dry_run, firewall=config.firewall)
+    if dispatcher is None:
+        dispatcher = ActionDispatcher(
+            enabled_actions=config.enabled_actions,
+            dry_run=config.dry_run,
+            firewall=config.firewall,
+            allow_private=config.allow_private,
+            ip_allowlist=config.allowlist,
+            user_allowlist=config.user_allowlist,
+        )
 
-    mode = "DRY-RUN" if isinstance(blocker, DryRunBlocker) else f"LIVE ({type(blocker).__name__})"
-    print(f"[tb-executor] polling {config.base_url} every {config.poll_interval}s ({mode})")
+    print(
+        f"[tb-executor] polling {config.base_url} every {config.poll_interval}s "
+        f"({dispatcher.mode()}) · actions: {', '.join(sorted(dispatcher.enabled))}"
+    )
 
     i = 0
     while iterations is None or i < iterations:
         try:
-            pending = client.list_pending_blocks()
+            pending = client.list_pending_actions()
         except Exception as exc:
             print(f"[tb-executor] poll failed: {exc}")
             pending = []
 
         for item in pending:
-            ip = item.get("target", "")
-            ok, reason = is_blockable_ip(ip, config.allowlist, allow_private=config.allow_private)
-            if not ok:
-                print(f"[tb-executor] REFUSED {ip}: {reason}")
-                client.report(item["id"], "failed", f"guard refused: {reason}")
-                continue
-            try:
-                detail = blocker.block(ip)
-                print(f"[tb-executor] BLOCKED {ip}: {detail}")
-                client.report(item["id"], "executed", detail)
-            except Exception as exc:
-                print(f"[tb-executor] block failed for {ip}: {exc}")
-                client.report(item["id"], "failed", str(exc))
+            action_type = item.get("action_type", "")
+            target = item.get("target", "")
+            result, detail = dispatcher.handle(action_type, target)
+            label = "EXECUTED" if result == "executed" else "REFUSED"
+            print(f"[tb-executor] {label} {action_type} on {target}: {detail}")
+            client.report(item["id"], result, detail)
 
         i += 1
         if iterations is None:

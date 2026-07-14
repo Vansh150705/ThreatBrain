@@ -1,4 +1,4 @@
-from tb_executor.blocker import DryRunBlocker
+from tb_executor.actions import ActionDispatcher
 from tb_executor.config import ExecutorConfig
 from tb_executor.runner import run
 
@@ -8,7 +8,7 @@ class FakeClient:
         self.pending = pending
         self.reports = []
 
-    def list_pending_blocks(self):
+    def list_pending_actions(self):
         return self.pending
 
     def report(self, approval_id, result, detail=None):
@@ -22,24 +22,31 @@ def _cfg(**kw):
     return ExecutorConfig(**base)
 
 
+def _dispatcher(**kw):
+    base = dict(enabled_actions=("block_ip", "disable_user"), dry_run=True)
+    base.update(kw)
+    return ActionDispatcher(**base)
+
+
 def test_runner_blocks_public_ip_and_reports_executed():
-    client = FakeClient([{"id": "a1", "target": "8.8.8.8"}])
-    blocker = DryRunBlocker()
-    run(_cfg(), client=client, blocker=blocker, iterations=1)
-    assert blocker.blocked == ["8.8.8.8"]
+    client = FakeClient([{"id": "a1", "action_type": "block_ip", "target": "8.8.8.8"}])
+    run(_cfg(), client=client, dispatcher=_dispatcher(), iterations=1)
     assert client.reports == [("a1", "executed", "[dry-run] would block 8.8.8.8")]
 
 
-def test_runner_rejects_private_ip_by_default_and_reports_failed():
-    client = FakeClient([{"id": "a2", "target": "10.0.0.5"}])
-    run(_cfg(), client=client, blocker=DryRunBlocker(), iterations=1)
-    assert client.reports[0][0] == "a2"
+def test_runner_rejects_private_ip_by_default():
+    client = FakeClient([{"id": "a2", "action_type": "block_ip", "target": "10.0.0.5"}])
+    run(_cfg(), client=client, dispatcher=_dispatcher(allow_private=False), iterations=1)
     assert client.reports[0][1] == "failed"
 
 
-def test_runner_blocks_private_ip_when_allow_private():
-    client = FakeClient([{"id": "a3", "target": "192.168.1.50"}])
-    blocker = DryRunBlocker()
-    run(_cfg(allow_private=True), client=client, blocker=blocker, iterations=1)
-    assert blocker.blocked == ["192.168.1.50"]
+def test_runner_disables_user():
+    client = FakeClient([{"id": "a3", "action_type": "disable_user", "target": "eviluser"}])
+    run(_cfg(), client=client, dispatcher=_dispatcher(), iterations=1)
     assert client.reports[0][1] == "executed"
+
+
+def test_runner_refuses_disable_when_action_not_enabled():
+    client = FakeClient([{"id": "a4", "action_type": "disable_user", "target": "eviluser"}])
+    run(_cfg(), client=client, dispatcher=_dispatcher(enabled_actions=("block_ip",)), iterations=1)
+    assert client.reports[0][1] == "failed"

@@ -12,6 +12,15 @@ firewall: auto
 # allow_private: block private/LAN IPs too. Keep false in production; set true in
 # a LAN lab where the attacker box is on a private IP (e.g. 192.168.x / 10.x).
 allow_private: false
-# Never block these (your own IP / management hosts):
+# Which real actions this executor may carry out. block_ip is safe + reversible.
+# Add disable_user to also lock compromised accounts (Linux usermod -L /
+# Windows net user /active:no). root/admin and the names below are never touched.
+enabled_actions:
+  - block_ip
+  # - disable_user
+# Never block these IPs (your own IP / management hosts):
 allowlist:
   - 203.0.113.9
+# Never disable these accounts (extra protection on top of root/admin):
+user_allowlist:
+  - youradminuser

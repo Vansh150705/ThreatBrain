@@ -28,13 +28,13 @@ class FakeHttp:
         return self.get_responses.pop(0)
 
 
-def test_list_pending_blocks_logs_in_and_returns_items():
+def test_list_pending_actions_logs_in_and_returns_items():
     http = FakeHttp()
     http.login_responses = [FakeResp(200, {"access_token": "tok"})]
-    http.get_responses = [FakeResp(200, {"items": [{"id": "a1", "target": "203.0.113.42"}]})]
+    http.get_responses = [FakeResp(200, {"items": [{"id": "a1", "action_type": "block_ip", "target": "203.0.113.42"}]})]
     c = ExecutorClient("http://x/api/v1", "e@x.co", "pw", http=http)
-    items = c.list_pending_blocks()
-    assert items == [{"id": "a1", "target": "203.0.113.42"}]
+    items = c.list_pending_actions()
+    assert items == [{"id": "a1", "action_type": "block_ip", "target": "203.0.113.42"}]
     assert http.calls[0][1].endswith("/auth/login")
     assert http.calls[1][3]["Authorization"] == "Bearer tok"
 

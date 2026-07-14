@@ -15,6 +15,8 @@ class ExecutorConfig:
     firewall: str = "auto"          # auto | iptables | windows | dry-run
     allow_private: bool = False
     allowlist: tuple[str, ...] = field(default_factory=tuple)
+    enabled_actions: tuple[str, ...] = ("block_ip",)
+    user_allowlist: tuple[str, ...] = field(default_factory=tuple)
 
 
 def load_executor_config(path: str) -> ExecutorConfig:
@@ -29,4 +31,6 @@ def load_executor_config(path: str) -> ExecutorConfig:
         firewall=data.get("firewall", "auto"),
         allow_private=bool(data.get("allow_private", False)),
         allowlist=tuple(data.get("allowlist", []) or []),
+        enabled_actions=tuple(data.get("enabled_actions", ["block_ip"]) or ["block_ip"]),
+        user_allowlist=tuple(data.get("user_allowlist", []) or []),
     )
