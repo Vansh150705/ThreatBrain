@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentUser, require_admin, require_role, require_viewer
+from app.api.deps import CurrentUser, require_admin, require_role
 from app.core.logging import get_logger
 from app.services.supabase_client import get_supabase_admin
 
@@ -126,7 +126,7 @@ def decide_approval(
                 "decided_by": user.id,
                 "decided_by_name": user.display_name,
                 "decision_note": request.note,
-                "decided_at": datetime.now(timezone.utc).isoformat(),
+                "decided_at": datetime.now(UTC).isoformat(),
             }
         )
         .eq("id", approval_id)
@@ -217,7 +217,7 @@ def report_execution(
         .update(
             {
                 "execution_status": request.result,
-                "executed_at": datetime.now(timezone.utc).isoformat(),
+                "executed_at": datetime.now(UTC).isoformat(),
                 "execution_detail": request.detail,
             }
         )

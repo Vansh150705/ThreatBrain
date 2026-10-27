@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.logging import get_logger
@@ -87,7 +87,7 @@ def revoke_api_key(organization_id: str, key_id: str) -> dict[str, Any] | None:
     rows = (
         get_supabase_admin()
         .table("api_keys")
-        .update({"revoked_at": datetime.now(timezone.utc).isoformat()})
+        .update({"revoked_at": datetime.now(UTC).isoformat()})
         .eq("organization_id", organization_id)
         .eq("id", key_id)
         .is_("revoked_at", "null")
@@ -122,8 +122,8 @@ def authenticate_api_key(raw: str) -> dict[str, Any] | None:
         try:
             exp = datetime.fromisoformat(str(expires).replace("Z", "+00:00"))
             if exp.tzinfo is None:
-                exp = exp.replace(tzinfo=timezone.utc)
-            if exp <= datetime.now(timezone.utc):
+                exp = exp.replace(tzinfo=UTC)
+            if exp <= datetime.now(UTC):
                 return None
         except ValueError:
             return None
@@ -133,13 +133,13 @@ def authenticate_api_key(raw: str) -> dict[str, Any] | None:
 
 def _touch_last_used(row: dict[str, Any]) -> None:
     """Stamp last_used_at, at most once a minute per key (best effort)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     last = row.get("last_used_at")
     if last:
         try:
             prev = datetime.fromisoformat(str(last).replace("Z", "+00:00"))
             if prev.tzinfo is None:
-                prev = prev.replace(tzinfo=timezone.utc)
+                prev = prev.replace(tzinfo=UTC)
             if (now - prev).total_seconds() < 60:
                 return
         except ValueError:

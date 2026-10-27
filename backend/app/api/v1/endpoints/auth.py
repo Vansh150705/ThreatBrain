@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -63,7 +63,7 @@ def _get_anon_client() -> Client:
 
 def _seed_starter_data(admin: Client, org_id: str) -> None:
     """Give a new workspace some starter threats, an incident, and iocs so it isn't empty."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     def ago(**kwargs: int) -> str:
         return (now - timedelta(**kwargs)).isoformat()

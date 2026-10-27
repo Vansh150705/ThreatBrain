@@ -11,7 +11,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable
 
 from app.agents.triage.schemas import TriageInput
@@ -54,7 +54,7 @@ def _ts(value: Any) -> datetime | None:
     if isinstance(value, (int, float)):
         seconds = value / 1000 if value > 1e11 else value
         try:
-            return datetime.fromtimestamp(seconds, tz=timezone.utc)
+            return datetime.fromtimestamp(seconds, tz=UTC)
         except (OverflowError, OSError, ValueError):
             return None
     if isinstance(value, str):
@@ -65,7 +65,7 @@ def _ts(value: Any) -> datetime | None:
             dt = datetime.fromisoformat(text)
         except ValueError:
             return None
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
     return None
 
 

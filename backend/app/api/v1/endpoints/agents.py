@@ -15,12 +15,12 @@ from app.agents.forensics import (
     ForensicsOutput,
 )
 from app.agents.hunt import HuntAgent, HuntInput, HuntOutput
-from app.agents.log_analysis import LogAnalysisAgent, LogAnalysisInput, LogAnalysisOutput
 from app.agents.investigation import (
     InvestigationAgent,
     InvestigationInput,
     InvestigationOutput,
 )
+from app.agents.log_analysis import LogAnalysisAgent, LogAnalysisInput, LogAnalysisOutput
 from app.agents.response import (
     ResponseAgent,
     ResponseInput,
@@ -109,9 +109,8 @@ def triage_classify(
     )
 
 # Threat Intel
-class ThreatIntelEnrichRequest(BaseModel):
-    ip_address: str = Field(..., min_length=3, max_length=45)
-    context: str | None = Field(default=None, max_length=2000)
+class ThreatIntelEnrichRequest(ThreatIntelInput):
+    """Same shape (and IP validation) as the agent's own input."""
 
 
 class ThreatIntelEnrichResponse(BaseModel):

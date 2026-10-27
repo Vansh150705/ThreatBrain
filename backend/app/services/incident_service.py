@@ -6,7 +6,6 @@ from uuid import UUID
 from app.services.supabase_client import get_supabase_admin
 from app.services.threat_service import ilike_pattern
 
-
 VALID_SORT_FIELDS = {
     "created_at",
     "updated_at",
@@ -142,7 +141,7 @@ def list_threats_for_incident(
 # ---------------------------------------------------------------------------
 # Case construction + correlation helpers (used by the orchestrator/agents)
 # ---------------------------------------------------------------------------
-from datetime import datetime, timedelta, timezone  # noqa: E402
+from datetime import UTC, datetime, timedelta  # noqa: E402
 
 from app.core.logging import get_logger  # noqa: E402
 
@@ -291,7 +290,7 @@ def find_correlated_incident(
     """
     if not source_ips:
         return None
-    since = (datetime.now(timezone.utc) - timedelta(hours=window_hours)).isoformat()
+    since = (datetime.now(UTC) - timedelta(hours=window_hours)).isoformat()
     client = get_supabase_admin()
     candidates = (
         client.table("incidents")

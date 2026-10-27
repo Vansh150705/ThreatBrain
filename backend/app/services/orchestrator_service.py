@@ -18,8 +18,9 @@ Design rules:
 from __future__ import annotations
 
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeout
-from datetime import datetime, timedelta, timezone
+from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 from uuid import UUID
 
@@ -81,7 +82,7 @@ def _get_fanout() -> ThreadPoolExecutor:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # --------------------------------------------------------------------------
@@ -278,7 +279,7 @@ def find_duplicate_threat(org_id: str, fingerprint: str) -> dict[str, Any] | Non
     window = get_settings().DEDUP_WINDOW_MINUTES
     if window <= 0:
         return None
-    since = (datetime.now(timezone.utc) - timedelta(minutes=window)).isoformat()
+    since = (datetime.now(UTC) - timedelta(minutes=window)).isoformat()
     try:
         rows = (
             get_supabase_admin()
@@ -737,7 +738,7 @@ def _correlate(
         holder["created"] = created
         return _agent_fields(res, verdict=out.model_dump(mode="json"), incidents_created=created)
 
-    fields = _run_agent_stage(run, "investigation", _investigate)
+    _run_agent_stage(run, "investigation", _investigate)
     created = holder.get("created") or []
     if created:
         # the new threat's incident, if it was grouped

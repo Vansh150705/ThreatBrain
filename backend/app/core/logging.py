@@ -43,7 +43,7 @@ def setup_logging() -> None:
         ),
     ]
 
-    # Choose output renderer based on format 
+    # Choose output renderer based on format
     if settings.LOG_FORMAT == "json":
         renderer: structlog.types.Processor = structlog.processors.JSONRenderer()
     else:

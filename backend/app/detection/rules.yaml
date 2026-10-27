@@ -75,10 +75,10 @@
   tags: [mfa-fatigue]
   match:
     any:
-      - {field: event_type, regex: 'mfa.*(fatigue|push)'}
+      - {field: event_type, regex: 'mfa.{0,200}(fatigue|push)'}
       - {field: text, regex: 'mfa (push )?(denied|fatigue|bombing)'}
 
-# --- Web application attacks (tb-collector web.* / recon.*) ------------------
+# --- Web application attacks (tb-collector web.{0,200} / recon.{0,200}) ------------------
 - id: TB-WEB-001
   name: Web exploitation attempt (SQLi / XSS / traversal / command injection)
   severity: high
@@ -131,8 +131,8 @@
   tags: [powershell, obfuscation]
   match:
     any:
-      - {field: command_line, regex: 'powershell(\.exe)?\s.*-(e|enc|encodedcommand)\s+[A-Za-z0-9+/=]{20,}'}
-      - {field: command_line, regex: 'frombase64string.*(iex|invoke-expression)'}
+      - {field: command_line, regex: 'powershell(\.exe)?\s.{0,200}-(e|enc|encodedcommand)\s+[A-Za-z0-9+/=]{20,}'}
+      - {field: command_line, regex: 'frombase64string.{0,200}(iex|invoke-expression)'}
 
 - id: TB-EXEC-002
   name: PowerShell download cradle
@@ -156,9 +156,9 @@
   match:
     any:
       - {field: command_line, regex: '/dev/tcp/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+'}
-      - {field: command_line, regex: '\b(nc|ncat|netcat)\b.*\s-e\s'}
+      - {field: command_line, regex: '\b(nc|ncat|netcat)\b.{0,200}\s-e\s'}
       - {field: command_line, regex: 'bash\s+-i\s*>&'}
-      - {field: command_line, regex: 'python\d?\s+-c\s+.*socket.*(subprocess|pty\.spawn|dup2)'}
+      - {field: command_line, regex: 'python\d?\s+-c\s+.{0,200}socket.{0,200}(subprocess|pty\.spawn|dup2)'}
 
 - id: TB-EXEC-004
   name: Remote script piped into a shell
@@ -178,11 +178,11 @@
   tags: [lolbin]
   match:
     any:
-      - {field: command_line, regex: 'certutil(\.exe)?\s.*-(urlcache|decode)'}
-      - {field: command_line, regex: 'bitsadmin(\.exe)?\s.*/transfer'}
+      - {field: command_line, regex: 'certutil(\.exe)?\s.{0,200}-(urlcache|decode)'}
+      - {field: command_line, regex: 'bitsadmin(\.exe)?\s.{0,200}/transfer'}
       - {field: command_line, regex: 'mshta(\.exe)?\s+(https?:|vbscript:|javascript:)'}
-      - {field: command_line, regex: 'regsvr32(\.exe)?\s.*/i:https?://'}
-      - {field: command_line, regex: 'rundll32(\.exe)?\s.*javascript:'}
+      - {field: command_line, regex: 'regsvr32(\.exe)?\s.{0,200}/i:https?://'}
+      - {field: command_line, regex: 'rundll32(\.exe)?\s.{0,200}javascript:'}
 
 - id: TB-CRED-001
   name: Credential dumping tool or LSASS access
@@ -193,8 +193,8 @@
   tags: [mimikatz, lsass, credential-dumping]
   match:
     any:
-      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|procdump.*lsass|comsvcs\.dll.*minidump)\b'}
-      - {field: text, regex: 'lsass(\.exe)?.*(dump|minidump|access)'}
+      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|procdump.{0,200}lsass|comsvcs\.dll.{0,200}minidump)\b'}
+      - {field: text, regex: 'lsass(\.exe)?.{0,200}(dump|minidump|access)'}
       - {field: process_name, regex: '^(mimikatz|pypykatz|lazagne)'}
 
 - id: TB-CRED-002
@@ -206,9 +206,9 @@
   tags: [credential-access]
   match:
     any:
-      - {field: command_line, regex: '(cat|less|cp|tar)\s+.*/etc/shadow'}
+      - {field: command_line, regex: '(cat|less|cp|tar)\s+.{0,200}/etc/shadow'}
       - {field: command_line, regex: 'reg(\.exe)?\s+save\s+hklm\\(sam|security|system)'}
-      - {field: command_line, regex: 'ntdsutil.*(ifm|snapshot)|vssadmin.*ntds'}
+      - {field: command_line, regex: 'ntdsutil.{0,200}(ifm|snapshot)|vssadmin.{0,200}ntds'}
 
 - id: TB-EVADE-001
   name: Security log clearing or history tampering
@@ -221,7 +221,7 @@
     any:
       - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)'}
       - {field: command_line, regex: 'clear-eventlog'}
-      - {field: command_line, regex: 'history\s+-c|unset\s+histfile|>\s*~?/?.*bash_history|rm\s+.*\.bash_history'}
+      - {field: command_line, regex: 'history\s+-c|unset\s+histfile|>\s*~?/?.{0,200}bash_history|rm\s+.{0,200}\.bash_history'}
       - {field: event_type, regex: 'log_cleared|audit_log_cleared'}
 
 - id: TB-EVADE-002
@@ -233,7 +233,7 @@
   tags: [defense-evasion, tamper]
   match:
     any:
-      - {field: command_line, regex: 'set-mppreference\s+.*-disable(realtimemonitoring|behaviormonitoring)\s+\$?true'}
+      - {field: command_line, regex: 'set-mppreference\s+.{0,200}-disable(realtimemonitoring|behaviormonitoring)\s+\$?true'}
       - {field: command_line, regex: 'netsh\s+advfirewall\s+set\s+\w+\s+state\s+off'}
       - {field: command_line, regex: 'systemctl\s+(stop|disable)\s+(auditd|falco|ossec|wazuh|clamav|crowdstrike|falcon)'}
       - {field: command_line, regex: 'sc(\.exe)?\s+(stop|config)\s+(windefend|sense|wscsvc)'}
@@ -251,7 +251,7 @@
       - {field: command_line, regex: '\buseradd\b|\badduser\b'}
       - {field: command_line, regex: 'net(1)?(\.exe)?\s+user\s+\S+\s+\S+\s+/add'}
       - {field: command_line, regex: 'net(1)?(\.exe)?\s+localgroup\s+administrators\s+\S+\s+/add'}
-      - {field: command_line, regex: 'usermod\s+.*-a?G\s*(sudo|wheel|admin)'}
+      - {field: command_line, regex: 'usermod\s+.{0,200}-a?G\s*(sudo|wheel|admin)'}
 
 - id: TB-PERSIST-002
   name: Scheduled task / cron persistence
@@ -263,7 +263,7 @@
   match:
     any:
       - {field: command_line, regex: 'schtasks(\.exe)?\s+/create'}
-      - {field: command_line, regex: '(crontab\s+-|echo\s+.*>>\s*/(etc|var/spool)/cron)'}
+      - {field: command_line, regex: '(crontab\s+-|echo\s+.{0,200}>>\s*/(etc|var/spool)/cron)'}
 
 - id: TB-PERSIST-003
   name: SSH authorized_keys modification
@@ -272,7 +272,7 @@
   tactics: [TA0003]
   techniques: [T1098.004]
   tags: [persistence, ssh]
-  match: {field: command_line, regex: '>>?\s*\S*\.ssh/authorized_keys'}
+  match: {field: command_line, regex: '>>?\s*\S{0,20}\.ssh/authorized_keys'}
 
 - id: TB-IMPACT-001
   name: Shadow copy / backup destruction
@@ -285,7 +285,7 @@
     any:
       - {field: command_line, regex: 'vssadmin(\.exe)?\s+delete\s+shadows'}
       - {field: command_line, regex: 'wmic\s+shadowcopy\s+delete'}
-      - {field: command_line, regex: 'bcdedit.*recoveryenabled\s+no'}
+      - {field: command_line, regex: 'bcdedit.{0,200}recoveryenabled\s+no'}
       - {field: command_line, regex: 'wbadmin\s+delete\s+(catalog|systemstatebackup)'}
 
 - id: TB-IMPACT-002
@@ -298,7 +298,7 @@
   match:
     any:
       - {field: text, regex: '\.(locked|crypt|encrypted|lockbit|ryuk|conti)\b'}
-      - {field: text, regex: 'your files (have been|are) encrypted|decrypt.*bitcoin|readme.*(restore|decrypt)'}
+      - {field: text, regex: 'your files (have been|are) encrypted|decrypt.{0,200}bitcoin|readme.{0,200}(restore|decrypt)'}
       - {field: event_type, regex: 'ransom'}
 
 - id: TB-IMPACT-003
@@ -334,7 +334,7 @@
     any:
       - {field: command_line, regex: 'psexec(64)?(\.exe)?\s+\\\\'}
       - {field: command_line, regex: 'wmic\s+/node:'}
-      - {field: command_line, regex: 'invoke-command\s+.*-computername'}
+      - {field: command_line, regex: 'invoke-command\s+.{0,200}-computername'}
 
 - id: TB-EXFIL-001
   name: Large outbound transfer
@@ -358,7 +358,7 @@
   tags: [staging, exfiltration]
   match:
     any:
-      - {field: command_line, regex: '(7z|rar|zip|tar)\S*\s+.*(a|-c[zj]f|-r)\s+.*\.(7z|rar|zip|tar(\.gz)?)\s+.*(\\users\\|/home/|/etc/|\.sql|\.db)'}
+      - {field: command_line, regex: '(7z|rar|zip|tar)\S{0,20}\s+.{0,200}(a|-c[zj]f|-r)\s+.{0,200}\.(7z|rar|zip|tar(\.gz)?)\s+.{0,200}(\\users\\|/home/|/etc/|\.sql|\.db)'}
 
 - id: TB-NET-002
   name: DNS tunneling indicator
@@ -370,7 +370,7 @@
   match:
     any:
       - {field: raw.query_length, gte: 100}
-      - {field: event_type, regex: 'dns.*tunnel'}
+      - {field: event_type, regex: 'dns.{0,200}tunnel'}
 
 - id: TB-NET-003
   name: Beaconing to known C2 framework path or user agent
@@ -391,8 +391,8 @@
   tags: [cloud, s3, public-exposure]
   match:
     any:
-      - {field: event_type, regex: 'bucket.*public|public.*bucket|s3.*public'}
-      - {field: text, regex: '(putbucketacl|putbucketpolicy).*(allusers|authenticatedusers|"principal":\s*"\*")'}
+      - {field: event_type, regex: 'bucket.{0,200}public|public.{0,200}bucket|s3.{0,200}public'}
+      - {field: text, regex: '(putbucketacl|putbucketpolicy).{0,200}(allusers|authenticatedusers|"principal":\s*"\*")'}
 
 - id: TB-CLOUD-002
   name: Audit logging disabled or tampered
@@ -404,7 +404,7 @@
   match:
     any:
       - {field: raw.eventName, in: [StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, DeleteFlowLogs, DeleteDetector]}
-      - {field: event_type, regex: 'cloudtrail.*(stop|delete|disabled)'}
+      - {field: event_type, regex: 'cloudtrail.{0,200}(stop|delete|disabled)'}
 
 - id: TB-CLOUD-003
   name: Administrator privileges granted in the cloud

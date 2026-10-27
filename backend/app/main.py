@@ -8,18 +8,19 @@ from typing import AsyncIterator
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
+from pydantic import ValidationError
 
 from app.agents.base import AgentConfigError
 from app.api.v1.router import api_router
 from app.core.config import get_settings
-from app.services.llm_service import LLMError
-from app.core.ratelimit import client_ip, limiter
 from app.core.logging import (
     bind_request_context,
     clear_request_context,
     get_logger,
     setup_logging,
 )
+from app.core.ratelimit import client_ip, limiter
+from app.services.llm_service import LLMError
 
 # Initialize logging immediately so import-time logs are captured too.
 setup_logging()
@@ -178,6 +179,19 @@ def create_app() -> FastAPI:
             }},
         )
 
+    @app.exception_handler(ValidationError)
+    async def model_output_validation_handler(request: Request, exc: ValidationError):
+        # Request bodies are validated by FastAPI (422). A ValidationError that
+        # reaches here was raised while parsing a model's reply, i.e. an upstream fault.
+        log.warning("agent_output_invalid", path=request.url.path, errors=exc.error_count())
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={"detail": {
+                "error": "agent_output_invalid",
+                "message": "The language model returned output that did not match the expected schema.",
+            }},
+        )
+
     @app.exception_handler(AgentConfigError)
     async def agent_config_error_handler(request: Request, exc: AgentConfigError):
         return JSONResponse(
@@ -202,7 +216,7 @@ def create_app() -> FastAPI:
             body["message"] = str(exc)
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=body)
 
-    # Root endpoint 
+    # Root endpoint
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, object]:
         """API info banner."""
@@ -215,7 +229,7 @@ def create_app() -> FastAPI:
             "api": "/api/v1",
         }
 
-    #  Mount the versioned API router 
+    #  Mount the versioned API router
     app.include_router(api_router, prefix="/api/v1")
 
     return app

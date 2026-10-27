@@ -15,15 +15,27 @@ _DOMAIN = re.compile(
 _FILE_EXT = {"exe", "dll", "sh", "py", "txt", "log", "php", "js", "ps1", "bat", "conf", "json", "yaml", "yml"}
 
 
+# Addresses that must never leave the organization in a third-party lookup.
+# Documentation ranges (TEST-NET, used by labs and demos) are deliberately *not*
+# listed: Python's ``is_private`` lumps them in with RFC 1918, which would make
+# every lab attacker look "internal" and silently skip enrichment.
+_INTERNAL_NETS = tuple(
+    ipaddress.ip_network(n)
+    for n in (
+        "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10",  # RFC1918 + CGNAT
+        "127.0.0.0/8", "169.254.0.0/16", "0.0.0.0/8", "224.0.0.0/4", "240.0.0.0/4",
+        "::1/128", "fc00::/7", "fe80::/10", "ff00::/8", "::/128",
+    )
+)
+
+
 def is_public_ip(value: str) -> bool:
+    """True if ``value`` is safe to send to an external threat-intel service."""
     try:
         ip = ipaddress.ip_address(value)
     except ValueError:
         return False
-    return not (
-        ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast
-        or ip.is_unspecified or ip.is_reserved
-    )
+    return not any(ip in net for net in _INTERNAL_NETS if net.version == ip.version)
 
 
 def extract_iocs(text: str, limit: int = 25) -> dict[str, list[str]]:

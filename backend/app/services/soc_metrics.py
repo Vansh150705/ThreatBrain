@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from statistics import median
 from typing import Any
 
@@ -19,7 +19,7 @@ def _parse(ts: Any) -> datetime | None:
         dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
     except ValueError:
         return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def _mins(delta: timedelta) -> float:
@@ -28,7 +28,7 @@ def _mins(delta: timedelta) -> float:
 
 def compute(org_id: str, days: int = 7) -> dict[str, Any]:
     client = get_supabase_admin()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     since = (now - timedelta(days=days)).isoformat()
 
     threats = (

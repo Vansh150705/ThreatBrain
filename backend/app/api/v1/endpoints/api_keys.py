@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -47,7 +47,7 @@ def create_key(body: ApiKeyCreate, user: Annotated[CurrentUser, Depends(require_
     if user.auth_method != "jwt":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "API keys cannot mint other API keys.")
     expires = (
-        (datetime.now(timezone.utc) + timedelta(days=body.expires_in_days)).isoformat()
+        (datetime.now(UTC) + timedelta(days=body.expires_in_days)).isoformat()
         if body.expires_in_days
         else None
     )

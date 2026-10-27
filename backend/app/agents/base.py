@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import time
-from datetime import datetime, timedelta, timezone
 import json
+import time
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -18,11 +18,11 @@ log = get_logger(__name__)
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _started_iso(latency_ms: int) -> str:
-    return (datetime.now(timezone.utc) - timedelta(milliseconds=latency_ms)).isoformat()
+    return (datetime.now(UTC) - timedelta(milliseconds=latency_ms)).isoformat()
 
 
 class AgentInput(BaseModel):
@@ -77,7 +77,7 @@ class BaseAgent(ABC):
             raise AgentConfigError(
                 f"{type(self).__name__} must set `agent_key`."
             )
-        
+
     def run(self, agent_input: AgentInput) -> AgentRunResult:
 
         run_start = time.perf_counter()

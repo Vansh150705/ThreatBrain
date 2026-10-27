@@ -28,6 +28,11 @@ from app.agents.investigation import (  # noqa: F401
     InvestigationOutput,
     ThreatGroup,
 )
+from app.agents.log_analysis import (  # noqa: F401,E402
+    LogAnalysisAgent,
+    LogAnalysisInput,
+    LogAnalysisOutput,
+)
 from app.agents.response import (  # noqa: F401
     ActionRecommendation,
     ResponseAgent,
@@ -43,9 +48,4 @@ from app.agents.triage import (  # noqa: F401
     TriageAgent,
     TriageInput,
     TriageOutput,
-)
-from app.agents.log_analysis import (  # noqa: F401,E402
-    LogAnalysisAgent,
-    LogAnalysisInput,
-    LogAnalysisOutput,
 )

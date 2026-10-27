@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.agents.base import AgentInput, AgentRunResult, BaseAgent
+from app.agents.base import AgentInput, BaseAgent
 from app.agents.triage.schemas import TriageInput, TriageOutput
 from app.core.logging import get_logger
 from app.detection.iocs import event_iocs
@@ -151,9 +151,9 @@ class TriageAgent(BaseAgent):
                 rule_hit_count=len(rule_hits or []),
             )
 
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         occurred = (
-            triage_input.occurred_at.astimezone(timezone.utc).isoformat()
+            triage_input.occurred_at.astimezone(UTC).isoformat()
             if triage_input.occurred_at
             else now_iso
         )

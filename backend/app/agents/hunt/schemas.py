@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+
 class HuntInput(BaseModel):
     """Optional focus areas for the hunt; otherwise the agent
     generates hypotheses from full recent context."""

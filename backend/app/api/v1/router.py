@@ -15,6 +15,8 @@ from app.api.v1.endpoints import (
     organizations,
     playbooks,
     stats,
+)
+from app.api.v1.endpoints import (
     threats as threats_endpoints,
 )
 

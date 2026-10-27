@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user, require_admin, require_viewer
+from app.api.deps import CurrentUser, get_current_user, require_viewer
 from app.core.config import get_settings
 from app.schemas.organization import OrganizationMini
 from app.services.supabase_client import get_supabase_admin, supabase_health_check

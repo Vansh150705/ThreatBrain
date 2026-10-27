@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tests.conftest import ORG_A, ORG_B
 
 BRUTE = {
@@ -101,9 +99,10 @@ def test_new_threat_from_same_source_correlates_into_existing_incident(client, a
 
 
 def test_llm_outage_degrades_to_rule_based_verdict(client, auth, db, llm):
-    from app.services.llm_service import LLMError  # noqa: F401
-    from groq import APIConnectionError
     import httpx
+    from groq import APIConnectionError
+
+    from app.services.llm_service import LLMError  # noqa: F401
 
     llm.fail_with = APIConnectionError(request=httpx.Request("POST", "http://x"))
     r = _ingest(client, auth).json()
@@ -116,8 +115,8 @@ def test_llm_outage_degrades_to_rule_based_verdict(client, auth, db, llm):
 
 
 def test_llm_outage_without_rule_match_fails_triage_cleanly(client, auth, llm):
-    from groq import APIConnectionError
     import httpx
+    from groq import APIConnectionError
 
     llm.fail_with = APIConnectionError(request=httpx.Request("POST", "http://x"))
     body = {"event": {"title": "weird thing", "event_type": "custom.unknown"}}

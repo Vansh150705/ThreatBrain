@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.agents.triage import TriageInput
@@ -40,7 +40,7 @@ def shutdown() -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def create_run(
@@ -131,7 +131,7 @@ def submit_async(
 
 def recover_stale_runs() -> int:
     """At startup, fail runs that were in flight when the previous process died."""
-    cutoff = (datetime.now(timezone.utc) - STALE_AFTER).isoformat()
+    cutoff = (datetime.now(UTC) - STALE_AFTER).isoformat()
     client = get_supabase_admin()
     stuck = (
         client.table("pipeline_runs")

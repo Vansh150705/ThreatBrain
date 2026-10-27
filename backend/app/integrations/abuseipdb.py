@@ -11,8 +11,8 @@ from tenacity import (
 )
 
 from app.core.config import get_settings
-from app.integrations import _http
 from app.core.logging import get_logger
+from app.integrations import _http
 
 log = get_logger(__name__)
 

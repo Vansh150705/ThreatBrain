@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -8,7 +8,6 @@ from app.agents.base import AgentInput, BaseAgent
 from app.agents.investigation.schemas import (
     InvestigationInput,
     InvestigationOutput,
-    ThreatGroup,
 )
 from app.core.logging import get_logger
 from app.services.incident_service import create_incident
@@ -47,7 +46,7 @@ class InvestigationAgent(BaseAgent):
     ) -> list[dict[str, Any]]:
         """Pull recent open threats for the org from the database."""
         client = get_supabase_admin()
-        since = (datetime.now(timezone.utc) - timedelta(hours=lookback_hours)).isoformat()
+        since = (datetime.now(UTC) - timedelta(hours=lookback_hours)).isoformat()
         min_rank = _SEVERITY_RANK.get(min_severity.lower(), 2)
         valid_severities = [s for s, r in _SEVERITY_RANK.items() if r >= min_rank]
 
