@@ -9,8 +9,14 @@ WorkingDirectory=/opt/tb-collector
 ExecStart=/opt/tb-collector/venv/bin/python -m tb_executor --config /opt/tb-collector/executor.yaml
 Restart=always
 RestartSec=5
-# needs root to run iptables
+# Needs root to run iptables/usermod. Everything else is locked down; ProtectSystem
+# is left off because usermod -L must write /etc/shadow.
 User=root
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
 
 [Install]
 WantedBy=multi-user.target

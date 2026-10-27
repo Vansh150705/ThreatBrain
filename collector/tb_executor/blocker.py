@@ -22,16 +22,22 @@ class IptablesBlocker:
         self.chain = chain
         self._run = runner or (lambda args: subprocess.run(args, capture_output=True))
 
+    @staticmethod
+    def _binary(target: str) -> str:
+        """iptables only speaks IPv4; IPv6 sources need ip6tables."""
+        return "ip6tables" if ":" in target else "iptables"
+
     def _rule_exists(self, ip: str) -> bool:
-        return self._run(["iptables", "-C", self.chain, "-s", ip, "-j", "DROP"]).returncode == 0
+        return self._run([self._binary(ip), "-C", self.chain, "-s", ip, "-j", "DROP"]).returncode == 0
 
     def block(self, ip: str) -> str:
+        binary = self._binary(ip)
         if self._rule_exists(ip):
             return f"already blocked {ip}"
-        result = self._run(["iptables", "-A", self.chain, "-s", ip, "-j", "DROP"])
+        result = self._run([binary, "-A", self.chain, "-s", ip, "-j", "DROP"])
         if result.returncode != 0:
-            raise RuntimeError(f"iptables failed (rc={result.returncode})")
-        return f"iptables DROP added for {ip}"
+            raise RuntimeError(f"{binary} failed (rc={result.returncode})")
+        return f"{binary} DROP added for {ip}"
 
 
 class WindowsFirewallBlocker:

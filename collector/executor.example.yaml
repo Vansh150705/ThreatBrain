@@ -1,27 +1,31 @@
 # Copy to executor.yaml and fill in. Then: chmod 600 executor.yaml
-base_url: https://vansh150705-threatbrain-backend.hf.space/api/v1
-email: you@example.com
-password: your-threatbrain-password
+base_url: https://YOUR-BACKEND-HOST/api/v1
+
+# RECOMMENDED: an API key with the "executor" scope (Settings -> API keys). It can
+# only list approved actions and report their outcome. It cannot approve anything.
+api_key: tbk_paste-your-executor-key-here
+# Alternative: analyst login.
+# email: you@example.com
+# password: your-threatbrain-password
+
 poll_interval: 10
-# dry_run: true logs intended blocks without touching iptables.
-# Set false to really add iptables DROP rules (needs root).
+# dry_run: true logs intended actions without touching the firewall/accounts.
+# Set false to really add rules (needs root). Start in dry-run and read the log first.
 dry_run: true
-# firewall: auto picks iptables on Linux and Windows Firewall on Windows.
-# Force it with "iptables" or "windows" if you prefer.
+# firewall: auto picks iptables/ip6tables on Linux and Windows Firewall on Windows.
 firewall: auto
-# allow_private: block private/LAN IPs too. Keep false in production; set true in
-# a LAN lab where the attacker box is on a private IP (e.g. 192.168.x / 10.x).
+# allow_private: also act on private/LAN/documentation addresses. Keep false in
+# production; set true in a LAN lab where the attacker box is on 192.168.x / 10.x.
 allow_private: false
-# Which real actions this executor may carry out. block_ip is safe + reversible.
-# Add disable_user to also lock compromised accounts (Linux usermod -L /
-# Windows net user /active:no). root/admin and the names below are never touched.
+# Which real actions this executor may carry out. Nothing runs unless it is listed
+# here AND a human approved it in the console.
 enabled_actions:
   - block_ip
   # - block_range      # block a whole subnet (for IP-rotating / botnet attackers)
-  # - disable_user     # lock a compromised account
+  # - disable_user     # lock a compromised account (usermod -L / net user /active:no)
 # Never block these IPs (your own IP / management hosts):
 allowlist:
-  - 203.0.113.9
-# Never disable these accounts (extra protection on top of root/admin):
+  - 198.51.100.10
+# Never disable these accounts (extra protection on top of root/admin/system accounts):
 user_allowlist:
   - youradminuser

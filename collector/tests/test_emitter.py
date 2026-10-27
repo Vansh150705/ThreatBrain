@@ -44,7 +44,7 @@ def test_reauths_on_401_then_succeeds():
     http.login_responses = [FakeResp(200, {"access_token": "new"})]
     http.event_responses = [FakeResp(401, {"error": "expired"}), FakeResp(200, {"summary": {}})]
     em = Emitter("http://x/api/v1", "e@x.co", "pw", http=http)
-    em._token = "old"  # pretend we already had a (now-stale) token
+    em.session._token = "old"  # pretend we already had a (now-stale) token
     out = em.post_event({"event": {"title": "t"}})
     assert out == {"summary": {}}
     # the retried event call used the refreshed token

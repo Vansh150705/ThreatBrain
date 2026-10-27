@@ -9,6 +9,15 @@ WorkingDirectory=/opt/tb-collector
 ExecStart=/opt/tb-collector/venv/bin/python -m tb_collector --config /opt/tb-collector/collector.yaml
 Restart=always
 RestartSec=5
+# Needs read access to logs only. "adm" can read /var/log/auth.log on Debian/Ubuntu.
+User=tb-collector
+SupplementaryGroups=adm
+StateDirectory=tb-collector
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/tb-collector
 
 [Install]
 WantedBy=multi-user.target

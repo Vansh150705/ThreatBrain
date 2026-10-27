@@ -10,7 +10,7 @@ _PROTECTED = {
     "root", "administrator", "admin", "system", "daemon", "guest",
     "sshd", "postfix", "dovecot", "www-data", "nobody",
 }
-_VALID_USER = re.compile(r"^[\w.\-\\$]+$")
+_VALID_USER = re.compile(r"^[A-Za-z0-9_][\w.\-\\$]*$")  # must not start with "-" (option injection)
 
 
 def is_disableable_user(user: str, allowlist: Iterable[str] = ()) -> tuple[bool, str]:
@@ -45,7 +45,7 @@ class LinuxUserDisabler:
         self._run = runner or (lambda args: subprocess.run(args, capture_output=True))
 
     def disable(self, user: str) -> str:
-        result = self._run(["usermod", "-L", user])
+        result = self._run(["usermod", "-L", "--", user])
         if result.returncode != 0:
             raise RuntimeError(f"usermod -L failed (rc={result.returncode})")
         return f"locked account {user} (usermod -L)"
