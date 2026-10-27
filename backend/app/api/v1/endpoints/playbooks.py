@@ -8,13 +8,17 @@ from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentUser, get_current_user, require_admin, require_analyst
+from app.api.deps import CurrentUser, require_admin, require_role, require_viewer
 from app.core.logging import get_logger
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
 
 router = APIRouter(prefix="/playbooks", tags=["playbooks"])
+
+# Humans read the queue as viewers; tb-executor reads it with an `executor` key.
+_require_queue_reader = require_role("viewer", scope="executor")
+_require_executor = require_role("analyst", scope="executor")
 
 
 class ApprovalItem(BaseModel):
@@ -54,9 +58,9 @@ class ExecutionReport(BaseModel):
 
 
 @router.get("/approvals", response_model=ApprovalListResponse)
-async def list_approvals(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
-    approval_status: Optional[str] = Query(default=None, alias="status"),
+def list_approvals(
+    user: Annotated[CurrentUser, Depends(_require_queue_reader)],
+    approval_status: Optional[str] = Query(default=None, alias="status", pattern="^(pending|approved|rejected)$"),
     action_type: Optional[str] = Query(default=None),
     pending_execution: bool = Query(default=False),
     limit: int = Query(default=100, ge=1, le=500),
@@ -88,7 +92,7 @@ async def list_approvals(
 
 
 @router.post("/approvals/{approval_id}/decision", response_model=ApprovalItem)
-async def decide_approval(
+def decide_approval(
     approval_id: str,
     request: DecisionRequest,
     user: Annotated[CurrentUser, Depends(require_admin)],
@@ -113,20 +117,28 @@ async def decide_approval(
             f"This recommendation was already {approval['status']}.",
         )
 
-    updated = (
+    # Conditional update: two admins deciding at once cannot both win.
+    updated_rows = (
         admin.table("playbook_approvals")
         .update(
             {
                 "status": request.decision,
                 "decided_by": user.id,
-                "decided_by_name": user.full_name or user.email,
+                "decided_by_name": user.display_name,
                 "decision_note": request.note,
                 "decided_at": datetime.now(timezone.utc).isoformat(),
             }
         )
         .eq("id", approval_id)
+        .eq("organization_id", user.organization_id)
+        .eq("status", "pending")
         .execute()
-    ).data[0]
+    ).data or []
+    if not updated_rows:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "This recommendation was already decided."
+        )
+    updated = updated_rows[0]
 
     # log the decision to the audit trail
     try:
@@ -136,7 +148,7 @@ async def decide_approval(
                 "actor_type": "user",
                 "actor_id": user.id,
                 "actor_email": user.email,
-                "actor_name": user.full_name or user.email,
+                "actor_name": user.display_name,
                 "action": f"playbook.{request.decision}",
                 "target_type": "incident",
                 "target_id": approval.get("incident_id"),
@@ -166,10 +178,10 @@ async def decide_approval(
 
 
 @router.post("/approvals/{approval_id}/execution", response_model=ApprovalItem)
-async def report_execution(
+def report_execution(
     approval_id: str,
     request: ExecutionReport,
-    user: Annotated[CurrentUser, Depends(require_analyst)],
+    user: Annotated[CurrentUser, Depends(_require_executor)],
 ) -> ApprovalItem:
     """Record the real-world execution result of an approved action.
 
@@ -200,7 +212,7 @@ async def report_execution(
             f"This action was already {approval['execution_status']}.",
         )
 
-    updated = (
+    updated_rows = (
         admin.table("playbook_approvals")
         .update(
             {
@@ -210,8 +222,16 @@ async def report_execution(
             }
         )
         .eq("id", approval_id)
+        .eq("organization_id", user.organization_id)
+        .eq("status", "approved")
+        .is_("execution_status", "null")
         .execute()
-    ).data[0]
+    ).data or []
+    if not updated_rows:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "This action was already reported."
+        )
+    updated = updated_rows[0]
 
     # log the real-world action to the append-only audit trail
     try:
@@ -219,8 +239,9 @@ async def report_execution(
             {
                 "organization_id": user.organization_id,
                 "actor_type": "system",
+                "actor_id": user.id if user.auth_method == "api_key" else None,
                 "actor_name": "tb-executor",
-                "action": f"response.block_ip.{request.result}",
+                "action": f"response.{approval['action_type']}.{request.result}",
                 "target_type": "incident",
                 "target_id": approval.get("incident_id"),
                 "target_short_id": approval.get("incident_short_id"),

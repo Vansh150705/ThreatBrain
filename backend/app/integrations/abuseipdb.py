@@ -11,6 +11,7 @@ from tenacity import (
 )
 
 from app.core.config import get_settings
+from app.integrations import _http
 from app.core.logging import get_logger
 
 log = get_logger(__name__)
@@ -90,15 +91,15 @@ def check_ip(
 
     @_retry
     def _call() -> httpx.Response:
-        return httpx.get(
-            f"{settings.ABUSEIPDB_BASE_URL}/check",
-            headers={
-                "Key": settings.ABUSEIPDB_API_KEY,
-                "Accept": "application/json",
-            },
-            params=params,
-            timeout=10.0,
-        )
+        with httpx.Client(timeout=10.0, transport=_http._transport) as client:
+            return client.get(
+                f"{str(settings.ABUSEIPDB_BASE_URL).rstrip('/')}/check",
+                headers={
+                    "Key": settings.ABUSEIPDB_API_KEY,
+                    "Accept": "application/json",
+                },
+                params=params,
+            )
 
     try:
         response = _call()

@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentUser, get_current_user
+from app.api.deps import CurrentUser, require_viewer
 from app.core.logging import get_logger
 from app.services.llm_service import LLMError, llm_complete
 from app.services.supabase_client import get_supabase_admin
@@ -102,9 +102,9 @@ can find them.
 
 
 @router.post("/ask", response_model=AskResponse)
-async def ask(
+def ask(
     request: AskRequest,
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> AskResponse:
     """Answer a question about the user's org data."""
     if not user.organization_id:

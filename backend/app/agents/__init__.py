@@ -44,3 +44,8 @@ from app.agents.triage import (  # noqa: F401
     TriageInput,
     TriageOutput,
 )
+from app.agents.log_analysis import (  # noqa: F401,E402
+    LogAnalysisAgent,
+    LogAnalysisInput,
+    LogAnalysisOutput,
+)

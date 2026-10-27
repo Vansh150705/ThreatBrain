@@ -3,10 +3,10 @@ from __future__ import annotations
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, Response
+from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user, require_admin
+from app.api.deps import CurrentUser, get_current_user, require_admin, require_viewer
 from app.core.config import get_settings
 from app.schemas.organization import OrganizationMini
 from app.services.supabase_client import get_supabase_admin, supabase_health_check
@@ -16,7 +16,7 @@ router = APIRouter(tags=["meta"])
 
 class MeResponse(BaseModel):
     id: str
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     full_name: Optional[str] = None
     role: str
     status: str
@@ -39,21 +39,51 @@ async def health() -> dict[str, object]:
 
 
 @router.get("/health/db")
-async def health_db() -> dict[str, object]:
-    """Deep health check that confirms Supabase connectivity."""
+def health_db(response: Response) -> dict[str, object]:
+    """Deep health check that confirms Supabase connectivity (readiness probe)."""
     settings = get_settings()
     db_status = supabase_health_check()
+    if not db_status["ok"]:
+        response.status_code = 503
     return {
         "status": "ok" if db_status["ok"] else "degraded",
         "service": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "database": db_status,
+        # never expose the underlying driver error to anonymous callers
+        "database": {"ok": bool(db_status["ok"])},
         "timestamp_unix": int(time.time()),
     }
 
 
+class IntegrationStatus(BaseModel):
+    llm: bool
+    abuseipdb: bool
+    virustotal: bool
+    otx: bool
+    discord_notifications: bool
+    public_signup: bool
+    hunt_scheduler: bool
+    rate_limiting: bool
+
+
+@router.get("/system/integrations", response_model=IntegrationStatus)
+def integrations(_: CurrentUser = Depends(require_viewer)) -> IntegrationStatus:
+    """Which optional integrations are configured (never returns the secrets)."""
+    s = get_settings()
+    return IntegrationStatus(
+        llm=bool(s.GROQ_API_KEY),
+        abuseipdb=bool(s.ABUSEIPDB_API_KEY),
+        virustotal=bool(s.VIRUSTOTAL_API_KEY),
+        otx=bool(s.OTX_API_KEY),
+        discord_notifications=s.discord_webhook_ok,
+        public_signup=s.ALLOW_PUBLIC_SIGNUP,
+        hunt_scheduler=s.HUNT_INTERVAL_MINUTES > 0,
+        rate_limiting=s.RATE_LIMIT_ENABLED,
+    )
+
+
 @router.get("/me", response_model=MeResponse)
-async def whoami(
+def whoami(
     user: CurrentUser = Depends(get_current_user),
 ) -> MeResponse:
     """Returns the authenticated user's resolved identity, including nested org."""
@@ -83,12 +113,3 @@ async def whoami(
     )
 
 
-@router.get("/admin-only")
-async def admin_only(
-    user: CurrentUser = Depends(require_admin),
-) -> dict[str, object]:
-    """Test endpoint that only admins/owners can reach."""
-    return {
-        "message": f"Hello {user.full_name or user.email}, you're an admin.",
-        "role": user.role,
-    }

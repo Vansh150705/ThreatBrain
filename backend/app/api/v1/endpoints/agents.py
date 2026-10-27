@@ -15,6 +15,7 @@ from app.agents.forensics import (
     ForensicsOutput,
 )
 from app.agents.hunt import HuntAgent, HuntInput, HuntOutput
+from app.agents.log_analysis import LogAnalysisAgent, LogAnalysisInput, LogAnalysisOutput
 from app.agents.investigation import (
     InvestigationAgent,
     InvestigationInput,
@@ -32,7 +33,9 @@ from app.agents.threat_intel import (
 )
 from app.agents.triage import TriageAgent, TriageInput, TriageOutput
 from app.api.deps import CurrentUser, require_analyst
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.core.ratelimit import rate_limit
 from app.schemas import (
     AgentListResponse,
     AgentResponse,
@@ -45,6 +48,8 @@ from app.services import agent_service
 
 router = APIRouter()
 log = get_logger(__name__)
+
+_llm_limit = rate_limit("llm", per_minute=lambda: get_settings().LLM_RATE_LIMIT_PER_MINUTE)
 
 # Triage
 class TriageClassifyRequest(BaseModel):
@@ -65,10 +70,11 @@ class TriageClassifyResponse(BaseModel):
 
 @router.post(
     "/triage/classify",
+    dependencies=[Depends(_llm_limit)],
     response_model=TriageClassifyResponse,
     status_code=status.HTTP_200_OK,
 )
-async def triage_classify(
+def triage_classify(
     request: TriageClassifyRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> TriageClassifyResponse:
@@ -119,10 +125,11 @@ class ThreatIntelEnrichResponse(BaseModel):
 
 @router.post(
     "/threat-intel/enrich",
+    dependencies=[Depends(_llm_limit)],
     response_model=ThreatIntelEnrichResponse,
     status_code=status.HTTP_200_OK,
 )
-async def threat_intel_enrich(
+def threat_intel_enrich(
     request: ThreatIntelEnrichRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ThreatIntelEnrichResponse:
@@ -175,10 +182,11 @@ class InvestigationCorrelateResponse(BaseModel):
 
 @router.post(
     "/investigation/correlate",
+    dependencies=[Depends(_llm_limit)],
     response_model=InvestigationCorrelateResponse,
     status_code=status.HTTP_200_OK,
 )
-async def investigation_correlate(
+def investigation_correlate(
     request: InvestigationCorrelateRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> InvestigationCorrelateResponse:
@@ -233,19 +241,24 @@ class ResponseRecommendResponse(BaseModel):
 
 @router.post(
     "/response/recommend",
+    dependencies=[Depends(_llm_limit)],
     response_model=ResponseRecommendResponse,
     status_code=status.HTTP_200_OK,
 )
-async def response_recommend(
+def response_recommend(
     request: ResponseRecommendRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ResponseRecommendResponse:
-    if (not request.dry_run) and request.execute_auto_playbooks and not user.is_admin:
+    if request.execute_auto_playbooks:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "insufficient_role",
-                "message": "Live playbook execution requires the admin role.",
+                "error": "server_side_execution_unsupported",
+                "message": (
+                    "ThreatBrain never executes response actions itself. Queue the "
+                    "recommendation (dry_run=false), approve it in the approval queue, "
+                    "and tb-executor carries it out on the target host."
+                ),
             },
         )
 
@@ -279,6 +292,54 @@ async def response_recommend(
         total_tokens=run_result.total_tokens,
     )
 
+# Log analysis
+class LogAnalysisRequest(BaseModel):
+    lines: list[str] = Field(default_factory=list, max_length=300)
+    text: str | None = Field(default=None, max_length=60000)
+    source_hint: str | None = Field(default=None, max_length=100)
+
+
+class LogAnalysisResponse(BaseModel):
+    run_id: str
+    agent_key: str
+    verdict: LogAnalysisOutput
+    model: str
+    latency_ms: int
+    total_tokens: int
+
+
+@router.post(
+    "/log-analysis/analyze",
+    dependencies=[Depends(_llm_limit)],
+    response_model=LogAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Analyse raw log lines: entities, findings with line-level evidence, rule hits",
+)
+def log_analysis_analyze(
+    request: LogAnalysisRequest,
+    user: CurrentUser = Depends(require_analyst),
+) -> LogAnalysisResponse:
+    try:
+        params = LogAnalysisInput(**request.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    run_result = LogAnalysisAgent().run(
+        AgentInput(
+            organization_id=user.organization_id,
+            trigger_type="manual",
+            payload=params.model_dump(),
+        )
+    )
+    return LogAnalysisResponse(
+        run_id=run_result.run_id,
+        agent_key=run_result.agent_key,
+        verdict=LogAnalysisOutput.model_validate(run_result.output),
+        model=run_result.model,
+        latency_ms=run_result.latency_ms,
+        total_tokens=run_result.total_tokens,
+    )
+
+
 # Forensics
 class ForensicsReconstructRequest(BaseModel):
     incident_short_id: str = Field(..., min_length=3, max_length=40)
@@ -295,10 +356,11 @@ class ForensicsReconstructResponse(BaseModel):
 
 @router.post(
     "/forensics/reconstruct",
+    dependencies=[Depends(_llm_limit)],
     response_model=ForensicsReconstructResponse,
     status_code=status.HTTP_200_OK,
 )
-async def forensics_reconstruct(
+def forensics_reconstruct(
     request: ForensicsReconstructRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ForensicsReconstructResponse:
@@ -340,10 +402,11 @@ class ComplianceAssessResponse(BaseModel):
 
 @router.post(
     "/compliance/assess",
+    dependencies=[Depends(_llm_limit)],
     response_model=ComplianceAssessResponse,
     status_code=status.HTTP_200_OK,
 )
-async def compliance_assess(
+def compliance_assess(
     request: ComplianceAssessRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> ComplianceAssessResponse:
@@ -388,11 +451,12 @@ class HuntGenerateResponse(BaseModel):
 
 @router.post(
     "/hunt/generate",
+    dependencies=[Depends(_llm_limit)],
     response_model=HuntGenerateResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate proactive threat hunting hypotheses",
 )
-async def hunt_generate(
+def hunt_generate(
     request: HuntGenerateRequest,
     user: CurrentUser = Depends(require_analyst),
 ) -> HuntGenerateResponse:
@@ -425,7 +489,7 @@ async def hunt_generate(
     response_model=AgentListResponse,
     summary="List all agents for the caller's organization",
 )
-async def list_agents(
+def list_agents(
     user: CurrentUser = Depends(require_analyst),
 ) -> AgentListResponse:
     rows = agent_service.list_agents_for_org(
@@ -440,7 +504,7 @@ async def list_agents(
     response_model=AgentRunListResponse,
     summary="List recent runs across ALL agents",
 )
-async def list_recent_runs(
+def list_recent_runs(
     page: int = Query(default=1, ge=1, le=10_000),
     page_size: int = Query(default=20, ge=1, le=100),
     run_status: str | None = Query(default=None),
@@ -464,7 +528,7 @@ async def list_recent_runs(
     response_model=AgentRunDetail,
     summary="Get full details of one specific agent run",
 )
-async def get_agent_run(
+def get_agent_run(
     run_id: str,
     user: CurrentUser = Depends(require_analyst),
 ) -> AgentRunDetail:
@@ -488,7 +552,7 @@ async def get_agent_run(
     response_model=AgentResponse,
     summary="Get one agent's config and stats",
 )
-async def get_agent(
+def get_agent(
     agent_key: str,
     user: CurrentUser = Depends(require_analyst),
 ) -> AgentResponse:
@@ -512,7 +576,7 @@ async def get_agent(
     response_model=AgentRunListResponse,
     summary="List recent runs for a specific agent",
 )
-async def list_agent_runs(
+def list_agent_runs(
     agent_key: str,
     page: int = Query(default=1, ge=1, le=10_000),
     page_size: int = Query(default=20, ge=1, le=100),

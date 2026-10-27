@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import CurrentUser, get_current_user, require_admin
+from app.api.deps import CurrentUser, require_admin, require_analyst, require_viewer
 from app.core.logging import get_logger
 from app.schemas import OrganizationResponse, OrganizationUpdate
-from app.services import organization_service
+from app.services import case_service, organization_service
 
 router = APIRouter()
 log = get_logger(__name__)
@@ -20,8 +20,8 @@ log = get_logger(__name__)
         404: {"description": "Organization not found or deleted."},
     },
 )
-async def get_my_organization(
-    user: CurrentUser = Depends(get_current_user),
+def get_my_organization(
+    user: CurrentUser = Depends(require_viewer),
 ) -> OrganizationResponse:
     """Returns the authenticated user's organization."""
     if not user.organization_id:
@@ -65,7 +65,7 @@ async def get_my_organization(
         404: {"description": "Organization not found."},
     },
 )
-async def update_my_organization(
+def update_my_organization(
     updates: OrganizationUpdate,
     user: CurrentUser = Depends(require_admin),
 ) -> OrganizationResponse:
@@ -109,3 +109,9 @@ async def update_my_organization(
         )
 
     return OrganizationResponse.model_validate(row)
+
+
+@router.get("/members", summary="Active members of the caller's organization (for assignment)")
+def list_members(user: CurrentUser = Depends(require_analyst)) -> dict:
+    members = [m for m in case_service.list_members(user.organization_id) if m.get("status") != "disabled"]
+    return {"items": members, "total": len(members)}

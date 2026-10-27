@@ -4,9 +4,12 @@ from collections import defaultdict
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Literal
 
-from app.api.deps import CurrentUser, get_current_user
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+
+from app.api.deps import CurrentUser, require_analyst, require_viewer
 from app.schemas.threat import (
     GeoThreatPoint,
     GeoThreatResponse,
@@ -15,7 +18,7 @@ from app.schemas.threat import (
     ThreatListItem,
     ThreatListResponse,
 )
-from app.services import threat_service
+from app.services import case_service, threat_service
 from app.services.supabase_client import get_supabase_admin
 
 router = APIRouter(prefix="/threats", tags=["threats"])
@@ -90,14 +93,16 @@ _SEVERITY_ORDER = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
 
 # List threats
 @router.get("", response_model=ThreatListResponse)
-async def list_threats(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+def list_threats(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
     page: Annotated[int, Query(ge=1, description="Page number, starts at 1")] = 1,
     page_size: Annotated[int, Query(ge=1, le=100, description="Items per page (max 100)")] = 25,
     severity: Annotated[str | None, Query(description="Filter by severity: critical, high, medium, low, info")] = None,
     threat_status: Annotated[str | None, Query(alias="status", description="Filter by status: open, investigating, resolved, false_positive")] = None,
     sort_by: Annotated[str, Query(description="Sort field: created_at, severity, status, confidence")] = "created_at",
     sort_dir: Annotated[str, Query(description="Sort direction: asc or desc")] = "desc",
+    q: Annotated[str | None, Query(max_length=100, description="Title search")] = None,
+    assigned_to: Annotated[UUID | None, Query()] = None,
 ) -> ThreatListResponse:
     """List threats for the caller's organization with filters, sorting, and pagination."""
     result = threat_service.list_threats(
@@ -108,6 +113,8 @@ async def list_threats(
         status=threat_status,
         sort_by=sort_by,
         sort_dir=sort_dir,
+        search=q,
+        assigned_to=str(assigned_to) if assigned_to else None,
     )
     return ThreatListResponse(
         items=[ThreatListItem(**row) for row in result["items"]],
@@ -120,8 +127,8 @@ async def list_threats(
 
 # keep this above /{identifier} or the router treats geo as an id
 @router.get("/geo", response_model=GeoThreatResponse)
-async def get_geo_threats(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+def get_geo_threats(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> GeoThreatResponse:
     """Return threat counts aggregated by country for the attack map."""
     admin = get_supabase_admin()
@@ -152,6 +159,7 @@ async def get_geo_threats(
         ioc_res = (
             admin.table("iocs")
             .select("normalized_value, geo_country, geo_city")
+            .eq("organization_id", user.organization_id)
             .in_("normalized_value", list(all_ips))
             .not_.is_("geo_country", "null")
             .execute()
@@ -227,9 +235,9 @@ async def get_geo_threats(
 
 # Threat detail by UUID or short_id
 @router.get("/{identifier}", response_model=ThreatDetail)
-async def get_threat(
+def get_threat(
     identifier: str,
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> ThreatDetail:
     """Fetch a single threat by UUID or short_id."""
     # Try UUID first, fall back to short_id
@@ -247,3 +255,27 @@ async def get_threat(
         )
 
     return ThreatDetail(**threat)
+
+
+class ThreatUpdate(BaseModel):
+    status: Literal["open", "investigating", "contained", "resolved", "closed", "false_positive"] | None = None
+    assigned_to: UUID | None = None
+
+
+@router.patch("/{identifier}", response_model=ThreatDetail, summary="Triage a threat (status / owner)")
+def update_threat(
+    identifier: str,
+    body: ThreatUpdate,
+    user: Annotated[CurrentUser, Depends(require_analyst)],
+) -> ThreatDetail:
+    threat = threat_service.get_threat(user.organization_id, identifier)
+    if not threat:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Threat '{identifier}' not found")
+    changes = {k: (str(v) if k == "assigned_to" and v is not None else v)
+               for k, v in body.model_dump(exclude_unset=True).items()}
+    changes = {k: v for k, v in changes.items() if v is not None or k == "assigned_to"}
+    try:
+        updated = case_service.update_threat(user, threat, changes)
+    except case_service.CaseError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    return ThreatDetail(**updated)

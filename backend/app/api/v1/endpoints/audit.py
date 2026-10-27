@@ -8,7 +8,7 @@ from typing import Annotated, Any, Optional
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user
+from app.api.deps import CurrentUser, require_viewer
 from app.services.supabase_client import get_supabase_admin
 
 router = APIRouter(prefix="/audit", tags=["audit"])
@@ -37,8 +37,8 @@ class AuditListResponse(BaseModel):
 
 
 @router.get("", response_model=AuditListResponse)
-async def list_audit_logs(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+def list_audit_logs(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
     severity: Optional[str] = Query(default=None),
     actor_type: Optional[str] = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),

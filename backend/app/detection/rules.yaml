@@ -1,0 +1,440 @@
+# ThreatBrain built-in detection rules (Sigma-inspired, MITRE ATT&CK mapped).
+#
+# Each rule: id, name, severity (info|low|medium|high|critical), confidence
+# (0-100: how likely a match is a true positive), tactics, techniques, tags and
+# a `match` tree. Leaves are {field, <operator>: value}; combine with all/any/not.
+# Operators: equals, contains, startswith, regex (all case-insensitive), in,
+# gt/gte/lt/lte (numeric), exists. `field` is any TriageInput attribute, a
+# dotted path into raw_data (raw.foo.bar), or the pseudo-field `text`, which is
+# every string in the event joined together.
+
+# --- Authentication (events from tb-collector and SIEMs) ---------------------
+- id: TB-AUTH-001
+  name: Brute-force authentication attack
+  severity: high
+  confidence: 85
+  tactics: [TA0006]
+  techniques: [T1110, T1110.001]
+  tags: [brute-force, credential-access]
+  match: {field: event_type, regex: '^authentication\.(brute_force|brute_force_slow)$'}
+
+- id: TB-AUTH-002
+  name: Successful login after repeated failures (likely account compromise)
+  severity: critical
+  confidence: 90
+  tactics: [TA0006, TA0001]
+  techniques: [T1110, T1078]
+  tags: [account-compromise, credential-access]
+  match: {field: event_type, equals: authentication.brute_force_success}
+
+- id: TB-AUTH-003
+  name: Password spraying
+  severity: high
+  confidence: 85
+  tactics: [TA0006]
+  techniques: [T1110.003]
+  tags: [password-spraying, credential-access]
+  match: {field: event_type, equals: authentication.password_spraying}
+
+- id: TB-AUTH-004
+  name: Distributed / botnet brute-force
+  severity: high
+  confidence: 85
+  tactics: [TA0006]
+  techniques: [T1110, T1110.004]
+  tags: [distributed, botnet, credential-access]
+  match: {field: event_type, equals: authentication.distributed_brute_force}
+
+- id: TB-AUTH-005
+  name: Username enumeration
+  severity: medium
+  confidence: 75
+  tactics: [TA0043, TA0006]
+  techniques: [T1589.001, T1110]
+  tags: [enumeration, reconnaissance]
+  match: {field: event_type, equals: authentication.username_enumeration}
+
+- id: TB-AUTH-006
+  name: Impossible travel / anomalous login location
+  severity: high
+  confidence: 70
+  tactics: [TA0001]
+  techniques: [T1078]
+  tags: [impossible-travel, valid-accounts]
+  match:
+    any:
+      - {field: event_type, regex: 'impossible_travel|anomalous_login'}
+      - {field: text, regex: 'impossible travel'}
+
+- id: TB-AUTH-007
+  name: MFA fatigue / repeated MFA push denials
+  severity: high
+  confidence: 70
+  tactics: [TA0006]
+  techniques: [T1621]
+  tags: [mfa-fatigue]
+  match:
+    any:
+      - {field: event_type, regex: 'mfa.*(fatigue|push)'}
+      - {field: text, regex: 'mfa (push )?(denied|fatigue|bombing)'}
+
+# --- Web application attacks (tb-collector web.* / recon.*) ------------------
+- id: TB-WEB-001
+  name: Web exploitation attempt (SQLi / XSS / traversal / command injection)
+  severity: high
+  confidence: 80
+  tactics: [TA0001]
+  techniques: [T1190]
+  tags: [web-attack, initial-access]
+  match: {field: event_type, regex: '^web\.(sql_injection|xss|path_traversal|command_injection)$'}
+
+- id: TB-WEB-002
+  name: Log4Shell (JNDI) remote code execution attempt
+  severity: critical
+  confidence: 90
+  tactics: [TA0001, TA0002]
+  techniques: [T1190]
+  tags: [log4shell, rce, web-attack]
+  match:
+    any:
+      - {field: event_type, equals: web.log4shell}
+      - {field: text, regex: '\$\{jndi:(ldap|ldaps|rmi|dns|iiop)'}
+
+- id: TB-RECON-001
+  name: Active reconnaissance (scanner / directory brute-force)
+  severity: medium
+  confidence: 75
+  tactics: [TA0043]
+  techniques: [T1595, T1595.002]
+  tags: [reconnaissance, scanning]
+  match: {field: event_type, regex: '^recon\.'}
+
+- id: TB-NET-001
+  name: Port scan
+  severity: medium
+  confidence: 70
+  tactics: [TA0043, TA0007]
+  techniques: [T1046]
+  tags: [port-scan, discovery]
+  match:
+    any:
+      - {field: event_type, regex: 'port_?scan'}
+      - {field: text, regex: '\b(port ?scan|nmap scan|syn scan)\b'}
+
+# --- Endpoint: execution / defense evasion / credential access ---------------
+- id: TB-EXEC-001
+  name: Encoded or obfuscated PowerShell
+  severity: high
+  confidence: 85
+  tactics: [TA0002, TA0005]
+  techniques: [T1059.001, T1027]
+  tags: [powershell, obfuscation]
+  match:
+    any:
+      - {field: command_line, regex: 'powershell(\.exe)?\s.*-(e|enc|encodedcommand)\s+[A-Za-z0-9+/=]{20,}'}
+      - {field: command_line, regex: 'frombase64string.*(iex|invoke-expression)'}
+
+- id: TB-EXEC-002
+  name: PowerShell download cradle
+  severity: high
+  confidence: 80
+  tactics: [TA0002, TA0011]
+  techniques: [T1059.001, T1105]
+  tags: [powershell, download-cradle]
+  match:
+    all:
+      - {field: command_line, regex: '(iex|invoke-expression)'}
+      - {field: command_line, regex: '(downloadstring|downloadfile|invoke-webrequest|net\.webclient|start-bitstransfer)'}
+
+- id: TB-EXEC-003
+  name: Reverse shell command
+  severity: critical
+  confidence: 90
+  tactics: [TA0002, TA0011]
+  techniques: [T1059.004, T1095]
+  tags: [reverse-shell]
+  match:
+    any:
+      - {field: command_line, regex: '/dev/tcp/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+'}
+      - {field: command_line, regex: '\b(nc|ncat|netcat)\b.*\s-e\s'}
+      - {field: command_line, regex: 'bash\s+-i\s*>&'}
+      - {field: command_line, regex: 'python\d?\s+-c\s+.*socket.*(subprocess|pty\.spawn|dup2)'}
+
+- id: TB-EXEC-004
+  name: Remote script piped into a shell
+  severity: high
+  confidence: 80
+  tactics: [TA0002]
+  techniques: [T1059.004, T1105]
+  tags: [curl-bash, ingress-tool-transfer]
+  match: {field: command_line, regex: '\b(curl|wget)\b[^|;]*\|\s*(sudo\s+)?(ba|z|da)?sh\b'}
+
+- id: TB-EXEC-005
+  name: Living-off-the-land binary used to download or execute
+  severity: high
+  confidence: 75
+  tactics: [TA0005, TA0011]
+  techniques: [T1218, T1105]
+  tags: [lolbin]
+  match:
+    any:
+      - {field: command_line, regex: 'certutil(\.exe)?\s.*-(urlcache|decode)'}
+      - {field: command_line, regex: 'bitsadmin(\.exe)?\s.*/transfer'}
+      - {field: command_line, regex: 'mshta(\.exe)?\s+(https?:|vbscript:|javascript:)'}
+      - {field: command_line, regex: 'regsvr32(\.exe)?\s.*/i:https?://'}
+      - {field: command_line, regex: 'rundll32(\.exe)?\s.*javascript:'}
+
+- id: TB-CRED-001
+  name: Credential dumping tool or LSASS access
+  severity: critical
+  confidence: 90
+  tactics: [TA0006]
+  techniques: [T1003, T1003.001]
+  tags: [mimikatz, lsass, credential-dumping]
+  match:
+    any:
+      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|procdump.*lsass|comsvcs\.dll.*minidump)\b'}
+      - {field: text, regex: 'lsass(\.exe)?.*(dump|minidump|access)'}
+      - {field: process_name, regex: '^(mimikatz|pypykatz|lazagne)'}
+
+- id: TB-CRED-002
+  name: Sensitive credential file access (shadow / SAM / ntds)
+  severity: high
+  confidence: 80
+  tactics: [TA0006]
+  techniques: [T1003.008, T1003.002, T1003.003]
+  tags: [credential-access]
+  match:
+    any:
+      - {field: command_line, regex: '(cat|less|cp|tar)\s+.*/etc/shadow'}
+      - {field: command_line, regex: 'reg(\.exe)?\s+save\s+hklm\\(sam|security|system)'}
+      - {field: command_line, regex: 'ntdsutil.*(ifm|snapshot)|vssadmin.*ntds'}
+
+- id: TB-EVADE-001
+  name: Security log clearing or history tampering
+  severity: high
+  confidence: 85
+  tactics: [TA0005]
+  techniques: [T1070, T1070.001, T1070.003]
+  tags: [log-clearing, defense-evasion]
+  match:
+    any:
+      - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)'}
+      - {field: command_line, regex: 'clear-eventlog'}
+      - {field: command_line, regex: 'history\s+-c|unset\s+histfile|>\s*~?/?.*bash_history|rm\s+.*\.bash_history'}
+      - {field: event_type, regex: 'log_cleared|audit_log_cleared'}
+
+- id: TB-EVADE-002
+  name: Security tooling disabled
+  severity: high
+  confidence: 80
+  tactics: [TA0005]
+  techniques: [T1562.001]
+  tags: [defense-evasion, tamper]
+  match:
+    any:
+      - {field: command_line, regex: 'set-mppreference\s+.*-disable(realtimemonitoring|behaviormonitoring)\s+\$?true'}
+      - {field: command_line, regex: 'netsh\s+advfirewall\s+set\s+\w+\s+state\s+off'}
+      - {field: command_line, regex: 'systemctl\s+(stop|disable)\s+(auditd|falco|ossec|wazuh|clamav|crowdstrike|falcon)'}
+      - {field: command_line, regex: 'sc(\.exe)?\s+(stop|config)\s+(windefend|sense|wscsvc)'}
+
+# --- Persistence / privilege escalation / impact ----------------------------
+- id: TB-PERSIST-001
+  name: New local account or privileged group change
+  severity: medium
+  confidence: 70
+  tactics: [TA0003, TA0004]
+  techniques: [T1136.001, T1098]
+  tags: [persistence, account-creation]
+  match:
+    any:
+      - {field: command_line, regex: '\buseradd\b|\badduser\b'}
+      - {field: command_line, regex: 'net(1)?(\.exe)?\s+user\s+\S+\s+\S+\s+/add'}
+      - {field: command_line, regex: 'net(1)?(\.exe)?\s+localgroup\s+administrators\s+\S+\s+/add'}
+      - {field: command_line, regex: 'usermod\s+.*-a?G\s*(sudo|wheel|admin)'}
+
+- id: TB-PERSIST-002
+  name: Scheduled task / cron persistence
+  severity: medium
+  confidence: 65
+  tactics: [TA0003, TA0002]
+  techniques: [T1053.003, T1053.005]
+  tags: [persistence, scheduled-task]
+  match:
+    any:
+      - {field: command_line, regex: 'schtasks(\.exe)?\s+/create'}
+      - {field: command_line, regex: '(crontab\s+-|echo\s+.*>>\s*/(etc|var/spool)/cron)'}
+
+- id: TB-PERSIST-003
+  name: SSH authorized_keys modification
+  severity: medium
+  confidence: 65
+  tactics: [TA0003]
+  techniques: [T1098.004]
+  tags: [persistence, ssh]
+  match: {field: command_line, regex: '>>?\s*\S*\.ssh/authorized_keys'}
+
+- id: TB-IMPACT-001
+  name: Shadow copy / backup destruction
+  severity: critical
+  confidence: 90
+  tactics: [TA0040]
+  techniques: [T1490]
+  tags: [ransomware, inhibit-recovery]
+  match:
+    any:
+      - {field: command_line, regex: 'vssadmin(\.exe)?\s+delete\s+shadows'}
+      - {field: command_line, regex: 'wmic\s+shadowcopy\s+delete'}
+      - {field: command_line, regex: 'bcdedit.*recoveryenabled\s+no'}
+      - {field: command_line, regex: 'wbadmin\s+delete\s+(catalog|systemstatebackup)'}
+
+- id: TB-IMPACT-002
+  name: Ransomware indicators
+  severity: critical
+  confidence: 80
+  tactics: [TA0040]
+  techniques: [T1486]
+  tags: [ransomware]
+  match:
+    any:
+      - {field: text, regex: '\.(locked|crypt|encrypted|lockbit|ryuk|conti)\b'}
+      - {field: text, regex: 'your files (have been|are) encrypted|decrypt.*bitcoin|readme.*(restore|decrypt)'}
+      - {field: event_type, regex: 'ransom'}
+
+- id: TB-IMPACT-003
+  name: Cryptominer activity
+  severity: medium
+  confidence: 75
+  tactics: [TA0040]
+  techniques: [T1496]
+  tags: [cryptominer]
+  match: {field: text, regex: '\b(xmrig|minerd|stratum\+tcp|cpuminer|monero pool)\b'}
+
+# --- Lateral movement / exfiltration / network -------------------------------
+- id: TB-LAT-001
+  name: Inbound RDP / SMB / WinRM from an external address
+  severity: medium
+  confidence: 60
+  tactics: [TA0008, TA0001]
+  techniques: [T1021.001, T1021.002, T1021.006]
+  tags: [lateral-movement, exposed-service]
+  match:
+    all:
+      - {field: destination_port, in: [3389, 445, 5985, 5986]}
+      - {field: event_type, regex: 'firewall|network|connection|allow'}
+
+- id: TB-LAT-002
+  name: Remote execution tooling (PsExec / WMI / WinRM)
+  severity: high
+  confidence: 75
+  tactics: [TA0008]
+  techniques: [T1021.002, T1047, T1569.002]
+  tags: [lateral-movement]
+  match:
+    any:
+      - {field: command_line, regex: 'psexec(64)?(\.exe)?\s+\\\\'}
+      - {field: command_line, regex: 'wmic\s+/node:'}
+      - {field: command_line, regex: 'invoke-command\s+.*-computername'}
+
+- id: TB-EXFIL-001
+  name: Large outbound transfer
+  severity: medium
+  confidence: 55
+  tactics: [TA0010]
+  techniques: [T1048, T1567]
+  tags: [exfiltration]
+  match:
+    any:
+      - {field: raw.bytes_out, gte: 500000000}
+      - {field: raw.bytes_sent, gte: 500000000}
+      - {field: event_type, regex: 'exfil'}
+
+- id: TB-EXFIL-002
+  name: Archive staged for exfiltration
+  severity: medium
+  confidence: 55
+  tactics: [TA0009, TA0010]
+  techniques: [T1560.001, T1074]
+  tags: [staging, exfiltration]
+  match:
+    any:
+      - {field: command_line, regex: '(7z|rar|zip|tar)\S*\s+.*(a|-c[zj]f|-r)\s+.*\.(7z|rar|zip|tar(\.gz)?)\s+.*(\\users\\|/home/|/etc/|\.sql|\.db)'}
+
+- id: TB-NET-002
+  name: DNS tunneling indicator
+  severity: medium
+  confidence: 60
+  tactics: [TA0011, TA0010]
+  techniques: [T1071.004, T1048.003]
+  tags: [dns-tunnel]
+  match:
+    any:
+      - {field: raw.query_length, gte: 100}
+      - {field: event_type, regex: 'dns.*tunnel'}
+
+- id: TB-NET-003
+  name: Beaconing to known C2 framework path or user agent
+  severity: high
+  confidence: 70
+  tactics: [TA0011]
+  techniques: [T1071.001, T1573]
+  tags: [c2, beaconing]
+  match: {field: text, regex: '\b(cobalt ?strike|meterpreter|sliver|havoc c2|empire stager|beacon\.(dll|exe))\b'}
+
+# --- Cloud (AWS CloudTrail and similar) --------------------------------------
+- id: TB-CLOUD-001
+  name: Storage bucket made publicly accessible
+  severity: high
+  confidence: 80
+  tactics: [TA0010, TA0009]
+  techniques: [T1530]
+  tags: [cloud, s3, public-exposure]
+  match:
+    any:
+      - {field: event_type, regex: 'bucket.*public|public.*bucket|s3.*public'}
+      - {field: text, regex: '(putbucketacl|putbucketpolicy).*(allusers|authenticatedusers|"principal":\s*"\*")'}
+
+- id: TB-CLOUD-002
+  name: Audit logging disabled or tampered
+  severity: high
+  confidence: 85
+  tactics: [TA0005]
+  techniques: [T1562.008]
+  tags: [cloud, defense-evasion]
+  match:
+    any:
+      - {field: raw.eventName, in: [StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, DeleteFlowLogs, DeleteDetector]}
+      - {field: event_type, regex: 'cloudtrail.*(stop|delete|disabled)'}
+
+- id: TB-CLOUD-003
+  name: Administrator privileges granted in the cloud
+  severity: high
+  confidence: 75
+  tactics: [TA0004, TA0003]
+  techniques: [T1098.003, T1078.004]
+  tags: [cloud, iam, privilege-escalation]
+  match:
+    any:
+      - {field: raw.eventName, in: [AttachUserPolicy, AttachRolePolicy, PutUserPolicy, PutRolePolicy, CreateAccessKey, CreateLoginProfile]}
+      - {field: text, regex: 'AdministratorAccess|"Action":\s*"\*"'}
+
+- id: TB-CLOUD-004
+  name: Cloud root account usage
+  severity: high
+  confidence: 80
+  tactics: [TA0004]
+  techniques: [T1078.004]
+  tags: [cloud, root-account]
+  match: {field: raw.userIdentity.type, equals: Root}
+
+- id: TB-CLOUD-005
+  name: Console login without MFA
+  severity: medium
+  confidence: 65
+  tactics: [TA0001]
+  techniques: [T1078.004]
+  tags: [cloud, mfa]
+  match:
+    all:
+      - {field: raw.eventName, equals: ConsoleLogin}
+      - {field: raw.additionalEventData.MFAUsed, equals: 'No'}

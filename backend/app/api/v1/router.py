@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     agents,
+    api_keys,
     audit,
     auth,
     copilot,
@@ -24,6 +25,9 @@ api_router.include_router(meta.router)
 
 # Authentication (signup, login)
 api_router.include_router(auth.router)
+
+# API keys (collector / executor credentials)
+api_router.include_router(api_keys.router)
 
 # Audit trail
 api_router.include_router(audit.router)

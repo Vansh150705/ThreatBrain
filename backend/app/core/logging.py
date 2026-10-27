@@ -48,7 +48,7 @@ def setup_logging() -> None:
         renderer: structlog.types.Processor = structlog.processors.JSONRenderer()
     else:
         renderer = structlog.dev.ConsoleRenderer(
-            colors=True,
+            colors=sys.stdout.isatty(),
             exception_formatter=structlog.dev.plain_traceback,
         )
 

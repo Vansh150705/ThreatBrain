@@ -11,6 +11,7 @@ from app.agents.investigation.schemas import (
     ThreatGroup,
 )
 from app.core.logging import get_logger
+from app.services.incident_service import create_incident
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
@@ -30,6 +31,10 @@ class InvestigationAgent(BaseAgent):
 
     agent_key = "investigation"
     json_mode = True
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._last_threats: list[dict[str, Any]] = []
 
 
     def _fetch_recent_threats(
@@ -55,6 +60,8 @@ class InvestigationAgent(BaseAgent):
                 "detected_at, incident_id"
             )
             .eq("organization_id", organization_id)
+            .is_("deleted_at", "null")
+            .is_("incident_id", "null")  # already-grouped threats must not spawn duplicate incidents
             .gte("detected_at", since)
             .in_("status", ["open", "investigating"])
             .in_("severity", valid_severities)
@@ -170,69 +177,45 @@ class InvestigationAgent(BaseAgent):
         if not verdict.groups:
             return []
 
-        client = get_supabase_admin()
         org_id = str(organization_id)
         created: list[dict[str, str]] = []
 
         # map short_id to id for the threats we just analyzed
-        threats_seen = getattr(self, "_last_threats", []) or []
-        short_to_id = {t["short_id"]: t["id"] for t in threats_seen}
+        short_to_id = {t["short_id"]: t["id"] for t in self._last_threats}
 
         for group in verdict.groups:
-            member_ids = [short_to_id[s] for s in group.threat_short_ids if s in short_to_id]
+            member_ids = list(
+                dict.fromkeys(short_to_id[s] for s in group.threat_short_ids if s in short_to_id)
+            )
             if len(member_ids) < 2:
                 # Group must have at least 2 valid threat refs; skip otherwise
                 continue
 
-# kill_chain is an ARRAY in the schema, not a string
-            kill_chain_array = (
-                [group.kill_chain_phase] if group.kill_chain_phase else []
+            incident_row = create_incident(
+                org_id,
+                title=group.title,
+                description=group.summary,
+                severity=group.severity.value,
+                confidence=group.confidence,
+                threat_ids=member_ids,
+                kill_chain=[group.kill_chain_phase] if group.kill_chain_phase else [],
+                attribution={"hint": group.attribution_hint} if group.attribution_hint else {},
+                ai_summary={
+                    "investigation_run_id": agent_run_id,
+                    "summary": group.summary,
+                    "reasoning": group.reasoning,
+                },
             )
-
-            incident_insert = (
-                client.table("incidents")
-                .insert(
-                    {
-                        "organization_id": org_id,
-                        "title": group.title,
-                        "description": group.summary,
-                        "severity": group.severity.value,
-                        "status": "open",
-                        "confidence": group.confidence,
-                        "kill_chain": kill_chain_array,
-                        "attribution": (
-                            {"hint": group.attribution_hint}
-                            if group.attribution_hint
-                            else {}
-                        ),
-                        "ai_summary": {
-                            "investigation_run_id": agent_run_id,
-                            "summary": group.summary,
-                            "reasoning": group.reasoning,
-                        },
-                        "threat_count": len(member_ids),
-                    }
-                )
-                .execute()
-            )
-            incident_row = incident_insert.data[0]
-            incident_id = incident_row["id"]
-
-            # Link the threats to the new incident
-            client.table("threats").update({"incident_id": incident_id}).in_(
-                "id", member_ids
-            ).execute()
-
             log.info(
                 "incident_created",
-                incident_id=incident_id,
+                incident_id=incident_row["id"],
                 short_id=incident_row.get("short_id"),
                 threat_count=len(member_ids),
                 severity=group.severity.value,
             )
             created.append(
                 {
-                    "incident_id": incident_id,
+                    "incident_id": incident_row["id"],
                     "short_id": incident_row.get("short_id"),
                     "title": group.title,
                     "threat_count": str(len(member_ids)),

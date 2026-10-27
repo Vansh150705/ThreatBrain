@@ -82,7 +82,7 @@ def supabase_health_check() -> dict[str, object]:
             exception_type=type(exc).__name__,
             exception_message=str(exc),
         )
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False}
 
 
 __all__ = [

@@ -10,7 +10,7 @@ from jwt import (
     InvalidSignatureError,
     InvalidTokenError,
 )
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -59,7 +59,7 @@ class MalformedTokenError(AuthError):
 class TokenClaims(BaseModel):
 
     sub: str = Field(..., description="Supabase user UUID")
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     aud: str
     role: str = "authenticated"
     iss: Optional[str] = None
@@ -83,13 +83,12 @@ class TokenClaims(BaseModel):
         org membership still comes from `public.users.organization_id`."""
         return self.user_metadata.get("organization_id")
 
-def decode_supabase_jwt(
-    token: str,
-    *,
-    verify_signature: bool = True,
-    verify_exp: bool = True,
-) -> TokenClaims:
+def decode_supabase_jwt(token: str) -> TokenClaims:
+    """Verify a Supabase access token (signature, expiry, audience) and parse it.
 
+    Signature and expiry verification are not optional: there is deliberately
+    no flag to turn them off.
+    """
     if not token:
         raise MissingTokenError()
 
@@ -103,8 +102,8 @@ def decode_supabase_jwt(
             audience="authenticated",
             leeway=30,
             options={
-                "verify_signature": verify_signature,
-                "verify_exp": verify_exp,
+                "verify_signature": True,
+                "verify_exp": True,
                 "verify_aud": True,
                 "require": ["sub", "exp", "iat", "aud"],
             },
@@ -117,13 +116,13 @@ def decode_supabase_jwt(
         raise InvalidTokenSignatureError() from exc
     except (InvalidAudienceError, InvalidIssuerError) as exc:
         log.warning("jwt_invalid_claim", error=str(exc))
-        raise MalformedTokenError(str(exc)) from exc
+        raise MalformedTokenError("Invalid audience or issuer.") from exc
     except InvalidTokenError as exc:
         log.warning("jwt_malformed", error=str(exc))
-        raise MalformedTokenError(str(exc)) from exc
+        raise MalformedTokenError() from exc
     except Exception as exc:
         log.exception("jwt_decode_unexpected_error")
-        raise AuthError(f"Unexpected token error: {exc}") from exc
+        raise AuthError("Token could not be verified.") from exc
 
     try:
         return TokenClaims.model_validate(payload)

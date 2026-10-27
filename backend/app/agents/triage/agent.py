@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
 from app.agents.base import AgentInput, AgentRunResult, BaseAgent
 from app.agents.triage.schemas import TriageInput, TriageOutput
 from app.core.logging import get_logger
+from app.detection.iocs import event_iocs
+from app.detection.risk import compute_risk_score
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
@@ -84,6 +87,7 @@ class TriageAgent(BaseAgent):
                 '  "title":            short one-line summary (<= 200 chars),',
                 '  "description":      2-3 sentence human-readable explanation,',
                 '  "reasoning":        why you assigned this severity, citing evidence,',
+                '  "evidence":         array of {"source": "event"|"rule:<id>"|"threat_intel", "detail": "<concrete fact>"} that justify the verdict,',
                 '  "mitre_tactics":    array of MITRE ATT&CK tactic IDs, e.g. ["TA0001","TA0006"],',
                 '  "mitre_techniques": array of technique IDs, e.g. ["T1110","T1110.001"],',
                 '  "tags":             array of short labels like ["brute-force","ssh"],',
@@ -101,6 +105,8 @@ class TriageAgent(BaseAgent):
                 "- Active reconnaissance (event_type starting 'recon.' — scanning tools, directory brute-forcing, vulnerability scanning) is a real attack precursor: severity>='medium', promote_to_threat=true.",
                 "- For routine info/low events with no IOCs, promote_to_threat=false.",
                 "- Always include at least one MITRE tactic and technique if applicable.",
+                "- If the SHARED INVESTIGATION CONTEXT lists deterministic detection rule hits, treat them as strong evidence: do not rate below the strongest rule severity unless you cite concrete contrary evidence, and reuse their MITRE IDs.",
+                "- Only cite evidence that is present in the event or the context. Never invent IPs, hashes or commands.",
             ]
         )
 
@@ -118,6 +124,10 @@ class TriageAgent(BaseAgent):
         triage_output: TriageOutput,
         agent_run_id: str,
         primary_asset_id: str | None = None,
+        fingerprint: str | None = None,
+        rule_hits: list[dict[str, Any]] | None = None,
+        risk_score: int | None = None,
+        reconciliation: dict[str, Any] | None = None,
     ) -> str:
         """Insert a row into public.threats based on the agent's verdict.
 
@@ -129,50 +139,58 @@ class TriageAgent(BaseAgent):
         target_ips = [triage_input.destination_ip] if triage_input.destination_ip else []
         affected_users = [triage_input.username] if triage_input.username else []
 
-        # Build an IOC bundle the Threat Intel agent will enrich later
-        iocs: dict[str, Any] = {}
-        if triage_input.source_ip:
-            iocs["ips"] = [triage_input.source_ip]
-        if triage_input.file_hash:
-            iocs["hashes"] = [triage_input.file_hash]
+        # IOC bundle (explicit fields + anything extracted from the event text)
+        found = event_iocs(triage_input.model_dump(mode="json"))
+        iocs: dict[str, Any] = {k: v for k, v in found.items() if v}
 
-        # risk_score: weighted blend of severity tier * confidence
-        severity_weight = {
-            "info": 5,
-            "low": 25,
-            "medium": 50,
-            "high": 75,
-            "critical": 95,
-        }[triage_output.severity.value]
-        risk_score = int(severity_weight * (triage_output.confidence / 100))
-
-        result = (
-            client.table("threats")
-            .insert(
-                {
-                    "organization_id": str(organization_id),
-                    "primary_asset_id": primary_asset_id,
-                    "title": triage_output.title,
-                    "description": triage_output.description,
-                    "severity": triage_output.severity.value,
-                    "status": "open",
-                    "confidence": triage_output.confidence,
-                    "risk_score": risk_score,
-                    "mitre_tactics": triage_output.mitre_tactics,
-                    "mitre_techniques": triage_output.mitre_techniques,
-                    "source_ips": source_ips,
-                    "target_ips": target_ips,
-                    "affected_users": affected_users,
-                    "iocs": iocs,
-                    "ai_analysis": {
-                        "triage_run_id": agent_run_id,
-                        "reasoning": triage_output.reasoning,
-                    },
-                    "tags": triage_output.tags,
-                }
+        if risk_score is None:
+            risk_score, _ = compute_risk_score(
+                severity=triage_output.severity.value,
+                confidence=triage_output.confidence,
+                asset_criticality=triage_input.asset_criticality,
+                rule_hit_count=len(rule_hits or []),
             )
-            .execute()
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        occurred = (
+            triage_input.occurred_at.astimezone(timezone.utc).isoformat()
+            if triage_input.occurred_at
+            else now_iso
         )
+
+        row = {
+            "organization_id": str(organization_id),
+            "primary_asset_id": primary_asset_id,
+            "title": triage_output.title,
+            "description": triage_output.description,
+            "severity": triage_output.severity.value,
+            "status": "open",
+            "confidence": triage_output.confidence,
+            "risk_score": risk_score,
+            "mitre_tactics": triage_output.mitre_tactics,
+            "mitre_techniques": triage_output.mitre_techniques,
+            "source_ips": source_ips,
+            "target_ips": target_ips,
+            "affected_users": affected_users,
+            "iocs": iocs,
+            "ai_analysis": {
+                "triage_run_id": agent_run_id,
+                "reasoning": triage_output.reasoning,
+                "evidence": [e.model_dump() for e in triage_output.evidence],
+                "reconciliation": reconciliation or {},
+                "event_type": triage_input.event_type,
+                "source": triage_input.source,
+            },
+            "tags": triage_output.tags,
+            "detected_at": occurred,
+            "last_seen_at": occurred,
+            "event_count": 1,
+            "rule_hits": rule_hits or [],
+        }
+        if fingerprint:
+            row["fingerprint"] = fingerprint
+
+        result = client.table("threats").insert(row).execute()
 
         threat_id = result.data[0]["id"]
         threat_short_id = result.data[0]["short_id"]

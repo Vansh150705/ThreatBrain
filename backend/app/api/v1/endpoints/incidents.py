@@ -4,16 +4,19 @@ from datetime import datetime, timezone
 from typing import Annotated, Any
 from uuid import UUID
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
+from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentUser, get_current_user
+from app.api.deps import CurrentUser, require_analyst, require_viewer
 from app.schemas.incident import (
     IncidentDetail,
     IncidentListItem,
     IncidentListResponse,
 )
-from app.services import incident_service
+from app.services import case_service, incident_service
 from app.services.supabase_client import get_supabase_admin
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -21,8 +24,8 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 
 # List incidents
 @router.get("", response_model=IncidentListResponse)
-async def list_incidents(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+def list_incidents(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     severity: Annotated[str | None, Query()] = None,
@@ -30,6 +33,8 @@ async def list_incidents(
     priority: Annotated[str | None, Query()] = None,
     sort_by: Annotated[str, Query()] = "created_at",
     sort_dir: Annotated[str, Query()] = "desc",
+    q: Annotated[str | None, Query(max_length=100)] = None,
+    assigned_to: Annotated[UUID | None, Query()] = None,
 ) -> IncidentListResponse:
     """List incidents for the caller's organization with filters, sorting, and pagination."""
     result = incident_service.list_incidents(
@@ -41,6 +46,8 @@ async def list_incidents(
         priority=priority,
         sort_by=sort_by,
         sort_dir=sort_dir,
+        search=q,
+        assigned_to=str(assigned_to) if assigned_to else None,
     )
     return IncidentListResponse(
         items=[IncidentListItem(**row) for row in result["items"]],
@@ -53,17 +60,12 @@ async def list_incidents(
 
 # Detail by UUID or short_id
 @router.get("/{identifier}", response_model=IncidentDetail)
-async def get_incident(
+def get_incident(
     identifier: str,
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> IncidentDetail:
     """Fetch a single incident by UUID or short_id."""
-    incident = None
-    try:
-        uuid_value = UUID(identifier)
-        incident = incident_service.get_incident_detail(user.organization_id, uuid_value)
-    except ValueError:
-        incident = incident_service.get_incident_by_short_id(user.organization_id, identifier)
+    incident = incident_service.get_incident(user.organization_id, identifier)
 
     if not incident:
         raise HTTPException(
@@ -76,17 +78,12 @@ async def get_incident(
 
 # Threats grouped under an incident
 @router.get("/{identifier}/threats")
-async def get_incident_threats(
+def get_incident_threats(
     identifier: str,
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> dict:
     """Fetch the threats that belong to an incident."""
-    incident = None
-    try:
-        uuid_value = UUID(identifier)
-        incident = incident_service.get_incident_detail(user.organization_id, uuid_value)
-    except ValueError:
-        incident = incident_service.get_incident_by_short_id(user.organization_id, identifier)
+    incident = incident_service.get_incident(user.organization_id, identifier)
 
     if not incident:
         raise HTTPException(
@@ -111,17 +108,12 @@ def _md_list(values: Any) -> str:
 
 # download an incident report as markdown
 @router.get("/{identifier}/report")
-async def export_incident_report(
+def export_incident_report(
     identifier: str,
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> Response:
     """Build a markdown report for an incident."""
-    incident = None
-    try:
-        uuid_value = UUID(identifier)
-        incident = incident_service.get_incident_detail(user.organization_id, uuid_value)
-    except ValueError:
-        incident = incident_service.get_incident_by_short_id(user.organization_id, identifier)
+    incident = incident_service.get_incident(user.organization_id, identifier)
 
     if not incident:
         raise HTTPException(
@@ -247,3 +239,77 @@ async def export_incident_report(
             "Content-Disposition": f'attachment; filename="{short_id}-report.md"',
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Case management
+# ---------------------------------------------------------------------------
+class IncidentUpdate(BaseModel):
+    """Only the fields present in the request are changed (``assigned_to: null`` unassigns)."""
+
+    status: Literal["open", "investigating", "contained", "resolved", "closed", "false_positive"] | None = None
+    priority: Literal["p1", "p2", "p3", "p4"] | None = None
+    assigned_to: UUID | None = None
+
+
+@router.patch("/{identifier}", response_model=IncidentDetail, summary="Update status, priority or owner")
+def update_incident(
+    identifier: str,
+    body: IncidentUpdate,
+    user: Annotated[CurrentUser, Depends(require_analyst)],
+) -> IncidentDetail:
+    incident = _require_incident(identifier, user)
+    changes = {k: (str(v) if k == "assigned_to" and v is not None else v)
+               for k, v in body.model_dump(exclude_unset=True).items()}
+    # explicit nulls for status/priority are meaningless; only assigned_to may be cleared
+    changes = {k: v for k, v in changes.items() if v is not None or k == "assigned_to"}
+    try:
+        updated = case_service.update_incident(user, incident, changes)
+    except case_service.CaseError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    return IncidentDetail(**updated)
+
+
+class NoteCreate(BaseModel):
+    body: str = Field(min_length=1, max_length=5000)
+
+
+@router.get("/{identifier}/notes", summary="Analyst notes on an incident")
+def list_incident_notes(
+    identifier: str, user: Annotated[CurrentUser, Depends(require_viewer)]
+) -> dict:
+    incident = _require_incident(identifier, user)
+    notes = case_service.list_notes(user.organization_id, incident["id"])
+    return {"items": notes, "total": len(notes)}
+
+
+@router.post("/{identifier}/notes", status_code=status.HTTP_201_CREATED, summary="Add an analyst note")
+def add_incident_note(
+    identifier: str,
+    body: NoteCreate,
+    user: Annotated[CurrentUser, Depends(require_analyst)],
+) -> dict:
+    incident = _require_incident(identifier, user)
+    try:
+        return case_service.add_note(user, incident, body.body)
+    except case_service.CaseError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+@router.get("/{identifier}/timeline", summary="Chronological evidence trail for an incident")
+def incident_timeline(
+    identifier: str, user: Annotated[CurrentUser, Depends(require_viewer)]
+) -> dict:
+    incident = _require_incident(identifier, user)
+    events = case_service.build_timeline(user.organization_id, incident)
+    return {"items": events, "total": len(events)}
+
+
+def _require_incident(identifier: str, user: CurrentUser) -> dict:
+    incident = incident_service.get_incident(user.organization_id, identifier)
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident '{identifier}' not found",
+        )
+    return incident

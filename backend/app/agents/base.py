@@ -1,17 +1,28 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timedelta, timezone
+import json
 from abc import ABC, abstractmethod
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.agents.safety import fence_untrusted
 from app.core.logging import get_logger
 from app.services.llm_service import LLMError, LLMResult, llm_complete, llm_json
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _started_iso(latency_ms: int) -> str:
+    return (datetime.now(timezone.utc) - timedelta(milliseconds=latency_ms)).isoformat()
 
 
 class AgentInput(BaseModel):
@@ -27,6 +38,13 @@ class AgentInput(BaseModel):
     payload: dict[str, Any] = Field(
         default_factory=dict,
         description="Freeform context the agent should reason about.",
+    )
+    context: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Shared investigation context: structured findings from earlier "
+            "agents/stages (detection hits, triage verdict, threat intel...)."
+        ),
     )
 
 
@@ -67,16 +85,19 @@ class BaseAgent(ABC):
         # 1. Load agent config
         agent_row = self._load_agent_row(agent_input.organization_id)
 
-        # 2. Build prompt
+        # 2. Build prompt (data fenced as untrusted; prior-stage context included)
         try:
-            user_prompt = self.build_user_prompt(agent_input)
+            user_prompt = fence_untrusted(
+                self.build_user_prompt(agent_input),
+                self._render_context(agent_input.context),
+            )
         except Exception as exc:
             log.exception(
                 "agent_prompt_build_failed",
                 agent_key=self.agent_key,
                 organization_id=str(agent_input.organization_id),
             )
-            run_id = self._record_failed_run(
+            self._record_failed_run(
                 agent_row=agent_row,
                 agent_input=agent_input,
                 error=f"Prompt build failed: {exc}",
@@ -192,6 +213,16 @@ class BaseAgent(ABC):
         """Subclasses may raise to reject bad LLM output."""
         return None
 
+    @staticmethod
+    def _render_context(context: dict[str, Any]) -> str | None:
+        """Compact, bounded rendering of the shared investigation context."""
+        if not context:
+            return None
+        text = json.dumps(context, default=str, separators=(",", ":"))
+        if len(text) > 3500:
+            text = text[:3500] + "...(truncated)"
+        return "SHARED INVESTIGATION CONTEXT (findings of earlier agents, JSON):\n" + text
+
     def post_process_output(self, parsed: dict[str, Any]) -> dict[str, Any]:
         """Enrich/rewrite the parsed LLM output before validation.
 
@@ -272,8 +303,8 @@ class BaseAgent(ABC):
                     "completion_tokens": llm_result.completion_tokens,
                     "total_tokens": llm_result.total_tokens,
                     "latency_ms": latency_ms,
-                    "started_at": "now()",
-                    "completed_at": "now()",
+                    "started_at": _started_iso(latency_ms),
+                    "completed_at": _now_iso(),
                 }
             )
             .execute()
@@ -289,7 +320,28 @@ class BaseAgent(ABC):
         latency_ms: int,
         output: dict[str, Any] | None = None,
     ) -> str:
-        """Insert a failed agent_runs row and return its UUID."""
+        """Insert a failed agent_runs row and return its UUID ("" if that fails too)."""
+        try:
+            return self._insert_failed_run(
+                agent_row=agent_row,
+                agent_input=agent_input,
+                error=error,
+                latency_ms=latency_ms,
+                output=output,
+            )
+        except Exception:
+            log.exception("agent_failed_run_record_failed", agent_key=self.agent_key)
+            return ""
+
+    def _insert_failed_run(
+        self,
+        *,
+        agent_row: dict[str, Any],
+        agent_input: AgentInput,
+        error: str,
+        latency_ms: int,
+        output: dict[str, Any] | None = None,
+    ) -> str:
         client = get_supabase_admin()
         result = (
             client.table("agent_runs")
@@ -307,8 +359,8 @@ class BaseAgent(ABC):
                     "status": "failed",
                     "error_message": error[:2000],
                     "latency_ms": latency_ms,
-                    "started_at": "now()",
-                    "completed_at": "now()",
+                    "started_at": _started_iso(latency_ms),
+                    "completed_at": _now_iso(),
                 }
             )
             .execute()

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from supabase import Client, create_client
 from supabase.client import ClientOptions
@@ -14,12 +14,20 @@ from supabase.client import ClientOptions
 from app.api.v1.endpoints.meta import MeResponse
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.core.ratelimit import rate_limit
 from app.schemas.organization import OrganizationMini
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# Unauthenticated, credential-bearing routes get a much tighter limit than the API.
+_auth_limit = rate_limit(
+    "auth",
+    per_minute=lambda: get_settings().AUTH_RATE_LIMIT_PER_MINUTE,
+    per_hour=lambda: get_settings().AUTH_RATE_LIMIT_PER_MINUTE * 20,
+)
 
 
 # request and response models
@@ -70,7 +78,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
             "reputation": "malicious",
             "confidence": 95,
             "threat_score": 92,
-            "tags": ["botnet", "brute-force", "ssh"],
+            "tags": ["botnet", "brute-force", "ssh", "sample-data"],
             "source_feeds": ["abuseipdb", "otx"],
             "enrichment": {"abuseipdb": {"confidence": 95, "reports": 1247}},
             "geo_country": "RU",
@@ -86,7 +94,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
             "reputation": "suspicious",
             "confidence": 70,
             "threat_score": 55,
-            "tags": ["exfiltration", "anomaly"],
+            "tags": ["exfiltration", "anomaly", "sample-data"],
             "source_feeds": ["otx"],
             "enrichment": {},
             "geo_country": "RU",
@@ -118,7 +126,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
         "mitre_techniques": ["T1110", "T1110.001", "T1098.001"],
         "source_ips": ["203.0.113.42"],
         "attribution": {"actor": "unknown", "infrastructure": "RU botnet"},
-        "tags": ["brute-force", "oauth", "active"],
+        "tags": ["brute-force", "oauth", "active", "sample-data"],
         "first_seen_at": ago(hours=3),
         "last_seen_at": ago(minutes=18),
     }).execute()
@@ -140,7 +148,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
             "mitre_techniques": ["T1110", "T1110.001"],
             "source_ips": ["203.0.113.42"],
             "affected_users": ["root", "admin"],
-            "tags": ["brute-force", "ssh", "network"],
+            "tags": ["brute-force", "ssh", "network", "sample-data"],
             "detected_at": ago(hours=3),
         },
         {
@@ -159,7 +167,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
             "mitre_techniques": ["T1098.001"],
             "source_ips": [],
             "affected_users": [],
-            "tags": ["oauth", "persistence", "iam"],
+            "tags": ["oauth", "persistence", "iam", "sample-data"],
             "detected_at": ago(hours=1, minutes=40),
         },
         {
@@ -177,7 +185,7 @@ def _seed_starter_data(admin: Client, org_id: str) -> None:
             "mitre_techniques": ["T1048"],
             "source_ips": ["198.51.100.23"],
             "affected_users": [],
-            "tags": ["exfiltration", "anomaly"],
+            "tags": ["exfiltration", "anomaly", "sample-data"],
             "detected_at": ago(minutes=50),
         },
     ]).execute()
@@ -219,9 +227,20 @@ def _me_response(
 
 # endpoints
 
-@router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
-async def signup(request: SignupRequest) -> SignupResponse:
+@router.post(
+    "/signup",
+    response_model=SignupResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(_auth_limit)],
+)
+def signup(request: SignupRequest) -> SignupResponse:
     """Create a verified user and set up their own workspace."""
+    settings = get_settings()
+    if not settings.ALLOW_PUBLIC_SIGNUP:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Self-service signup is disabled on this deployment.",
+        )
     admin = get_supabase_admin()
 
     # create the auth user, email_confirm skips the confirmation email
@@ -237,7 +256,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
         user_id = auth_response.user.id
     except Exception as exc:
         message = str(exc)
-        log.warning("signup_create_user_failed", email=request.email, error=message)
+        log.warning("signup_create_user_failed", error=message[:200])
         if "already" in message.lower() or "registered" in message.lower():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -245,7 +264,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
             ) from exc
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not create the account: {message}",
+            detail="Could not create the account. Check the details and try again.",
         ) from exc
 
     org_id: str | None = None
@@ -260,7 +279,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
                 "slug": org_slug,
                 "plan": "free",
                 "status": "active",
-                "is_demo_org": True,  # treat every signup as a demo org for now
+                "is_demo_org": settings.SEED_DEMO_DATA,
             }
         ).execute()
         org_row = org_result.data[0]
@@ -279,14 +298,15 @@ async def signup(request: SignupRequest) -> SignupResponse:
             on_conflict="id",
         ).execute()
 
-        # fill the dashboard with some starter data
-        _seed_starter_data(admin, org_id)
+        # fill the dashboard with clearly tagged sample data (optional)
+        if settings.SEED_DEMO_DATA:
+            _seed_starter_data(admin, org_id)
     except Exception as exc:
         log.exception("signup_provisioning_failed", email=request.email)
         _cleanup_failed_signup(admin, user_id, org_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Signup failed while provisioning the workspace: {exc}",
+            detail="Signup failed while provisioning the workspace. Please try again.",
         ) from exc
 
     # sign them in so we can hand back a session
@@ -312,8 +332,8 @@ async def signup(request: SignupRequest) -> SignupResponse:
     )
 
 
-@router.post("/login", response_model=SignupResponse)
-async def login(request: LoginRequest) -> SignupResponse:
+@router.post("/login", response_model=SignupResponse, dependencies=[Depends(_auth_limit)])
+def login(request: LoginRequest) -> SignupResponse:
     """Password login returning the same shape as signup."""
     try:
         session_response = _get_anon_client().auth.sign_in_with_password(
@@ -324,7 +344,7 @@ async def login(request: LoginRequest) -> SignupResponse:
         if session is None or user is None:
             raise RuntimeError("Supabase returned no session.")
     except Exception as exc:
-        log.warning("login_failed", email=request.email, error=str(exc))
+        log.warning("login_failed", error_type=type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
