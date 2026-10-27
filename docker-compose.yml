@@ -1,0 +1,35 @@
+# Local stack: API + console. The database/auth is Supabase (hosted project or
+# `supabase start`); see README "Database setup". Copy .env.example to .env first.
+#
+#   docker compose up --build
+#   console: http://localhost:5173   API: http://localhost:8000/docs
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      PORT: "8000"
+      APP_ENV: ${APP_ENV:-development}
+      LOG_FORMAT: ${LOG_FORMAT:-console}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

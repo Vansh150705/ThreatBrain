@@ -63,7 +63,10 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 ```
 
 ### Database / schema change
-Migrations in `database/migrations/` are **not applied automatically**. Run the
+Migrations in `database/migrations/` are **not applied automatically**. For the SOC release run
+`022_agent_key_log_analysis.sql` **on its own first** (it adds an enum value, which cannot share a
+transaction with code that uses it), then `023_soc_platform.sql`. `./database/verify_migrations.sh`
+proves the whole chain on a scratch PostgreSQL before you touch production. Run the
 SQL manually in the Supabase SQL editor (Dashboard → SQL Editor), then deploy
 any backend code that depends on the new schema. A new table/column without the
 backend code that reads it does nothing; backend code without the table 500s.
@@ -77,14 +80,19 @@ Secrets are configured per host, never committed:
   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Local dev uses
   `frontend/.env.local` with `VITE_API_BASE_URL=http://localhost:8000/api/v1`.
 - **Hugging Face Spaces** (backend): `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `GROQ_API_KEY`. Set under
+  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `GROQ_API_KEY`, plus for a real deployment
+  `CORS_ORIGINS` (your frontend origin), `ALLOW_PUBLIC_SIGNUP=false`, `SEED_DEMO_DATA=false`,
+  `TRUST_PROXY_HEADERS=true` (the Space proxy sets `X-Forwarded-For`, so per-client rate limits work),
+  and optionally `ABUSEIPDB_API_KEY`, `VIRUSTOTAL_API_KEY`, `OTX_API_KEY`, `DISCORD_WEBHOOK_URL`.
+  `.env.example` documents every variable. Set under
   the Space's Settings → Variables and secrets.
 
 ## Local development
 
 ```bash
 # backend  (http://localhost:8000)
-cd backend && ./venv/Scripts/python.exe -m uvicorn app.main:app --port 8000
+cd backend && python -m venv venv && ./venv/bin/pip install -r requirements-dev.txt
+./venv/bin/uvicorn app.main:app --reload --port 8000     # Windows: venv\Scripts\python.exe -m uvicorn ...
 
 # frontend (http://localhost:5173) — reads frontend/.env.local
 cd frontend && npm run dev
@@ -96,5 +104,7 @@ cd frontend && npm run dev
 |---------|-------|
 | New page shows `404: Not Found` from the API | Backend code pushed to `origin` but not to `space`. Push to `space`. |
 | Feature works locally, not in production | Same — the HF Spaces backend is behind. |
-| `500` referencing a missing table/column | Migration not run in Supabase yet. |
+| `500` referencing a missing table/column | Migration not run in Supabase yet (new backend needs 022 + 023). |
+| Every request returns `429` behind the Space proxy | Set `TRUST_PROXY_HEADERS=true` so limits are per client, not per proxy. |
+| Agents all fail with `llm_unavailable` (502) | `GROQ_API_KEY` missing/invalid or Groq quota exhausted; detection rules still classify known attacks (degraded mode). |
 | Frontend change not live | Check the Vercel deployment finished; it follows `origin/main`. |
