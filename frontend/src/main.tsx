@@ -24,6 +24,9 @@ const ThreatDetailPage = lazy(() => import("./pages/ThreatDetailPage"));
 const AttackMapPage = lazy(() => import("./pages/AttackMapPage"));
 const AuditPage = lazy(() => import("./pages/AuditPage"));
 const ApprovalsPage = lazy(() => import("./pages/ApprovalsPage"));
+const PipelinesPage = lazy(() => import("./pages/PipelinesPage"));
+const LogAnalysisPage = lazy(() => import("./pages/LogAnalysisPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 import "leaflet/dist/leaflet.css";
@@ -70,6 +73,9 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="attack-map" element={<AttackMapPage />} />
                 <Route path="audit" element={<AuditPage />} />
                 <Route path="approvals" element={<ApprovalsPage />} />
+                <Route path="pipelines" element={<PipelinesPage />} />
+                <Route path="log-analysis" element={<LogAnalysisPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
 
               {/* 404 */}

@@ -901,7 +901,7 @@ export default function LandingPage() {
             <BentoCard className="md:col-span-6" delay={0.12}>
               <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                 <div className="lg:w-72 flex-shrink-0">
-                  <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Six specialists, one pipeline</h3>
+                  <h3 className="text-[16px] font-semibold tracking-[-0.015em]">Specialist agents, one traced pipeline</h3>
                   <p className="text-[14px] text-muted-foreground mt-2 leading-[1.65]">
                     Each agent has one job and a strict contract with the next.
                   </p>
@@ -1019,7 +1019,7 @@ export default function LandingPage() {
 
             <p className="text-[16px] lg:text-[17px] text-muted-foreground mt-7 leading-[1.65] max-w-xl mx-auto">
               Spin up your own isolated workspace with seeded threat data and
-              six agents on duty, or read the code first.
+              the agents on duty, or read the code first.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

@@ -6,7 +6,7 @@ export interface ThreatListItem {
   short_id: string;
   title: string;
   severity: "critical" | "high" | "medium" | "low" | "info";
-  status: "open" | "investigating" | "resolved" | "false_positive" | "contained";
+  status: "open" | "investigating" | "resolved" | "closed" | "false_positive" | "contained";
   confidence: number;
   risk_score: number | null;
   mitre_tactics: string[];
@@ -15,6 +15,8 @@ export interface ThreatListItem {
   target_ips: string[];
   affected_users: string[];
   assigned_to: string | null;
+  event_count?: number;
+  last_seen_at?: string | null;
   detected_at: string;
   created_at: string;
   updated_at: string;
@@ -31,6 +33,14 @@ export interface ThreatDetail extends ThreatListItem {
   primary_asset_id: string | null;
   incident_id: string | null;
   resolved_at: string | null;
+  rule_hits?: Array<{
+    rule_id: string;
+    name: string;
+    severity: string;
+    confidence: number;
+    techniques: string[];
+    matched_fields: string[];
+  }>;
 }
 
 // Paginated response
@@ -48,6 +58,7 @@ export interface ListThreatsParams {
   page_size?: number;
   severity?: string;
   status?: string;
+  q?: string;
   sort_by?: string;
   sort_dir?: "asc" | "desc";
 }

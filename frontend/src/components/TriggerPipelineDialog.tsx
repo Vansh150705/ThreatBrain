@@ -225,7 +225,7 @@ export default function TriggerPipelineDialog() {
         {(isRunning || isComplete) && (
           <div className="space-y-4 mt-4">
             <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-              {isRunning && "Running 6-stage AI pipeline..."}
+              {isRunning && "Running the agent pipeline..."}
               {runState === "success" && "Pipeline completed."}
               {runState === "failed" && "Pipeline failed."}
             </div>
@@ -238,8 +238,22 @@ export default function TriggerPipelineDialog() {
                   <CheckCircle2 className="w-4 h-4 text-severity-low flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-semibold text-foreground">
-                      Pipeline complete
+                      {result.summary.deduplicated ? "Duplicate alert folded" : "Pipeline complete"}
                     </div>
+                    {result.summary.deduplicated && (
+                      <p className="mt-1 text-[12px] text-foreground/80">
+                        This matches active threat{" "}
+                        <span className="font-mono font-semibold">{result.summary.duplicate_of}</span>
+                        {result.summary.event_count ? ` (${result.summary.event_count} events)` : ""}. It was merged
+                        instead of re-running the agents, which saves analyst attention and LLM tokens.
+                      </p>
+                    )}
+                    {result.summary.degraded && (
+                      <p className="mt-1 text-[12px] text-severity-medium">
+                        The language model was unavailable, so the verdict came from deterministic detection rules.
+                        Review it before acting.
+                      </p>
+                    )}
                     <div className="mt-1.5 space-y-0.5 font-mono text-[11px] text-muted-foreground">
                       <div>
                         Stages succeeded:{" "}

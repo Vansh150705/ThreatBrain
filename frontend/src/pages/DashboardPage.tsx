@@ -16,6 +16,7 @@ import { ApiError, withColdStartRetry } from "@/lib/api";
 import { useUserStore } from "@/store/useUserStore";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 import ColdStartNotice from "@/components/ColdStartNotice";
+import SocMetrics from "@/components/SocMetrics";
 import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
 import {
   useRealtimeThreats,
@@ -277,6 +278,8 @@ export default function DashboardPage() {
         </div>
       </motion.section>
 
+      <SocMetrics />
+
       {/* two-column: threats + agents */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
         {/* Recent threats (LIVE) */}
@@ -484,7 +487,7 @@ export default function DashboardPage() {
               Agent roster
             </h2>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              Six specialists, one orchestrator.
+              Eight specialists, one orchestrator.
             </p>
           </div>
           <Link

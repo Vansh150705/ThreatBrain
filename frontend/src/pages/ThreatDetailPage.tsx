@@ -14,6 +14,7 @@ import {
 import { api, withColdStartRetry, type ThreatDetail } from "@/lib/api";
 import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
+import ThreatTriagePanel from "@/components/ThreatTriagePanel";
 import ColdStartNotice from "@/components/ColdStartNotice";
 
 type IocTab = "source" | "targets" | "users";
@@ -197,6 +198,8 @@ export default function ThreatDetailPage() {
       >
         {/* left column */}
         <div className="lg:col-span-2 space-y-5">
+          <ThreatTriagePanel threat={threat} onUpdated={setThreat} />
+
           {/* Description */}
           {threat.description && (
             <InfoCard>

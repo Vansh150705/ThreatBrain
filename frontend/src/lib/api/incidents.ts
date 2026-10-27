@@ -6,8 +6,8 @@ export interface IncidentListItem {
   short_id: string;
   title: string;
   severity: "critical" | "high" | "medium" | "low" | "info";
-  status: "open" | "investigating" | "contained" | "resolved" | "false_positive";
-  priority: "p1" | "p2" | "p3" | "p4" | "p5";
+  status: "open" | "investigating" | "contained" | "resolved" | "closed" | "false_positive";
+  priority: "p1" | "p2" | "p3" | "p4";
   confidence: number;
   risk_score: number | null;
   threat_count: number;
@@ -70,6 +70,7 @@ export interface ListIncidentsParams {
   severity?: string;
   status?: string;
   priority?: string;
+  q?: string;
   sort_by?: string;
   sort_dir?: "asc" | "desc";
 }
