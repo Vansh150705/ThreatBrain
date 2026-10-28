@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `pipeline` · commit `5a8e764` · rules `2026.10.2` (101 rules) · 2026-10-28T18:51:32Z
+* Result: **PASS**  · mode `pipeline` · commit `29900e3` · rules `2026.10.2` (101 rules) · 2026-10-28T19:10:19Z
 * Fidelity: real FastAPI app, durable queue and worker; in-memory PostgREST stand-in; scripted LLM (no live services)
 
 ## Headline metrics
@@ -107,7 +107,7 @@
 
 ## Latency
 
-`{"scenarios": 316, "p50": 16.4, "p95": 41.6, "p99": 95.8, "max": 517.8, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
+`{"scenarios": 316, "p50": 16.4, "p95": 45.7, "p99": 100.9, "max": 541.6, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
 
 ## LLM
 

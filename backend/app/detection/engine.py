@@ -185,6 +185,7 @@ def _leaf(cond: dict[str, Any], view: dict[str, Any]) -> tuple[bool, str | None]
     return _text_op(op, arg, text)[0], path
 
 
+
 _COMMAND_FIELDS = {"command_line", "raw.parent_command_line"}
 _SQUASH_WS = re.compile(r"\s+")
 
@@ -214,6 +215,113 @@ def _evaluate(node: dict[str, Any], view: dict[str, Any], fields: list[str]) -> 
     if ok and path:
         fields.append(path)
     return ok
+
+
+# --------------------------------------------------------------------------------------------------------------
+# Compiled evaluation. A rule's match tree is turned into closures once (operator resolved, regex compiled, field
+# path split) so evaluating an event does no dictionary-shape inspection. `_evaluate` above is kept as the simple
+# reference interpreter; tests assert the two agree on every corpus event.
+# --------------------------------------------------------------------------------------------------------------
+def _compile_leaf(cond: dict[str, Any]):
+    path = cond["field"]
+    op = next(o for o in cond if o in _OPERATORS)
+    arg = cond[op]
+    parts = path.split(".")
+    squash = path in _COMMAND_FIELDS and op in ("regex", "contains", "startswith", "endswith", "equals")
+
+    def get(view: dict[str, Any]) -> Any:
+        if len(parts) == 1:
+            v = view.get(path)
+            if v is not None:
+                return v
+        return _lookup(view, path)
+
+    if op == "exists":
+        want = bool(arg)
+        return lambda view, fields: ((get(view) is not None) == want and (fields.append(path) or True)) or False
+    if op in ("gt", "gte", "lt", "lte"):
+        cmp = {"gt": lambda n: n > arg, "gte": lambda n: n >= arg, "lt": lambda n: n < arg, "lte": lambda n: n <= arg}[op]
+
+        def num_leaf(view, fields):
+            v = get(view)
+            n = _num(v) if v is not None else None
+            if n is None or not cmp(n):
+                return False
+            fields.append(path)
+            return True
+
+        return num_leaf
+    if op == "in":
+        wanted = {str(x).lower() for x in arg}
+
+        def in_leaf(view, fields):
+            v = get(view)
+            if v is not None and str(v).lower() in wanted:
+                fields.append(path)
+                return True
+            return False
+
+        return in_leaf
+    if op == "cidr":
+        nets = [ipaddress.ip_network(n, strict=False) for n in (arg if isinstance(arg, list) else [arg])]
+
+        def cidr_leaf(view, fields):
+            v = get(view)
+            if v is None:
+                return False
+            try:
+                ip = ipaddress.ip_address(str(v).strip())
+            except ValueError:
+                return False
+            if any(ip in n for n in nets if n.version == ip.version):
+                fields.append(path)
+                return True
+            return False
+
+        return cidr_leaf
+
+    if op == "regex":
+        rx = re.compile(arg, re.IGNORECASE)
+        test = lambda t: rx.search(t) is not None  # noqa: E731
+    else:
+        needle = str(arg).lower()
+        test = {
+            "equals": lambda t: t.lower() == needle,
+            "contains": lambda t: needle in t.lower(),
+            "startswith": lambda t: t.lower().startswith(needle),
+            "endswith": lambda t: t.lower().endswith(needle),
+        }[op]
+
+    def text_leaf(view, fields):
+        v = get(view)
+        if v is None:
+            return False
+        text = (v if isinstance(v, str) else json.dumps(v, default=str))[:_MAX_TEXT]
+        if test(text):
+            fields.append(path)
+            return True
+        if squash:
+            squashed = _SQUASH_WS.sub(" ", text.replace('"', "").replace("^", ""))
+            if squashed != text and test(squashed):
+                fields.append(path)
+                return True
+        return False
+
+    return text_leaf
+
+
+def compile_match(node: dict[str, Any]):
+    if "all" in node:
+        kids = [compile_match(n) for n in node["all"]]
+        return lambda view, fields: all(k(view, fields) for k in kids)
+    if "any" in node:
+        kids = [compile_match(n) for n in node["any"]]
+        return lambda view, fields: any(k(view, fields) for k in kids)
+    if "not" in node:
+        inner = compile_match(node["not"])
+        return lambda view, fields: not inner(view, [])
+    return _compile_leaf(node)
+
 
 
 def _validate(node: Any, rule_id: str) -> None:
@@ -347,15 +455,16 @@ class RuleEngine:
     def __init__(self, rules: list[Rule], version: str = "adhoc") -> None:
         self.rules = rules
         self.version = version
+        self._compiled = [(r, compile_match(r.match)) for r in rules]
 
     def evaluate(self, event: dict[str, Any]) -> list[RuleHit]:
         """Return every rule that matches ``event`` (most severe first)."""
         view = build_view(event)
         hits: list[RuleHit] = []
-        for rule in self.rules:
+        for rule, matcher in self._compiled:
             fields: list[str] = []
             try:
-                matched = _evaluate(rule.match, view, fields)
+                matched = matcher(view, fields)
             except Exception:  # a broken rule must never take the pipeline down
                 log.exception("rule_evaluation_failed", rule_id=rule.id)
                 continue

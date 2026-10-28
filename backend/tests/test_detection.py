@@ -241,3 +241,30 @@ def test_adversarial_inputs_cannot_cause_regex_blowup(payload):
     start = time.perf_counter()
     get_engine().evaluate(ev(command_line=payload, title=payload[:200], raw_data={"x": payload}))
     assert time.perf_counter() - start < 1.5, "a rule has super-linear backtracking"
+
+
+def test_compiled_matchers_agree_with_the_reference_interpreter_on_the_whole_corpus():
+    """The fast path (compiled closures) must be behaviourally identical to the simple interpreter."""
+    from app.detection.engine import _evaluate, build_view, get_engine
+    from validation import runner
+
+    engine = get_engine()
+    events = []
+    for f in ("attacks.yaml", "benign.yaml"):
+        for sc in runner.load(f):
+            for e in sc["events"]:
+                events += [runner._event_dict(x) for x in runner.expand(e)]
+    for sc in runner.load("chains.yaml") + runner.load("chains_negative.yaml"):
+        events += [runner._event_dict(e) for e in sc["events"]]
+    events += [{"title": "x", "event_type": "process.start", "raw_data": {}, "command_line": c} for c in (
+        '"C:\\Windows\\System32\\wevtutil.exe"   cl "Security"', "w^e^v^t^u^t^i^l cl Security", "a" * 30000,
+        "powershell -enc " + "QQ" * 40, "VsSaDmIn   DeLeTe  ShAdOwS /all")]
+    assert len(events) > 350
+    for ev in events:
+        view = build_view(ev)
+        slow = sorted(r.id for r in engine.rules if _evaluate(r.match, view, []))
+        fast = sorted(h.rule_id for h in engine.evaluate(ev))
+        assert slow == fast, (ev, set(slow) ^ set(fast))
+    # matched_fields (used as evidence) must agree too for a hit
+    hit = engine.evaluate({"title": "t", "event_type": "process.start", "command_line": "vssadmin delete shadows /all", "raw_data": {}})[0]
+    assert hit.matched_fields == ["command_line"]

@@ -1,0 +1,73 @@
+{
+  "schema": "threatbrain.perf/1",
+  "generated_at": "2026-10-28T19:09:18Z",
+  "environment": {
+    "python": "3.13.17",
+    "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
+    "cpus": 4,
+    "corpus_events": 295,
+    "caveats": [
+      "What each number means (read before quoting any of them):",
+      "  detection      the rule engine alone, one thread, on the validation corpus. Real CPU cost of detection.",
+      "  api_ingest     FastAPI app in-process (TestClient, no network) writing to an IN-MEMORY database stand-in. Measures",
+      "                 application overhead only; a real database adds network and SQL time per batch.",
+      "  worker         the worker pipeline (detect -> persist -> correlate) against the in-memory database, by concurrency.",
+      "                 Python threads share the GIL, so this does not predict multi-process scaling.",
+      "  postgres_queue claim_jobs() on a REAL PostgreSQL server with concurrent claimers (only when PGHOST etc. are set).",
+      "Not measured: LLM latency/throughput, network, a hosted Supabase, multi-node scaling."
+    ]
+  },
+  "detection": {
+    "events": 3835,
+    "rules": 101,
+    "events_per_second": 1241.1,
+    "latency_ms": {
+      "p50": 0.657,
+      "p95": 1.617,
+      "p99": 2.421,
+      "max": 4.533
+    }
+  },
+  "api_ingest": {
+    "batches": 40,
+    "batch_size": 50,
+    "accepted": 2000,
+    "events_per_second": 780.3,
+    "batch_latency_ms": {
+      "p50": 59.9,
+      "p95": 129.9,
+      "max": 144.4
+    }
+  },
+  "worker": {
+    "concurrency_1": {
+      "jobs": 300,
+      "seconds": 1.13,
+      "events_per_second": 265.2
+    },
+    "concurrency_2": {
+      "jobs": 300,
+      "seconds": 1.17,
+      "events_per_second": 257.1
+    },
+    "concurrency_4": {
+      "jobs": 300,
+      "seconds": 1.31,
+      "events_per_second": 229.4
+    },
+    "concurrency_8": {
+      "jobs": 300,
+      "seconds": 1.18,
+      "events_per_second": 254.5
+    }
+  },
+  "postgres_queue": {
+    "jobs": 4000,
+    "claimers": 8,
+    "claimed": 4000,
+    "double_claimed": 0,
+    "seconds": 2.21,
+    "claims_per_second": 1805.9,
+    "note": "each claimer is a separate psql process (connection setup included)"
+  }
+}

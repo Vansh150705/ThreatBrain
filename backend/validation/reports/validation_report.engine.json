@@ -2,8 +2,8 @@
   "schema": "threatbrain.validation/1",
   "environment": {
     "mode": "engine",
-    "generated_at": "2026-10-28T19:05:56Z",
-    "git_sha": "78a7d02",
+    "generated_at": "2026-10-28T19:10:09Z",
+    "git_sha": "29900e3",
     "python": "3.13.17",
     "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
     "rule_count": 101,
@@ -3450,11 +3450,11 @@
     ],
     "latency_ms": {
       "events": 381,
-      "p50": 1.05,
-      "p95": 2.167,
-      "p99": 2.588,
-      "max": 38.17,
-      "mean": 1.282
+      "p50": 0.652,
+      "p95": 1.834,
+      "p99": 2.434,
+      "max": 4.149,
+      "mean": 0.821
     },
     "rule_count": 101,
     "rules_version": "2026.10.2"

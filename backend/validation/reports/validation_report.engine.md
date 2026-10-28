@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `engine` · commit `78a7d02` · rules `2026.10.2` (101 rules) · 2026-10-28T19:05:56Z
+* Result: **PASS**  · mode `engine` · commit `29900e3` · rules `2026.10.2` (101 rules) · 2026-10-28T19:10:09Z
 * Fidelity: detection engine + correlation only; no database, no LLM
 
 ## Headline metrics
@@ -108,7 +108,7 @@
 
 ## Latency
 
-`{"events": 381, "p50": 1.05, "p95": 2.167, "p99": 2.588, "max": 38.17, "mean": 1.282}`
+`{"events": 381, "p50": 0.652, "p95": 1.834, "p99": 2.434, "max": 4.149, "mean": 0.821}`
 
 ## ATT&CK coverage (catalog subset)
 
