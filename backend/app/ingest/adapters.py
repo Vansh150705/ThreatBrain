@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from typing import Any, Callable
 
 from app.agents.triage.schemas import TriageInput
+from app.ingest.normalize import enrich_raw
 
 
 class AdapterError(ValueError):
@@ -84,6 +85,8 @@ def _raw(record: Any) -> dict[str, Any]:
 
 def _build(**kw: Any) -> TriageInput:
     kw["title"] = (kw.get("title") or "Security event")[:490]
+    if isinstance(kw.get("raw_data"), dict):
+        kw["raw_data"] = enrich_raw(kw["raw_data"])
     return TriageInput.model_validate({k: v for k, v in kw.items() if v is not None})
 
 
@@ -211,6 +214,10 @@ def _cef(payload: Any) -> list[TriageInput]:
 
 # ----------------------------------------------------------- CloudTrail ----
 _CLOUD_READONLY = ("Get", "List", "Describe", "Head")
+# read-only calls that still matter: credential/secret access (and any call by the Root user)
+_CLOUD_SENSITIVE_READS = {"GetSecretValue", "GetPasswordData", "GetSessionToken", "GetFederationToken",
+                          "GetParameter", "GetParameters", "GetParametersByPath", "GetCredentialReport",
+                          "GetAccountAuthorizationDetails", "ListAccessKeys"}
 
 
 def _cloudtrail_one(r: dict[str, Any]) -> TriageInput:
@@ -248,7 +255,8 @@ def _cloudtrail(payload: Any) -> list[TriageInput]:
             continue
         # Read-only API noise is not worth an LLM call; keep denied reads (recon).
         name = str(rec.get("eventName") or "")
-        if name.startswith(_CLOUD_READONLY) and not rec.get("errorCode"):
+        is_root = (rec.get("userIdentity") or {}).get("type") == "Root"
+        if name.startswith(_CLOUD_READONLY) and not rec.get("errorCode") and not is_root and name not in _CLOUD_SENSITIVE_READS:
             continue
         out.append(_cloudtrail_one(rec))
     return out

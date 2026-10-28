@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.core.logging import get_logger
-from app.detection.correlation import GROUP_FIELDS, evaluate_all, load_correlations
+from app.detection.correlation import GROUP_FIELDS, evaluate_all, load_correlations, rate_event_types
 from app.detection.engine import RuleHit
 from app.services.supabase_client import get_supabase_admin
 
@@ -24,6 +24,7 @@ def _shape(row: dict[str, Any]) -> dict[str, Any]:
     dets = row.get("detections") or []
     return {
         "id": row["id"],
+        "event_type": row.get("event_type"),
         "at": _parse(row.get("observed_at") or row.get("created_at")),
         "detections": [d["rule_id"] for d in dets if isinstance(d, dict)],
         "tactics": list(row.get("mitre_tactics") or []),
@@ -38,8 +39,9 @@ def _shape(row: dict[str, Any]) -> dict[str, Any]:
 
 def correlate(org_id: str, event_row: dict[str, Any], hits: list[RuleHit]) -> list[RuleHit]:
     """Correlations completed by ``event_row`` (whose own rule ``hits`` are already known)."""
-    if not hits:
-        return []
+    rate_types = rate_event_types()
+    if not hits and event_row.get("event_type") not in rate_types:
+        return []   # nothing to chain and not a countable event: skip the event-store queries
     current = _shape({**event_row, "detections": [h.as_dict() for h in hits],
                       "mitre_tactics": [t for h in hits for t in h.tactics],
                       "mitre_techniques": [t for h in hits for t in h.techniques]})
@@ -61,4 +63,18 @@ def correlate(org_id: str, event_row: dict[str, Any], hits: list[RuleHit]) -> li
             if str(r["id"]) not in seen and str(r["id"]) != str(event_row["id"]):
                 seen.add(str(r["id"]))
                 recent.append(_shape(r))
+    if event_row.get("event_type") in rate_types:
+        for field in GROUP_FIELDS:
+            value = current.get(field)
+            if not value:
+                continue
+            rows = (
+                client.table("events").select("*").eq("organization_id", org_id).eq(field, str(value))
+                .in_("event_type", sorted(rate_types)).gte("observed_at", since)
+                .order("observed_at", desc=True).limit(300).execute().data or []
+            )
+            for r in rows:
+                if str(r["id"]) not in seen and str(r["id"]) != str(event_row["id"]):
+                    seen.add(str(r["id"]))
+                    recent.append(_shape(r))
     return evaluate_all(current, recent)

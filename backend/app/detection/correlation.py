@@ -26,6 +26,9 @@ DISTINCT_KINDS = {"rule", "tactic", "technique", "username", "source_ip", "desti
 MAX_EVENTS_PER_GROUP = 300
 
 
+RATE_DISTINCT = {"username", "source_ip", "destination_ip", "asset_name"}
+
+
 @dataclass(frozen=True)
 class Correlation:
     id: str
@@ -40,6 +43,7 @@ class Correlation:
     select: dict[str, Any] = field(default_factory=dict)
     distinct: str = "rule"
     min: int = 2
+    max_evidence: int = 50
     tests: tuple[dict[str, Any], ...] = ()
 
     @property
@@ -47,10 +51,11 @@ class Correlation:
         return attack_catalog.tactics_for(list(self.techniques))
 
 
-def _validate_selector(sel: Any, cid: str) -> dict[str, Any]:
-    if not isinstance(sel, dict) or not any(sel.get(k) for k in ("rules", "tactics", "tags")):
-        raise RuleError(f"{cid}: a stage/selector needs rules, tactics or tags")
-    for k in ("rules", "tactics", "tags"):
+def _validate_selector(sel: Any, cid: str, *, allow_event_types: bool = False) -> dict[str, Any]:
+    keys = ("rules", "tactics", "tags") + (("event_types",) if allow_event_types else ())
+    if not isinstance(sel, dict) or not any(sel.get(k) for k in keys):
+        raise RuleError(f"{cid}: a stage/selector needs one of {', '.join(keys)}")
+    for k in keys:
         if k in sel and not (isinstance(sel[k], list) and all(isinstance(x, str) for x in sel[k])):
             raise RuleError(f"{cid}: selector {k} must be a list of strings")
     return sel
@@ -91,7 +96,18 @@ def correlation_from_dict(item: dict[str, Any]) -> Correlation:
         if n < 2:
             raise RuleError(f"{cid}: threshold min must be >= 2 (use a plain rule for single events)")
         return Correlation(**common, select=_validate_selector(item.get("select"), cid), distinct=distinct, min=n)
-    raise RuleError(f"{cid}: kind must be 'sequence' or 'threshold'")
+    if kind == "rate":
+        sel = _validate_selector(item.get("select"), cid, allow_event_types=True)
+        if not sel.get("event_types"):
+            raise RuleError(f"{cid}: a rate correlation selects on event_types")
+        distinct = item.get("distinct")
+        if distinct is not None and distinct not in RATE_DISTINCT:
+            raise RuleError(f"{cid}: distinct must be one of {sorted(RATE_DISTINCT)}")
+        n = int(item.get("min", 0))
+        if n < 3:
+            raise RuleError(f"{cid}: rate min must be >= 3")
+        return Correlation(**common, select=sel, distinct=distinct or "", min=n)
+    raise RuleError(f"{cid}: kind must be 'sequence', 'threshold' or 'rate'")
 
 
 @lru_cache(maxsize=1)
@@ -108,6 +124,8 @@ def load_correlations() -> tuple[Correlation, ...]:
 
 
 def _event_matches(ev: dict[str, Any], sel: dict[str, Any]) -> bool:
+    if sel.get("event_types") and ev.get("event_type") in set(sel["event_types"]):
+        return True
     rules, tactics, tags = set(sel.get("rules", [])), set(sel.get("tactics", [])), set(sel.get("tags", []))
     ids = set(ev.get("detections") or [])
     if ids & rules:
@@ -134,7 +152,7 @@ def evaluate(
     tactics, techniques, tags, and the grouping fields. ``recent`` may include ``current``."""
     c = correlation
     key = current.get(c.group_by)
-    if not key or not current.get("detections"):
+    if not key or (c.kind != "rate" and not current.get("detections")):
         return None
     horizon = current["at"] - timedelta(minutes=c.window_minutes)
     group = [
@@ -145,7 +163,18 @@ def evaluate(
     group.sort(key=lambda e: e["at"])
     evidence: list[dict[str, Any]] = []
 
-    if c.kind == "sequence":
+    if c.kind == "rate":
+        if not _event_matches(current, c.select):
+            return None
+        members = [e for e in group if _event_matches(e, c.select)]
+
+        def _count(evs: list[dict[str, Any]]) -> int:
+            return len({e.get(c.distinct) for e in evs if e.get(c.distinct)}) if c.distinct else len(evs)
+
+        if _count([*members, current]) < c.min or _count(members) >= c.min:
+            return None  # not reached yet, or already fired on an earlier event in this window
+        evidence = [*members, current]
+    elif c.kind == "sequence":
         if not _event_matches(current, c.stages[-1]):
             return None
         stage_idx, chain = 0, []
@@ -179,12 +208,17 @@ def evaluate(
     return RuleHit(
         rule_id=c.id, name=c.name, severity=c.severity, confidence=c.confidence,
         tactics=c.tactics, techniques=list(c.techniques), tags=["correlation", f"group:{c.group_by}"],
-        matched_fields=[c.group_by], evidence=[str(e["id"]) for e in evidence if e.get("id")], kind="correlation",
+        matched_fields=[c.group_by], evidence=[str(e["id"]) for e in evidence if e.get("id")][-c.max_evidence:],
+        kind="correlation",
     )
 
 
 def evaluate_all(current: dict[str, Any], recent: list[dict[str, Any]]) -> list[RuleHit]:
     return [h for c in load_correlations() if (h := evaluate(c, current, recent))]
+
+
+def rate_event_types() -> set[str]:
+    return {t for c in load_correlations() if c.kind == "rate" for t in c.select.get("event_types", [])}
 
 
 def run_inline_tests(c: Correlation) -> list[dict[str, Any]]:

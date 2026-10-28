@@ -282,3 +282,84 @@ correlations:
       events:
         - {asset_name: srv-fs-01, at: 0, detections: [TB-IMPACT-005]}
         - {asset_name: srv-fs-01, at: 9, detections: [TB-IMPACT-005]}
+
+- id: TB-COR-013
+  name: Repeated authentication failures from one source
+  severity: high
+  confidence: 75
+  techniques: [T1110.001]
+  group_by: source_ip
+  window_minutes: 10
+  kind: rate
+  select: {event_types: [authentication.failed]}
+  min: 10
+  tests:
+    - name: ten failures in ten minutes
+      expect_fire: true
+      events:
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 0, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 1, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 1, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 2, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 3, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 4, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 5, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 6, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 7, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 8, detections: []}
+    - name: only nine failures
+      expect_fire: false
+      events:
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 0, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 1, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 2, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 3, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 4, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 5, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 6, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 7, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 8, detections: []}
+    - name: ten failures spread over an hour
+      expect_fire: false
+      events:
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 0, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 7, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 14, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 21, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 28, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 35, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 42, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 49, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 56, detections: []}
+        - {source_ip: 203.0.113.61, event_type: authentication.failed, at: 63, detections: []}
+
+- id: TB-COR-014
+  name: Password spraying (failures against many accounts from one source)
+  severity: high
+  confidence: 80
+  techniques: [T1110.003]
+  group_by: source_ip
+  window_minutes: 30
+  kind: rate
+  select: {event_types: [authentication.failed]}
+  distinct: username
+  min: 6
+  tests:
+    - name: six accounts
+      expect_fire: true
+      events:
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 0, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: b, at: 2, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: c, at: 4, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: d, at: 6, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: e, at: 8, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: f, at: 10, detections: []}
+    - name: one account hammered (that is brute force, not spraying)
+      expect_fire: false
+      events:
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 0, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 2, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 4, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 6, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 8, detections: []}
+        - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 10, detections: []}

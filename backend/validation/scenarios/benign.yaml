@@ -1,0 +1,74 @@
+# Benign "hard negatives": legitimate activity that shares vocabulary, tools or structure with attacks.
+# A SOC does not want an alert for any of these. A rule that fires here is a false positive to be
+# tuned or documented, never hidden.
+scenarios:
+- {id: BEN-001, name: Admin lists scheduled tasks, events: [{title: Process creation, event_type: process.start, command_line: "schtasks /query /fo LIST"}]}
+- {id: BEN-002, name: Admin queries a single local user, events: [{title: Process creation, event_type: process.start, command_line: "net user alice"}]}
+- {id: BEN-003, name: Mapping a file share, events: [{title: Process creation, event_type: process.start, command_line: "net use Z: \\\\fileserver\\public /persistent:no"}]}
+- {id: BEN-004, name: Backup script via PowerShell file, events: [{title: Process creation, event_type: process.start, process_name: powershell.exe, command_line: "powershell.exe -NoProfile -File C:\\scripts\\nightly-backup.ps1"}]}
+- {id: BEN-005, name: Download a web page with curl, events: [{title: Process creation, event_type: process.start, command_line: "curl -sS -o /tmp/index.html https://example.org/"}]}
+- {id: BEN-006, name: Developer pulls with git over ssh, events: [{title: Process creation, event_type: process.start, command_line: "git pull origin main"}]}
+- {id: BEN-007, name: Normal ssh login, events: [{title: Process creation, event_type: process.start, command_line: "ssh deploy@10.0.0.5 uptime"}]}
+- {id: BEN-008, name: apt update, events: [{title: Process creation, event_type: process.start, command_line: "apt-get update && apt-get -y upgrade"}]}
+- {id: BEN-009, name: Restart nginx, events: [{title: Process creation, event_type: process.start, command_line: "systemctl restart nginx"}]}
+- {id: BEN-010, name: Check firewall status, events: [{title: Process creation, event_type: process.start, command_line: "ufw status verbose"}]}
+- {id: BEN-011, name: Tail auth log, events: [{title: Process creation, event_type: process.start, command_line: "tail -f /var/log/auth.log"}]}
+- {id: BEN-012, name: Logrotate, events: [{title: Process creation, event_type: process.start, command_line: "/usr/sbin/logrotate /etc/logrotate.conf"}]}
+- {id: BEN-013, name: Docker run of a plain container, events: [{title: Process creation, event_type: process.start, command_line: "docker run -d --name web -p 8080:80 nginx:1.27"}]}
+- {id: BEN-014, name: kubectl get pods, events: [{title: Process creation, event_type: process.start, command_line: "kubectl get pods -n production"}]}
+- {id: BEN-015, name: kubectl rollout, events: [{title: Process creation, event_type: process.start, command_line: "kubectl rollout restart deployment/api -n production"}]}
+- {id: BEN-016, name: Tar extract of a release, events: [{title: Process creation, event_type: process.start, command_line: "tar xzf release-1.4.2.tgz -C /opt/app"}]}
+- {id: BEN-017, name: Python venv creation, events: [{title: Process creation, event_type: process.start, command_line: "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"}]}
+- {id: BEN-018, name: Compile project, events: [{title: Process creation, event_type: process.start, command_line: "make -j8 all"}]}
+- {id: BEN-019, name: Postgres service restart, events: [{title: Process creation, event_type: process.start, command_line: "systemctl restart postgresql"}]}
+- {id: BEN-020, name: Word spawns splwow64 print helper, events: [{title: Process creation, event_type: process.start, process_name: splwow64.exe, raw_data: {parent_process: WINWORD.EXE}}]}
+- {id: BEN-021, name: Explorer starts Chrome from Program Files, events: [{title: Process creation, event_type: process.start, process_name: chrome.exe, raw_data: {parent_process: explorer.exe, process_path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"}}]}
+- {id: BEN-022, name: Real svchost, events: [{title: Process creation, event_type: process.start, process_name: svchost.exe, raw_data: {process_path: "C:\\Windows\\System32\\svchost.exe", parent_process: services.exe}}]}
+- {id: BEN-023, name: Defender signature update, events: [{title: Process creation, event_type: process.start, process_name: MpCmdRun.exe, command_line: "MpCmdRun.exe -SignatureUpdate"}]}
+- {id: BEN-024, name: Defender quick scan, events: [{title: Process creation, event_type: process.start, command_line: "powershell Start-MpScan -ScanType QuickScan"}]}
+- {id: BEN-025, name: Windows Update service start, events: [{title: Process creation, event_type: process.start, command_line: "net start wuauserv"}]}
+- {id: BEN-026, name: Successful login, events: [{title: Sign-in, event_type: authentication.success, username: alice, source_ip: 10.0.3.4, raw_data: {user_status: active}}]}
+- {id: BEN-027, name: Single failed login, events: [{title: Sign-in failed, event_type: authentication.failed, username: bob, source_ip: 10.0.3.5}]}
+- {id: BEN-028, name: Password change, events: [{title: Password changed, event_type: identity.password_change, username: carol}]}
+- {id: BEN-029, name: MFA enrolment, events: [{title: MFA enrolled, event_type: identity.mfa_enroll, username: dave, outcome: success}]}
+- {id: BEN-030, name: HTTP GET home page, events: [{title: HTTP request, event_type: web.request, source_ip: 198.51.100.5, raw_data: {url: "/", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36"}}]}
+- {id: BEN-031, name: Search query with SQL-ish words, events: [{title: HTTP request, event_type: web.request, source_ip: 198.51.100.6, raw_data: {url: "/search?q=select+a+union+of+two+sets", user_agent: "Mozilla/5.0 Firefox/125.0"}}]}
+- {id: BEN-032, name: Blog slug containing script, events: [{title: HTTP request, event_type: web.request, source_ip: 198.51.100.7, raw_data: {url: "/blog/how-to-write-a-script-for-your-video"}}]}
+- {id: BEN-033, name: Relative path in image URL, events: [{title: HTTP request, event_type: web.request, source_ip: 198.51.100.8, raw_data: {url: "/assets/../assets/logo.svg"}}]}
+- {id: BEN-034, name: API call with url parameter to external site, events: [{title: HTTP request, event_type: web.request, source_ip: 198.51.100.9, raw_data: {url: "/preview?url=https://example.org/article"}}]}
+- {id: BEN-035, name: Health check, events: [{title: HTTP request, event_type: web.request, source_ip: 10.0.0.1, raw_data: {url: "/healthz", user_agent: "kube-probe/1.29"}}]}
+- {id: BEN-036, name: Normal CloudTrail DescribeInstances, events: [{title: CloudTrail event, event_type: cloud.audit, username: ops, raw_data: {eventName: DescribeInstances, userIdentity: {type: IAMUser}}}]}
+- {id: BEN-037, name: CloudTrail ListBuckets by IAM user, events: [{title: CloudTrail event, event_type: cloud.audit, username: analyst, raw_data: {eventName: ListBuckets, userIdentity: {type: IAMUser}}}]}
+- {id: BEN-038, name: Attach read-only policy, events: [{title: CloudTrail event, event_type: cloud.audit, username: ops, raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: "arn:aws:iam::aws:policy/ReadOnlyAccess"}}}]}
+- {id: BEN-039, name: Console login with MFA, events: [{title: CloudTrail event, event_type: cloud.audit, username: ops, raw_data: {eventName: ConsoleLogin, additionalEventData: {MFAUsed: "Yes"}, responseElements: {ConsoleLogin: Success}}}]}
+- {id: BEN-040, name: Security group to internal CIDR only, events: [{title: CloudTrail event, event_type: cloud.audit, raw_data: {eventName: AuthorizeSecurityGroupIngress, requestParameters: {ipPermissions: {items: [{fromPort: 22, toPort: 22, ipRanges: {items: [{cidrIp: "10.0.0.0/8"}]}}]}}}}]}
+- {id: BEN-041, name: S3 PutObject, events: [{title: CloudTrail event, event_type: cloud.audit, raw_data: {eventName: PutObject, requestParameters: {bucketName: logs}}}]}
+- {id: BEN-042, name: Firewall allows HTTPS inbound, events: [{title: Firewall allow, event_type: network.firewall.allow, source_ip: 203.0.113.99, destination_port: 443}]}
+- {id: BEN-043, name: Internal RDP between admin hosts, events: [{title: Firewall allow, event_type: network.firewall.allow, source_ip: 10.1.2.3, destination_port: 3389}]}
+- {id: BEN-044, name: DNS lookup of a normal host, events: [{title: DNS query, event_type: network.dns, source_ip: 10.0.1.20, raw_data: {query: "api.github.com"}}]}
+- {id: BEN-045, name: DNS lookup with a CDN style long hostname, events: [{title: DNS query, event_type: network.dns, source_ip: 10.0.1.21, raw_data: {query: "d1a2b3c4d5e6f7.cloudfront.net", query_type: A}}]}
+- {id: BEN-046, name: Outbound HTTPS flow, events: [{title: Flow record, event_type: network.connection, source_ip: 10.0.1.22, destination_ip: 203.0.113.10, destination_port: 443, raw_data: {direction: outbound, bytes_out: 24000}}]}
+- {id: BEN-047, name: Nightly backup upload under threshold, events: [{title: Flow record, event_type: network.flow, source_ip: 10.0.2.10, raw_data: {bytes_out: 150000000}}]}
+- {id: BEN-048, name: Falco notice-level event, events: [{title: Falco alert, event_type: container.runtime_alert, raw_data: {priority: Notice, rule: "Container health check"}}]}
+- {id: BEN-049, name: K8s audit list pods, events: [{title: K8s audit, event_type: container.k8s.audit, username: "system:serviceaccount:monitoring:prom", raw_data: {verb: list, resource: pods, response_code: 200}}]}
+- {id: BEN-050, name: K8s anonymous denied, events: [{title: K8s audit, event_type: container.k8s.audit, username: "system:anonymous", raw_data: {verb: get, resource: pods, response_code: 403}}]}
+- {id: BEN-051, name: Email delivered with PDF, events: [{title: Email delivered, event_type: email.delivered, username: erin, raw_data: {attachment: "agenda.pdf"}}]}
+- {id: BEN-052, name: Email with spreadsheet (no macro), events: [{title: Email delivered, event_type: email.delivered, username: erin, raw_data: {attachment: "budget-2026.xlsx"}}]}
+- {id: BEN-053, name: Bulk download by one file, events: [{title: SharePoint audit, event_type: file.download, username: frank, raw_data: {file_count: 1}}]}
+- {id: BEN-054, name: USB copy of two files, events: [{title: USB copy, event_type: file.copy_to_usb, username: gina, raw_data: {file_count: 2}}]}
+- {id: BEN-055, name: Active user sign-in, events: [{title: Sign-in, event_type: authentication.success, username: hank, raw_data: {user_status: active}}]}
+- {id: BEN-056, name: Chrome helper process, events: [{title: Process creation, event_type: process.start, process_name: chrome.exe, command_line: "chrome.exe --type=renderer --lang=en-US"}]}
+- {id: BEN-057, name: Cron job running logrotate, events: [{title: Process creation, event_type: process.start, command_line: "/usr/sbin/cron -f"}]}
+- {id: BEN-058, name: Rsync of home to backup server, events: [{title: Process creation, event_type: process.start, command_line: "rsync -a /home/alice/ backup@10.0.9.9:/srv/backups/alice/"}]}
+- {id: BEN-059, name: Cleaning build artifacts, events: [{title: Process creation, event_type: process.start, command_line: "rm -rf /tmp/build node_modules"}]}
+- {id: BEN-060, name: Planned reboot, events: [{title: Process creation, event_type: process.start, command_line: "shutdown /r /t 600 /c \"Patch window\""}]}
+- {id: BEN-061, name: chmod on a script, events: [{title: Process creation, event_type: process.start, command_line: "chmod 755 /opt/app/run.sh"}]}
+- {id: BEN-062, name: useradd by provisioning in dev docs text, events: [{title: Documentation updated, event_type: audit.wiki, description: "Runbook describes how new engineers get access"}]}
+- {id: BEN-063, name: Zip of project for release, events: [{title: Process creation, event_type: process.start, command_line: "zip -r release.zip dist/"}]}
+- {id: BEN-064, name: Local SSH port forward to a dev database, events: [{title: Process creation, event_type: process.start, command_line: "ssh dev-bastion"}]}
+- {id: BEN-065, name: Windows installer from Program Files, events: [{title: Process creation, event_type: process.start, process_name: setup.exe, raw_data: {process_path: "C:\\Program Files\\Vendor\\setup.exe", parent_process: msiexec.exe}}]}
+- {id: BEN-066, name: Process named continuing on a conti-like host name, events: [{title: Config change, event_type: audit.config, description: "Contiguous memory pool resized"}]}
+- {id: BEN-067, name: Marketing mention of mining, events: [{title: Calendar event, event_type: audit.calendar, description: "Mining operations quarterly review meeting"}]}
+- {id: BEN-068, name: Service discovery with kubectl describe, events: [{title: Process creation, event_type: process.start, command_line: "kubectl describe svc api -n production"}]}
+- {id: BEN-069, name: Netcat port check to internal host, events: [{title: Process creation, event_type: process.start, command_line: "nc -zv 10.0.0.5 5432"}]}
+- {id: BEN-070, name: Whoami and id by admin, events: [{title: Process creation, event_type: process.start, command_line: "id && whoami"}]}

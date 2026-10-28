@@ -1,0 +1,3734 @@
+{
+  "schema": "threatbrain.validation/1",
+  "environment": {
+    "mode": "engine",
+    "generated_at": "2026-10-28T18:31:01Z",
+    "git_sha": "32f7a7d",
+    "python": "3.13.17",
+    "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
+    "rule_count": 101,
+    "rules_version": "2026.10.2",
+    "fidelity": "detection engine + correlation only; no database, no LLM"
+  },
+  "gates": {
+    "attack_recall_min": 0.9,
+    "precision_min": 0.95,
+    "benign_fpr_max": 0.03,
+    "mapping_accuracy_min": 0.8,
+    "chain_recall_min": 1.0,
+    "chain_negative_pass_min": 1.0,
+    "engine_event_p95_ms_max": 25.0
+  },
+  "summary": {
+    "metrics": {
+      "attack_scenarios": 169,
+      "true_positives": 169,
+      "false_negatives": 0,
+      "accepted_gaps": [
+        {
+          "id": "HL2-011",
+          "name": "CloudTrail secret read by unfamiliar principal from outside",
+          "reason": "needs a per-principal behavioural baseline; a successful GetSecretValue is normal for most workloads. The adapter now keeps the event, but no rule fires on it.",
+          "now_detected": false
+        }
+      ],
+      "benign_scenarios": 125,
+      "false_positives": 0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0,
+      "mapping_accuracy": 0.9941,
+      "chain_recall": 1.0,
+      "chain_negative_pass": 1.0,
+      "evasion_probes": 12,
+      "evasion_detected": 5,
+      "evasion_known_gaps_open": 7,
+      "evasion_gaps_closed": [],
+      "evasion_unexpected_misses": [],
+      "recall_by_tactic": {
+        "TA0001": {
+          "scenarios": 24,
+          "detected": 24,
+          "recall": 1.0
+        },
+        "TA0002": {
+          "scenarios": 14,
+          "detected": 14,
+          "recall": 1.0
+        },
+        "TA0003": {
+          "scenarios": 19,
+          "detected": 19,
+          "recall": 1.0
+        },
+        "TA0004": {
+          "scenarios": 10,
+          "detected": 10,
+          "recall": 1.0
+        },
+        "TA0005": {
+          "scenarios": 23,
+          "detected": 23,
+          "recall": 1.0
+        },
+        "TA0006": {
+          "scenarios": 21,
+          "detected": 21,
+          "recall": 1.0
+        },
+        "TA0007": {
+          "scenarios": 7,
+          "detected": 7,
+          "recall": 1.0
+        },
+        "TA0008": {
+          "scenarios": 7,
+          "detected": 7,
+          "recall": 1.0
+        },
+        "TA0009": {
+          "scenarios": 8,
+          "detected": 8,
+          "recall": 1.0
+        },
+        "TA0010": {
+          "scenarios": 6,
+          "detected": 6,
+          "recall": 1.0
+        },
+        "TA0011": {
+          "scenarios": 15,
+          "detected": 15,
+          "recall": 1.0
+        },
+        "TA0040": {
+          "scenarios": 15,
+          "detected": 15,
+          "recall": 1.0
+        }
+      }
+    },
+    "gate_checks": {
+      "attack_recall_min": true,
+      "precision_min": true,
+      "benign_fpr_max": true,
+      "mapping_accuracy_min": true,
+      "chain_recall_min": true,
+      "chain_negative_pass_min": true,
+      "no_unexpected_evasion_misses": true,
+      "engine_event_p95_ms_max": true
+    },
+    "passed": true
+  },
+  "results": {
+    "attacks": [
+      {
+        "id": "ATK-001",
+        "name": "Nmap SYN scan of subnet",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1046"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-RECON-002"
+        ]
+      },
+      {
+        "id": "ATK-002",
+        "name": "sqlmap against login form (user agent)",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-RECON-002"
+        ]
+      },
+      {
+        "id": "ATK-003",
+        "name": "Log4Shell JNDI in User-Agent",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-002"
+        ]
+      },
+      {
+        "id": "ATK-004",
+        "name": "SQL injection UNION in query string",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-003"
+        ]
+      },
+      {
+        "id": "ATK-005",
+        "name": "Path traversal reading /etc/passwd",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005"
+        ]
+      },
+      {
+        "id": "ATK-006",
+        "name": "Reflected XSS payload",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-004"
+        ]
+      },
+      {
+        "id": "ATK-007",
+        "name": "Command injection via ping parameter",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-006"
+        ]
+      },
+      {
+        "id": "ATK-008",
+        "name": "SSRF to AWS metadata",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-007"
+        ]
+      },
+      {
+        "id": "ATK-009",
+        "name": "Web shell dropped in web root",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1505.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-008"
+        ]
+      },
+      {
+        "id": "ATK-010",
+        "name": "Apache spawning a shell",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-009"
+        ]
+      },
+      {
+        "id": "ATK-011",
+        "name": "Phishing with double-extension attachment",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1566.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-INIT-001"
+        ]
+      },
+      {
+        "id": "ATK-012",
+        "name": "Macro Word spawning PowerShell",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1204.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-002",
+          "TB-EXEC-006"
+        ]
+      },
+      {
+        "id": "ATK-013",
+        "name": "PowerShell -EncodedCommand",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-001"
+        ]
+      },
+      {
+        "id": "ATK-014",
+        "name": "Bash reverse shell via /dev/tcp",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-003"
+        ]
+      },
+      {
+        "id": "ATK-015",
+        "name": "Python reverse shell one-liner",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-003"
+        ]
+      },
+      {
+        "id": "ATK-016",
+        "name": "curl pipe to bash",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1105"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-004"
+        ]
+      },
+      {
+        "id": "ATK-017",
+        "name": "certutil download",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1105"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "ATK-018",
+        "name": "mshta remote HTA",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1218"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "ATK-019",
+        "name": "regsvr32 squiblydoo",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1218"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "ATK-020",
+        "name": "BITS job download",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1105"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "ATK-021",
+        "name": "New local admin user",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1136.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-001"
+        ]
+      },
+      {
+        "id": "ATK-022",
+        "name": "Scheduled task persistence",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1053.005"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-002"
+        ]
+      },
+      {
+        "id": "ATK-023",
+        "name": "Cron reverse beacon",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1053.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-004",
+          "TB-PERSIST-002"
+        ]
+      },
+      {
+        "id": "ATK-024",
+        "name": "SSH key persistence",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1098.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-003"
+        ]
+      },
+      {
+        "id": "ATK-025",
+        "name": "Registry Run key persistence",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1547.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-004"
+        ]
+      },
+      {
+        "id": "ATK-026",
+        "name": "Service creation with suspicious binpath",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1543.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-004"
+        ]
+      },
+      {
+        "id": "ATK-027",
+        "name": "SUID shell",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1548.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-007",
+          "TB-PRIV-001"
+        ]
+      },
+      {
+        "id": "ATK-028",
+        "name": "PrintSpoofer privilege escalation",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1068"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-002"
+        ]
+      },
+      {
+        "id": "ATK-029",
+        "name": "UAC bypass via fodhelper",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1548.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-003"
+        ]
+      },
+      {
+        "id": "ATK-030",
+        "name": "Privileged container with host mount",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1611"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-009",
+          "TB-PRIV-004"
+        ]
+      },
+      {
+        "id": "ATK-031",
+        "name": "cluster-admin binding",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1098"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-005"
+        ]
+      },
+      {
+        "id": "ATK-032",
+        "name": "Clear Windows Security log",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1070.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-001"
+        ]
+      },
+      {
+        "id": "ATK-033",
+        "name": "Disable Defender real-time protection",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-002"
+        ]
+      },
+      {
+        "id": "ATK-034",
+        "name": "Stop auditd",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-002"
+        ]
+      },
+      {
+        "id": "ATK-035",
+        "name": "Linux history wipe",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1070.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-001"
+        ]
+      },
+      {
+        "id": "ATK-036",
+        "name": "svchost from user-writable path",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1036"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-003",
+          "TB-EXEC-007",
+          "TB-MAL-002"
+        ]
+      },
+      {
+        "id": "ATK-037",
+        "name": "CreateRemoteThread injection",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1055"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-004"
+        ]
+      },
+      {
+        "id": "ATK-038",
+        "name": "LSASS dump with procdump",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-001"
+        ]
+      },
+      {
+        "id": "ATK-039",
+        "name": "comsvcs MiniDump",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-001"
+        ]
+      },
+      {
+        "id": "ATK-040",
+        "name": "SAM hive export",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-002",
+          "TB-IMPACT-002"
+        ]
+      },
+      {
+        "id": "ATK-041",
+        "name": "Shadow file read",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-002"
+        ]
+      },
+      {
+        "id": "ATK-042",
+        "name": "AWS credentials file theft",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1552.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-003"
+        ]
+      },
+      {
+        "id": "ATK-043",
+        "name": "Cloud metadata credential theft from host",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1552.005"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-003"
+        ]
+      },
+      {
+        "id": "ATK-044",
+        "name": "Hydra SSH brute force tooling",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1110"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-004"
+        ]
+      },
+      {
+        "id": "ATK-045",
+        "name": "Kerberoasting SPN query",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1558.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-002"
+        ]
+      },
+      {
+        "id": "ATK-046",
+        "name": "BloodHound collection",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1087.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-001"
+        ]
+      },
+      {
+        "id": "ATK-047",
+        "name": "Domain admins enumeration",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1069"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-001"
+        ]
+      },
+      {
+        "id": "ATK-048",
+        "name": "PsExec lateral movement",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1021.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-008"
+        ]
+      },
+      {
+        "id": "ATK-049",
+        "name": "WMI remote process create",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1047"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-008"
+        ]
+      },
+      {
+        "id": "ATK-050",
+        "name": "Admin share copy",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1021.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-002"
+        ]
+      },
+      {
+        "id": "ATK-051",
+        "name": "SSH reverse tunnel",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1572"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-004"
+        ]
+      },
+      {
+        "id": "ATK-052",
+        "name": "chisel SOCKS client",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1572"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-004"
+        ]
+      },
+      {
+        "id": "ATK-053",
+        "name": "ngrok exposure",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1572"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-003"
+        ]
+      },
+      {
+        "id": "ATK-054",
+        "name": "DNS tunnelling long label",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1071.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-NET-002"
+        ]
+      },
+      {
+        "id": "ATK-055",
+        "name": "Cobalt Strike default user agent",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1071.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-NET-003"
+        ]
+      },
+      {
+        "id": "ATK-056",
+        "name": "Outbound connection to 4444",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1571"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-004"
+        ]
+      },
+      {
+        "id": "ATK-057",
+        "name": "Archive of home directories",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1560.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-002"
+        ]
+      },
+      {
+        "id": "ATK-058",
+        "name": "Database dump to /tmp",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1005"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-002"
+        ]
+      },
+      {
+        "id": "ATK-059",
+        "name": "rclone to remote storage",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1567.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-003"
+        ]
+      },
+      {
+        "id": "ATK-060",
+        "name": "Upload via transfer.sh",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1567"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-003",
+          "TB-EXFIL-003"
+        ]
+      },
+      {
+        "id": "ATK-061",
+        "name": "Large outbound transfer",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1048"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-001"
+        ]
+      },
+      {
+        "id": "ATK-062",
+        "name": "Shadow copy deletion",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1490"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-001"
+        ]
+      },
+      {
+        "id": "ATK-063",
+        "name": "bcdedit recovery disabled",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1490"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-001"
+        ]
+      },
+      {
+        "id": "ATK-064",
+        "name": "Ransom note and renamed files",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1486"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-002"
+        ]
+      },
+      {
+        "id": "ATK-065",
+        "name": "Backup service stopped",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1489"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-005"
+        ]
+      },
+      {
+        "id": "ATK-066",
+        "name": "XMRig miner",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1496"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-003"
+        ]
+      },
+      {
+        "id": "ATK-067",
+        "name": "rm -rf root",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1485"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-004"
+        ]
+      },
+      {
+        "id": "ATK-068",
+        "name": "CloudTrail StopLogging",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-002"
+        ]
+      },
+      {
+        "id": "ATK-069",
+        "name": "S3 bucket opened to AllUsers",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1530"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-001"
+        ]
+      },
+      {
+        "id": "ATK-070",
+        "name": "IAM admin policy attached",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1098.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-003",
+          "TB-PRIV-005"
+        ]
+      },
+      {
+        "id": "ATK-071",
+        "name": "Root account used",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-004"
+        ]
+      },
+      {
+        "id": "ATK-072",
+        "name": "Security group opened to world on SSH",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.007"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-006"
+        ]
+      },
+      {
+        "id": "ATK-073",
+        "name": "EBS snapshot shared externally",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1537"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-007"
+        ]
+      },
+      {
+        "id": "ATK-074",
+        "name": "KMS key deletion scheduled",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1485"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-008"
+        ]
+      },
+      {
+        "id": "ATK-075",
+        "name": "Mailbox auto-forward rule",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1114.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-009"
+        ]
+      },
+      {
+        "id": "ATK-076",
+        "name": "Falco terminal shell in container",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1609"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CONT-001"
+        ]
+      },
+      {
+        "id": "ATK-077",
+        "name": "K8s exec into pod",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1609"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-009"
+        ]
+      },
+      {
+        "id": "ATK-078",
+        "name": "K8s anonymous access granted",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CONT-002",
+          "TB-DISC-003"
+        ]
+      },
+      {
+        "id": "ATK-079",
+        "name": "EICAR test string on endpoint",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1204.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-MAL-001"
+        ]
+      },
+      {
+        "id": "ATK-080",
+        "name": "Antivirus detection event",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1204.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-MAL-001"
+        ]
+      },
+      {
+        "id": "ATK-081",
+        "name": "SSH brute force (collector summary)",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1110.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-AUTH-001"
+        ]
+      },
+      {
+        "id": "ATK-082",
+        "name": "Password spraying (collector summary)",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1110.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-AUTH-003"
+        ]
+      },
+      {
+        "id": "ATK-083",
+        "name": "Impossible travel (IdP)",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-AUTH-006"
+        ]
+      },
+      {
+        "id": "ATK-084",
+        "name": "Okta MFA factors reset",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1556"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IDP-001"
+        ]
+      },
+      {
+        "id": "ATK-085",
+        "name": "Disabled account sign-in",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-INSIDER-002"
+        ]
+      },
+      {
+        "id": "ATK-086",
+        "name": "Remote admin tool on server",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1219"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-005"
+        ]
+      },
+      {
+        "id": "ATK-087",
+        "name": "Mimikatz by name",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-001"
+        ]
+      },
+      {
+        "id": "ATK-088",
+        "name": "DNS amplification flood",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1498"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-006"
+        ]
+      },
+      {
+        "id": "ATK-089",
+        "name": "Bulk document download",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1213"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-INSIDER-001"
+        ]
+      },
+      {
+        "id": "ATK-090",
+        "name": "Kubernetes secrets enumeration",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1613"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-003"
+        ]
+      },
+      {
+        "id": "HLD-001",
+        "name": "Atomic T1059.001 download and exec via IWR",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-002"
+        ]
+      },
+      {
+        "id": "HLD-002",
+        "name": "wget then run payload",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1105"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-006",
+          "TB-EXEC-007"
+        ]
+      },
+      {
+        "id": "HLD-003",
+        "name": "nc listener bind shell",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-003"
+        ]
+      },
+      {
+        "id": "HLD-004",
+        "name": "Perl reverse shell",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-003"
+        ]
+      },
+      {
+        "id": "HLD-005",
+        "name": "Cron persistence by writing file",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1053.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-002"
+        ]
+      },
+      {
+        "id": "HLD-006",
+        "name": "systemd service dropped",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1543.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-004"
+        ]
+      },
+      {
+        "id": "HLD-007",
+        "name": "Startup folder copy",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1547.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-004"
+        ]
+      },
+      {
+        "id": "HLD-008",
+        "name": "WMI event subscription",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1546.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-005"
+        ]
+      },
+      {
+        "id": "HLD-009",
+        "name": "sudo to root shell with find",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1548.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-006"
+        ]
+      },
+      {
+        "id": "HLD-010",
+        "name": "Docker socket mounted",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1611"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-004"
+        ]
+      },
+      {
+        "id": "HLD-011",
+        "name": "iptables flushed",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-002"
+        ]
+      },
+      {
+        "id": "HLD-012",
+        "name": "Sysmon driver unloaded",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-002"
+        ]
+      },
+      {
+        "id": "HLD-013",
+        "name": "Event log service stopped",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-002"
+        ]
+      },
+      {
+        "id": "HLD-014",
+        "name": "Timestomp with touch",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1070.006"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-005"
+        ]
+      },
+      {
+        "id": "HLD-015",
+        "name": "rundll32 javascript",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1218.011"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "HLD-016",
+        "name": "msbuild executing inline task from temp",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1127.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "HLD-017",
+        "name": "ntdsutil IFM",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-002"
+        ]
+      },
+      {
+        "id": "HLD-018",
+        "name": "secretsdump over network",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.006"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-002",
+          "TB-CRED-004"
+        ]
+      },
+      {
+        "id": "HLD-019",
+        "name": "Browser credential store copy",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1555.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-003"
+        ]
+      },
+      {
+        "id": "HLD-020",
+        "name": "Responder LLMNR poisoning",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1557.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-004"
+        ]
+      },
+      {
+        "id": "HLD-021",
+        "name": "Network share discovery",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1135"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-004"
+        ]
+      },
+      {
+        "id": "HLD-022",
+        "name": "Account discovery of domain users",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1087.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-001"
+        ]
+      },
+      {
+        "id": "HLD-023",
+        "name": "AdFind enumeration",
+        "tactic": "TA0007",
+        "techniques": [
+          "T1482"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-001"
+        ]
+      },
+      {
+        "id": "HLD-024",
+        "name": "smbexec lateral movement",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1021.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-008"
+        ]
+      },
+      {
+        "id": "HLD-025",
+        "name": "Pass-the-hash with pth-winexe",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1550.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-003"
+        ]
+      },
+      {
+        "id": "HLD-026",
+        "name": "Staging with 7z password",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1560.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-002"
+        ]
+      },
+      {
+        "id": "HLD-027",
+        "name": "scp of directory to external host",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1048"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-003"
+        ]
+      },
+      {
+        "id": "HLD-028",
+        "name": "Cloud storage upload via azcopy",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1567.002"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXFIL-003"
+        ]
+      },
+      {
+        "id": "HLD-029",
+        "name": "Wiper using dd on disk",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1561"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-004"
+        ]
+      },
+      {
+        "id": "HLD-030",
+        "name": "Service stop of SQL by sc",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1489"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-005"
+        ]
+      },
+      {
+        "id": "HLD-031",
+        "name": "AWS CLI disabling CloudTrail",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-002"
+        ]
+      },
+      {
+        "id": "HLD-032",
+        "name": "AWS CLI create access key for another user",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1098.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-003"
+        ]
+      },
+      {
+        "id": "HLD-033",
+        "name": "CloudTrail DeleteTrail",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-002"
+        ]
+      },
+      {
+        "id": "HLD-034",
+        "name": "Azure diagnostic settings deleted",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-002"
+        ]
+      },
+      {
+        "id": "HLD-035",
+        "name": "GCP log sink deleted",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.008"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-002"
+        ]
+      },
+      {
+        "id": "HLD-036",
+        "name": "Console login without MFA",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-005"
+        ]
+      },
+      {
+        "id": "HLD-037",
+        "name": "RDP exposed to internet",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1133"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-001"
+        ]
+      },
+      {
+        "id": "HLD-038",
+        "name": "Telegram bot exfil channel",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1102"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-C2-003"
+        ]
+      },
+      {
+        "id": "HLD-039",
+        "name": "Webshell request with cmd parameter",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1505.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005",
+          "TB-WEB-008"
+        ]
+      },
+      {
+        "id": "HLD-040",
+        "name": "Struts-style OGNL injection header",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-010"
+        ]
+      },
+      {
+        "id": "HLD-041",
+        "name": "Spring4Shell style class loader access",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-010"
+        ]
+      },
+      {
+        "id": "HLD-042",
+        "name": "XXE payload",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005"
+        ]
+      },
+      {
+        "id": "HLD-043",
+        "name": "Ransom note filename variety",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1486"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-002",
+          "TB-MAL-001"
+        ]
+      },
+      {
+        "id": "HLD-044",
+        "name": "SMB signing disabled via registry",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-008"
+        ]
+      },
+      {
+        "id": "HLD-045",
+        "name": "Local account added to RDP users",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1098"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-001"
+        ]
+      },
+      {
+        "id": "HL2-001",
+        "name": "Wazuh sysmon - encoded PowerShell with full image path",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-001",
+          "TB-EXEC-006"
+        ]
+      },
+      {
+        "id": "HL2-002",
+        "name": "Wazuh sysmon - LSASS access by unsigned tool",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-001"
+        ]
+      },
+      {
+        "id": "HL2-003",
+        "name": "Wazuh sysmon - svchost from Temp",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1036"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-003"
+        ]
+      },
+      {
+        "id": "HL2-004",
+        "name": "ECS process event - certutil download",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1105"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-005"
+        ]
+      },
+      {
+        "id": "HL2-005",
+        "name": "ECS DNS tunnelling",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1071.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-NET-002"
+        ]
+      },
+      {
+        "id": "HL2-006",
+        "name": "ECS web log - SQLi in url",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-003"
+        ]
+      },
+      {
+        "id": "HL2-007",
+        "name": "ECS authentication brute force",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1110"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-AUTH-009"
+        ]
+      },
+      {
+        "id": "HL2-008",
+        "name": "CEF IDS exploit signature",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-NET-004"
+        ]
+      },
+      {
+        "id": "HL2-009",
+        "name": "CEF firewall allow RDP from internet",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1133"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-LAT-001"
+        ]
+      },
+      {
+        "id": "HL2-010",
+        "name": "CloudTrail root usage with a read-only call",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1078.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-004"
+        ]
+      },
+      {
+        "id": "HL2-011",
+        "name": "CloudTrail secret read by unfamiliar principal from outside",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1552"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": "needs a per-principal behavioural baseline; a successful GetSecretValue is normal for most workloads. The adapter now keeps the event, but no rule fires on it."
+      },
+      {
+        "id": "HL2-012",
+        "name": "CloudTrail public ACL on bucket object",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1530"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-001"
+        ]
+      },
+      {
+        "id": "HL2-013",
+        "name": "CloudTrail DeleteDBSnapshot",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1485"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-008"
+        ]
+      },
+      {
+        "id": "HL2-014",
+        "name": "Offensive tool crackmapexec",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1021"
+        ],
+        "detected": true,
+        "mapping_ok": false,
+        "rules": [
+          "TB-CRED-004"
+        ]
+      },
+      {
+        "id": "HL2-015",
+        "name": "PowerShell Invoke-Mimikatz in memory",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-001",
+          "TB-EXEC-002"
+        ]
+      },
+      {
+        "id": "HL2-016",
+        "name": "sudo su to root via cron write",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1053.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-002"
+        ]
+      },
+      {
+        "id": "HL2-017",
+        "name": "SSH authorized_keys via tee",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1098.004"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-003"
+        ]
+      },
+      {
+        "id": "HL2-018",
+        "name": "LD_PRELOAD rootkit install",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1574.006"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-006"
+        ]
+      },
+      {
+        "id": "HL2-019",
+        "name": "Kerberos RC4 TGS request for service account",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1558.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-DISC-002"
+        ]
+      },
+      {
+        "id": "HL2-020",
+        "name": "Container escape via release_agent",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1611"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-004"
+        ]
+      },
+      {
+        "id": "HL2-021",
+        "name": "Docker API exposed container create with privileged",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1610"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-004"
+        ]
+      },
+      {
+        "id": "HL2-022",
+        "name": "Cryptominer by pool domain DNS",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1496"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-003"
+        ]
+      },
+      {
+        "id": "HL2-023",
+        "name": "Ransomware renames with .lockbit extension",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1486"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-002",
+          "TB-MAL-001"
+        ]
+      },
+      {
+        "id": "HL2-024",
+        "name": "Mass file deletion via PowerShell",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1485"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-004"
+        ]
+      },
+      {
+        "id": "HL2-025",
+        "name": "AMSI bypass",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-009"
+        ]
+      },
+      {
+        "id": "HL2-026",
+        "name": "Cobalt Strike named pipe",
+        "tactic": "TA0011",
+        "techniques": [
+          "T1071"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-NET-003"
+        ]
+      },
+      {
+        "id": "HL2-027",
+        "name": "Okta API token created by admin",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1098"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IDP-001"
+        ]
+      },
+      {
+        "id": "HL2-028",
+        "name": "MFA push fatigue",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1621"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-AUTH-007"
+        ]
+      },
+      {
+        "id": "HL2-029",
+        "name": "Mailbox transport rule redirecting mail",
+        "tactic": "TA0009",
+        "techniques": [
+          "T1114.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CLOUD-009"
+        ]
+      },
+      {
+        "id": "HL2-030",
+        "name": "Linux find SUID enumeration",
+        "tactic": "TA0004",
+        "techniques": [
+          "T1548.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PRIV-001"
+        ]
+      },
+      {
+        "id": "HL2-031",
+        "name": "Java deserialisation gadget in request",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-010"
+        ]
+      },
+      {
+        "id": "HL2-032",
+        "name": "PHP file inclusion over wrapper",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005"
+        ]
+      },
+      {
+        "id": "HL2-033",
+        "name": "Server-side template injection probe",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-010"
+        ]
+      },
+      {
+        "id": "HL2-034",
+        "name": "Windows service created over the network",
+        "tactic": "TA0003",
+        "techniques": [
+          "T1543.003"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-008",
+          "TB-PERSIST-004"
+        ]
+      },
+      {
+        "id": "HL2-035",
+        "name": "Scheduled task created remotely",
+        "tactic": "TA0008",
+        "techniques": [
+          "T1053.005"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-PERSIST-002"
+        ]
+      }
+    ],
+    "benign": [
+      {
+        "id": "BEN-001",
+        "name": "Admin lists scheduled tasks",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-002",
+        "name": "Admin queries a single local user",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-003",
+        "name": "Mapping a file share",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-004",
+        "name": "Backup script via PowerShell file",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-005",
+        "name": "Download a web page with curl",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-006",
+        "name": "Developer pulls with git over ssh",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-007",
+        "name": "Normal ssh login",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-008",
+        "name": "apt update",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-009",
+        "name": "Restart nginx",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-010",
+        "name": "Check firewall status",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-011",
+        "name": "Tail auth log",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-012",
+        "name": "Logrotate",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-013",
+        "name": "Docker run of a plain container",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-014",
+        "name": "kubectl get pods",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-015",
+        "name": "kubectl rollout",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-016",
+        "name": "Tar extract of a release",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-017",
+        "name": "Python venv creation",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-018",
+        "name": "Compile project",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-019",
+        "name": "Postgres service restart",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-020",
+        "name": "Word spawns splwow64 print helper",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-021",
+        "name": "Explorer starts Chrome from Program Files",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-022",
+        "name": "Real svchost",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-023",
+        "name": "Defender signature update",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-024",
+        "name": "Defender quick scan",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-025",
+        "name": "Windows Update service start",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-026",
+        "name": "Successful login",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-027",
+        "name": "Single failed login",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-028",
+        "name": "Password change",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-029",
+        "name": "MFA enrolment",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-030",
+        "name": "HTTP GET home page",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-031",
+        "name": "Search query with SQL-ish words",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-032",
+        "name": "Blog slug containing script",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-033",
+        "name": "Relative path in image URL",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-034",
+        "name": "API call with url parameter to external site",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-035",
+        "name": "Health check",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-036",
+        "name": "Normal CloudTrail DescribeInstances",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-037",
+        "name": "CloudTrail ListBuckets by IAM user",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-038",
+        "name": "Attach read-only policy",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-039",
+        "name": "Console login with MFA",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-040",
+        "name": "Security group to internal CIDR only",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-041",
+        "name": "S3 PutObject",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-042",
+        "name": "Firewall allows HTTPS inbound",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-043",
+        "name": "Internal RDP between admin hosts",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-044",
+        "name": "DNS lookup of a normal host",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-045",
+        "name": "DNS lookup with a CDN style long hostname",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-046",
+        "name": "Outbound HTTPS flow",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-047",
+        "name": "Nightly backup upload under threshold",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-048",
+        "name": "Falco notice-level event",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-049",
+        "name": "K8s audit list pods",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-050",
+        "name": "K8s anonymous denied",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-051",
+        "name": "Email delivered with PDF",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-052",
+        "name": "Email with spreadsheet (no macro)",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-053",
+        "name": "Bulk download by one file",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-054",
+        "name": "USB copy of two files",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-055",
+        "name": "Active user sign-in",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-056",
+        "name": "Chrome helper process",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-057",
+        "name": "Cron job running logrotate",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-058",
+        "name": "Rsync of home to backup server",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-059",
+        "name": "Cleaning build artifacts",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-060",
+        "name": "Planned reboot",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-061",
+        "name": "chmod on a script",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-062",
+        "name": "useradd by provisioning in dev docs text",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-063",
+        "name": "Zip of project for release",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-064",
+        "name": "Local SSH port forward to a dev database",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-065",
+        "name": "Windows installer from Program Files",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-066",
+        "name": "Process named continuing on a conti-like host name",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-067",
+        "name": "Marketing mention of mining",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-068",
+        "name": "Service discovery with kubectl describe",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-069",
+        "name": "Netcat port check to internal host",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "BEN-070",
+        "name": "Whoami and id by admin",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-001",
+        "name": "Sysadmin lists local groups",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-002",
+        "name": "Ansible provisioning user via useradd documented in ticket",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-003",
+        "name": "Nginx reload",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-004",
+        "name": "Developer docker run with volume",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-005",
+        "name": "Download installer then install",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-006",
+        "name": "pip install",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-007",
+        "name": "Powershell Get-Process",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-008",
+        "name": "certutil hash check",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-009",
+        "name": "sc query",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-010",
+        "name": "wmic os info",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-011",
+        "name": "Admin sets file permissions",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-012",
+        "name": "tar create of build output",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-013",
+        "name": "mysqldump in scheduled backup to local volume",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-014",
+        "name": "ssh tunnel for dev db (single local forward)",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-015",
+        "name": "aws s3 ls",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-016",
+        "name": "aws sts get-caller-identity",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-017",
+        "name": "terraform plan",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-018",
+        "name": "kubectl logs",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-019",
+        "name": "Helm upgrade",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-020",
+        "name": "journalctl",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-021",
+        "name": "CloudTrail AssumeRole",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-022",
+        "name": "CloudTrail CreateBucket",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-023",
+        "name": "HTTP POST login",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-024",
+        "name": "Product page with ampersand",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-025",
+        "name": "Long CDN URL",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-026",
+        "name": "Firewall deny inbound 23",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-027",
+        "name": "DNS TXT for SPF",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-028",
+        "name": "Okta user login success",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-029",
+        "name": "Falco info-level",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HLB-030",
+        "name": "Windows logon event 4624 type 3",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-001",
+        "name": "Wazuh sysmon - Word starting normal helper",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-002",
+        "name": "Wazuh sysmon - real svchost",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-003",
+        "name": "ECS normal DNS",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-004",
+        "name": "ECS normal web log",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-005",
+        "name": "CEF firewall deny",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-006",
+        "name": "CloudTrail routine PutObject by service",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-007",
+        "name": "CloudTrail IAM user listing buckets",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-008",
+        "name": "CloudTrail CreateAccessKey for self",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-009",
+        "name": "Visual Studio launching msbuild on a project",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-010",
+        "name": "Python http.server for local docs",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-011",
+        "name": "openssl cert check",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-012",
+        "name": "base64 encode a file",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-013",
+        "name": "Scheduled task creation by deployment tool name in description",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-014",
+        "name": "git clone",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-015",
+        "name": "useradd through ansible user module logging",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-016",
+        "name": "nmap -sn by documented monitoring job on monitoring host",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-017",
+        "name": "Jenkins agent starting a build shell",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-018",
+        "name": "Docker build",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-019",
+        "name": "curl to metadata from cloud-init",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-020",
+        "name": "Large backup flow under threshold",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-021",
+        "name": "Okta policy read",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-022",
+        "name": "User downloads one file",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-023",
+        "name": "Node.js app spawning git via child process",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-024",
+        "name": "Cron running a nightly rsync",
+        "false_positive": false,
+        "rules": []
+      },
+      {
+        "id": "HB2-025",
+        "name": "Enabling a service with systemctl",
+        "false_positive": false,
+        "rules": []
+      }
+    ],
+    "chains": [
+      {
+        "id": "CHN-001",
+        "name": "Spray, then successful login from same IP",
+        "expected": "TB-COR-001",
+        "fired": [
+          "TB-COR-001",
+          "TB-COR-007"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-002",
+        "name": "Scan, then SQL injection from same source",
+        "expected": "TB-COR-002",
+        "fired": [
+          "TB-COR-002"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-003",
+        "name": "Exploit, then reverse shell on same host",
+        "expected": "TB-COR-003",
+        "fired": [
+          "TB-COR-003",
+          "TB-COR-007"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-004",
+        "name": "Credential dump, then PsExec by the same account",
+        "expected": "TB-COR-004",
+        "fired": [
+          "TB-COR-004"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-005",
+        "name": "Staging archive, then upload with rclone",
+        "expected": "TB-COR-005",
+        "fired": [
+          "TB-COR-005"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-006",
+        "name": "Defender disabled, then shadow copies deleted",
+        "expected": "TB-COR-006",
+        "fired": [
+          "TB-COR-006",
+          "TB-COR-012"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-007",
+        "name": "Phishing attachment, then macro-spawned PowerShell for the same user",
+        "expected": "TB-COR-008",
+        "fired": [
+          "TB-COR-008"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-008",
+        "name": "Privilege grant, then CloudTrail disabled by the same principal",
+        "expected": "TB-COR-009",
+        "fired": [
+          "TB-COR-009"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-009",
+        "name": "Web shell then persistence",
+        "expected": "TB-COR-010",
+        "fired": [
+          "TB-COR-003",
+          "TB-COR-007",
+          "TB-COR-010"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-010",
+        "name": "Container shell then privileged container",
+        "expected": "TB-COR-011",
+        "fired": [
+          "TB-COR-007",
+          "TB-COR-011"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-011",
+        "name": "Ransomware precursors",
+        "expected": "TB-COR-012",
+        "fired": [
+          "TB-COR-012"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-012",
+        "name": "Three tactics on one host",
+        "expected": "TB-COR-007",
+        "fired": [
+          "TB-COR-007"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-013",
+        "name": "Twelve failed logins in under ten minutes from one source",
+        "expected": "TB-COR-013",
+        "fired": [
+          "TB-COR-013"
+        ],
+        "passed": true
+      },
+      {
+        "id": "CHN-014",
+        "name": "Failed logins against seven different accounts from one source",
+        "expected": "TB-COR-014",
+        "fired": [
+          "TB-COR-014"
+        ],
+        "passed": true
+      }
+    ],
+    "chains_negative": [
+      {
+        "id": "CHN-N01",
+        "name": "Success before the spray",
+        "forbidden": "TB-COR-001",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N02",
+        "name": "Spray and success from different IPs",
+        "forbidden": "TB-COR-001",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N03",
+        "name": "Spray and success three hours apart (window is two hours)",
+        "forbidden": "TB-COR-001",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N04",
+        "name": "Exploit and shell on different hosts",
+        "forbidden": "TB-COR-003",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N05",
+        "name": "Same precursor repeated is not a pair",
+        "forbidden": "TB-COR-012",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N06",
+        "name": "Eight failed logins is below the burst threshold",
+        "forbidden": "TB-COR-013",
+        "fired": [],
+        "passed": true
+      },
+      {
+        "id": "CHN-N07",
+        "name": "Many failures but spread over two hours",
+        "forbidden": "TB-COR-013",
+        "fired": [],
+        "passed": true
+      }
+    ],
+    "evasion": [
+      {
+        "id": "EVA-001",
+        "name": "PowerShell with string concatenation to hide IEX",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1027"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-002",
+        "name": "Reverse shell via renamed netcat",
+        "tactic": "TA0002",
+        "techniques": [
+          "T1059.004"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-003",
+        "name": "Defender disabled via registry through reg import",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1562.001"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-004",
+        "name": "Log clearing with PowerShell .NET API",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1070.001"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-005",
+        "name": "Credential dump via direct syscalls tool with innocuous name",
+        "tactic": "TA0006",
+        "techniques": [
+          "T1003.001"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-006",
+        "name": "Exfil over HTTPS to attacker domain with no tooling signature",
+        "tactic": "TA0010",
+        "techniques": [
+          "T1041"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-007",
+        "name": "base64 split across arguments",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1140"
+        ],
+        "detected": true,
+        "mapping_ok": false,
+        "rules": [
+          "TB-EXEC-007"
+        ],
+        "known_gap": false
+      },
+      {
+        "id": "EVA-008",
+        "name": "Case and whitespace variation of a known command",
+        "tactic": "TA0040",
+        "techniques": [
+          "T1490"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-IMPACT-001"
+        ],
+        "known_gap": false
+      },
+      {
+        "id": "EVA-009",
+        "name": "Quoted path variation of wevtutil",
+        "tactic": "TA0005",
+        "techniques": [
+          "T1070.001"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-001"
+        ],
+        "known_gap": false
+      },
+      {
+        "id": "EVA-010",
+        "name": "URL-encoded path traversal",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005"
+        ],
+        "known_gap": false
+      },
+      {
+        "id": "EVA-011",
+        "name": "Double URL-encoded traversal",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": false,
+        "mapping_ok": false,
+        "rules": [],
+        "known_gap": true,
+        "gap_reason": ""
+      },
+      {
+        "id": "EVA-012",
+        "name": "Mixed-case JNDI with nested lookups",
+        "tactic": "TA0001",
+        "techniques": [
+          "T1190"
+        ],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-002"
+        ],
+        "known_gap": false
+      }
+    ],
+    "latency_ms": {
+      "events": 381,
+      "p50": 0.995,
+      "p95": 2.082,
+      "p99": 3.137,
+      "max": 37.152,
+      "mean": 1.23
+    },
+    "rule_count": 101,
+    "rules_version": "2026.10.2"
+  },
+  "coverage": {
+    "tactics": [
+      {
+        "tactic": "TA0043",
+        "name": "Reconnaissance",
+        "catalog_techniques": 4,
+        "with_rule": 3,
+        "tested_by_scenario": 0,
+        "detected_in_validation": 0,
+        "no_rule": [
+          "T1592"
+        ],
+        "rule_but_untested": [
+          "T1589.001",
+          "T1595",
+          "T1595.002"
+        ]
+      },
+      {
+        "tactic": "TA0042",
+        "name": "Resource Development",
+        "catalog_techniques": 0,
+        "with_rule": 0,
+        "tested_by_scenario": 0,
+        "detected_in_validation": 0,
+        "no_rule": [],
+        "rule_but_untested": []
+      },
+      {
+        "tactic": "TA0001",
+        "name": "Initial Access",
+        "catalog_techniques": 9,
+        "with_rule": 6,
+        "tested_by_scenario": 5,
+        "detected_in_validation": 5,
+        "no_rule": [
+          "T1195",
+          "T1199",
+          "T1566"
+        ],
+        "rule_but_untested": [
+          "T1566.002"
+        ]
+      },
+      {
+        "tactic": "TA0002",
+        "name": "Execution",
+        "catalog_techniques": 16,
+        "with_rule": 11,
+        "tested_by_scenario": 8,
+        "detected_in_validation": 8,
+        "no_rule": [
+          "T1053",
+          "T1059.003",
+          "T1059.005",
+          "T1059.006",
+          "T1204"
+        ],
+        "rule_but_untested": [
+          "T1059",
+          "T1059.007",
+          "T1569.002"
+        ]
+      },
+      {
+        "tactic": "TA0003",
+        "name": "Persistence",
+        "catalog_techniques": 23,
+        "with_rule": 18,
+        "tested_by_scenario": 17,
+        "detected_in_validation": 17,
+        "no_rule": [
+          "T1037",
+          "T1053",
+          "T1136",
+          "T1136.003",
+          "T1197"
+        ],
+        "rule_but_untested": [
+          "T1546.004"
+        ]
+      },
+      {
+        "tactic": "TA0004",
+        "name": "Privilege Escalation",
+        "catalog_techniques": 23,
+        "with_rule": 20,
+        "tested_by_scenario": 18,
+        "detected_in_validation": 18,
+        "no_rule": [
+          "T1037",
+          "T1053",
+          "T1134"
+        ],
+        "rule_but_untested": [
+          "T1546.004",
+          "T1548"
+        ]
+      },
+      {
+        "tactic": "TA0005",
+        "name": "Defense Evasion",
+        "catalog_techniques": 39,
+        "with_rule": 28,
+        "tested_by_scenario": 21,
+        "detected_in_validation": 21,
+        "no_rule": [
+          "T1134",
+          "T1197",
+          "T1202",
+          "T1218.005",
+          "T1218.010",
+          "T1218.011",
+          "T1550",
+          "T1553",
+          "T1562",
+          "T1562.002",
+          "T1578"
+        ],
+        "rule_but_untested": [
+          "T1027",
+          "T1070",
+          "T1070.002",
+          "T1070.004",
+          "T1112",
+          "T1140",
+          "T1548",
+          "T1562.006",
+          "T1620"
+        ]
+      },
+      {
+        "tactic": "TA0006",
+        "name": "Credential Access",
+        "catalog_techniques": 22,
+        "with_rule": 17,
+        "tested_by_scenario": 15,
+        "detected_in_validation": 14,
+        "no_rule": [
+          "T1110.002",
+          "T1528",
+          "T1539",
+          "T1555",
+          "T1557.001"
+        ],
+        "rule_but_untested": [
+          "T1003",
+          "T1110.004",
+          "T1557"
+        ]
+      },
+      {
+        "tactic": "TA0007",
+        "name": "Discovery",
+        "catalog_techniques": 18,
+        "with_rule": 7,
+        "tested_by_scenario": 6,
+        "detected_in_validation": 6,
+        "no_rule": [
+          "T1016",
+          "T1018",
+          "T1033",
+          "T1057",
+          "T1082",
+          "T1083",
+          "T1087",
+          "T1087.001",
+          "T1201",
+          "T1580",
+          "T1619"
+        ],
+        "rule_but_untested": [
+          "T1526"
+        ]
+      },
+      {
+        "tactic": "TA0008",
+        "name": "Lateral Movement",
+        "catalog_techniques": 8,
+        "with_rule": 6,
+        "tested_by_scenario": 3,
+        "detected_in_validation": 3,
+        "no_rule": [
+          "T1021",
+          "T1550"
+        ],
+        "rule_but_untested": [
+          "T1021.001",
+          "T1021.004",
+          "T1021.006",
+          "T1570"
+        ]
+      },
+      {
+        "tactic": "TA0009",
+        "name": "Collection",
+        "catalog_techniques": 12,
+        "with_rule": 7,
+        "tested_by_scenario": 6,
+        "detected_in_validation": 6,
+        "no_rule": [
+          "T1039",
+          "T1114",
+          "T1119",
+          "T1557.001",
+          "T1560"
+        ],
+        "rule_but_untested": [
+          "T1074",
+          "T1557"
+        ]
+      },
+      {
+        "tactic": "TA0011",
+        "name": "Command and Control",
+        "catalog_techniques": 12,
+        "with_rule": 12,
+        "tested_by_scenario": 8,
+        "detected_in_validation": 8,
+        "no_rule": [],
+        "rule_but_untested": [
+          "T1090",
+          "T1095",
+          "T1568",
+          "T1573"
+        ]
+      },
+      {
+        "tactic": "TA0010",
+        "name": "Exfiltration",
+        "catalog_techniques": 8,
+        "with_rule": 5,
+        "tested_by_scenario": 4,
+        "detected_in_validation": 4,
+        "no_rule": [
+          "T1020",
+          "T1041",
+          "T1048.003"
+        ],
+        "rule_but_untested": [
+          "T1052.001"
+        ]
+      },
+      {
+        "tactic": "TA0040",
+        "name": "Impact",
+        "catalog_techniques": 11,
+        "with_rule": 10,
+        "tested_by_scenario": 7,
+        "detected_in_validation": 7,
+        "no_rule": [
+          "T1561.001"
+        ],
+        "rule_but_untested": [
+          "T1499",
+          "T1529",
+          "T1531"
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Scenarios were authored by the same team that wrote the rules; they are modelled on public emulation procedures but are NOT an independent benchmark. Scores will overstate real-world detection.",
+    "All telemetry is synthetic event data. No real malware, credentials, or exploitation were used, and no attack command was executed.",
+    "Benign hard negatives are a small hand-picked set (70). Production false-positive rates depend on your environment and must be measured on your own telemetry.",
+    "LLM quality is not measured: the pipeline runs with a scripted model and an in-memory database stand-in. No live Groq/Supabase behaviour is verified by this report.",
+    "Detection is per-event and sequence/threshold correlation within a window; it does not model statistical baselines or UEBA."
+  ]
+}

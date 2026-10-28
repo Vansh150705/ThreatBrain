@@ -77,28 +77,41 @@ class RuleHit:
         }
 
 
-def _flatten_strings(value: Any, out: list[str], depth: int = 0) -> None:
-    if depth > 6:
+_MAX_DEPTH = 16   # CloudTrail/K8s audit nest request parameters 8-10 levels deep
+_MAX_NODES = 5000  # hard bound on traversal work per event regardless of shape
+
+
+def _flatten_strings(value: Any, out: list[str], depth: int = 0, budget: list[int] | None = None) -> None:
+    budget = budget if budget is not None else [_MAX_NODES]
+    if depth > _MAX_DEPTH or budget[0] <= 0:
         return
+    budget[0] -= 1
     if isinstance(value, str):
         out.append(value)
     elif isinstance(value, (int, float)) and not isinstance(value, bool):
         out.append(str(value))
     elif isinstance(value, dict):
         for v in value.values():
-            _flatten_strings(v, out, depth + 1)
+            _flatten_strings(v, out, depth + 1, budget)
     elif isinstance(value, (list, tuple)):
         for v in value[:200]:
-            _flatten_strings(v, out, depth + 1)
+            _flatten_strings(v, out, depth + 1, budget)
 
 
 def build_view(event: dict[str, Any]) -> dict[str, Any]:
     """Event dict + a ``text`` pseudo-field (all strings, bounded) + ``raw`` alias."""
     parts: list[str] = []
-    _flatten_strings({k: v for k, v in event.items() if k != "raw_data"}, parts)
-    _flatten_strings(event.get("raw_data") or {}, parts)
+    budget = [_MAX_NODES]
+    _flatten_strings({k: v for k, v in event.items() if k != "raw_data"}, parts, 0, budget)
+    _flatten_strings(event.get("raw_data") or {}, parts, 0, budget)
     view = dict(event)
-    view["raw"] = event.get("raw_data") or {}
+    raw = dict(event.get("raw_data") or {})
+    pn = view.get("process_name")
+    if isinstance(pn, str) and ("\\" in pn or "/" in pn):
+        # EDR/Sysmon send the full image path; rules match the executable name, paths stay available
+        raw.setdefault("process_path", pn)
+        view["process_name"] = re.split(r"[\\/]", pn.rstrip("\\/"))[-1]
+    view["raw"] = raw
     view["text"] = " \n ".join(parts)[:_MAX_TEXT]
     return view
 
@@ -159,16 +172,33 @@ def _leaf(cond: dict[str, Any], view: dict[str, Any]) -> tuple[bool, str | None]
 
     text = value if isinstance(value, str) else json.dumps(value, default=str)
     text = text[:_MAX_TEXT]
+    if path in _COMMAND_FIELDS and op in ("regex", "contains", "startswith", "endswith", "equals"):
+        # Evaluate the command as written, then with the cheap shell-obfuscation layer removed
+        # (quoted executable paths, cmd.exe ^ escapes, runs of whitespace).
+        ok, _ = _text_op(op, arg, text)
+        if not ok:
+            squashed = _SQUASH_WS.sub(" ", text.replace('"', "").replace("^", ""))
+            if squashed != text:
+                ok, _ = _text_op(op, arg, squashed)
+        return ok, path
+    return _text_op(op, arg, text)[0], path
+
+
+_COMMAND_FIELDS = {"command_line", "raw.parent_command_line"}
+_SQUASH_WS = re.compile(r"\s+")
+
+
+def _text_op(op: str, arg: Any, text: str) -> tuple[bool, None]:
     if op == "equals":
-        return text.lower() == str(arg).lower(), path
+        return text.lower() == str(arg).lower(), None
     if op == "contains":
-        return str(arg).lower() in text.lower(), path
+        return str(arg).lower() in text.lower(), None
     if op == "startswith":
-        return text.lower().startswith(str(arg).lower()), path
+        return text.lower().startswith(str(arg).lower()), None
     if op == "endswith":
-        return text.lower().endswith(str(arg).lower()), path
+        return text.lower().endswith(str(arg).lower()), None
     if op == "regex":
-        return re.search(arg, text, re.IGNORECASE) is not None, path
+        return re.search(arg, text, re.IGNORECASE) is not None, None
     return False, None  # pragma: no cover - guarded by validation
 
 

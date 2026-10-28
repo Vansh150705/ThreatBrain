@@ -71,6 +71,12 @@ _T = {
     # Privilege escalation
     "T1068": ("Exploitation for Privilege Escalation", ["TA0004"]),
     "T1548": ("Abuse Elevation Control Mechanism", ["TA0004", "TA0005"]),
+    "T1562.002": ("Impair Defenses: Disable Windows Event Logging", ["TA0005"]),
+    "T1557": ("Adversary-in-the-Middle", ["TA0006", "TA0009"]),
+    "T1557.001": ("LLMNR/NBT-NS Poisoning and SMB Relay", ["TA0006", "TA0009"]),
+    "T1561": ("Disk Wipe", ["TA0040"]),
+    "T1561.001": ("Disk Content Wipe", ["TA0040"]),
+    "T1127.001": ("Trusted Developer Utilities Proxy Execution: MSBuild", ["TA0005"]),
     "T1548.001": ("Setuid and Setgid", ["TA0004", "TA0005"]),
     "T1548.002": ("Bypass User Account Control", ["TA0004", "TA0005"]),
     "T1548.003": ("Sudo and Sudo Caching", ["TA0004", "TA0005"]),
