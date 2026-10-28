@@ -207,3 +207,24 @@ def sigma_import(body: SigmaBody, user: Annotated[CurrentUser, Depends(require_a
     case_service.audit(user, action="detection_rule.sigma_imported", target_type="detection_rule",
                        row={"id": row["id"], "title": row["rule_key"]}, changes={})
     return {"rule": row, "warnings": converted["warnings"]}
+
+
+@router.post("/{rule_key}/tuning-proposal", summary="Ask the Detection Engineering agent to propose a tuning from false-positive feedback")
+def tuning_proposal(rule_key: str, user: Annotated[CurrentUser, Depends(require_analyst)]) -> dict[str, Any]:
+    """Needs >= 3 threats from this rule that analysts closed as false positive. The model's proposal is verified by
+    replaying it against the real false/true-positive samples; only a verified proposal is stored, as a DRAFT custom
+    rule (origin=proposal) that an admin must test and enable like any other."""
+    from app.services import tuning_service
+
+    try:
+        out = tuning_service.propose(user.organization_id, user.id, rule_key)
+    except tuning_service.UnknownRule as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Rule not found.") from exc
+    except tuning_service.NotEnoughFeedback as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"error": "not_enough_feedback", "message": str(exc)}) from exc
+    except RuleError as exc:
+        raise _bad(exc) from exc
+    case_service.audit(user, action="detection_rule.tuning_proposed", target_type="detection_rule",
+                       row={"id": out.get("stored_rule_id"), "title": rule_key},
+                       changes={"recommendation": out["recommendation"], "accepted": out["verification"]["accepted"]})
+    return out

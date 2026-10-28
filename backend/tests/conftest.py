@@ -43,6 +43,7 @@ AGENT_PROMPTS = {
     "compliance": "You are the Compliance Agent.",
     "hunt": "You are the Hunt Agent.",
     "log_analysis": "You are the Log Analysis Agent.",
+    "detection_engineering": "You are the Detection Engineering Agent.",
 }
 
 USERS = {
