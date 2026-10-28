@@ -2,9 +2,9 @@
   "schema": "threatbrain.validation/1",
   "environment": {
     "mode": "pipeline",
-    "generated_at": "2026-10-28T19:10:19Z",
-    "git_sha": "29900e3",
-    "python": "3.13.17",
+    "generated_at": "2026-10-28T19:34:21Z",
+    "git_sha": "e616bc6",
+    "python": "3.11.17",
     "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
     "rule_count": 101,
     "rules_version": "2026.10.2",
@@ -3449,10 +3449,10 @@
     ],
     "latency_ms": {
       "scenarios": 316,
-      "p50": 16.4,
-      "p95": 45.7,
-      "p99": 100.9,
-      "max": 541.6,
+      "p50": 16.7,
+      "p95": 47.7,
+      "p99": 129.1,
+      "max": 519.0,
       "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"
     },
     "llm": {
@@ -3726,7 +3726,7 @@
   "limitations": [
     "Scenarios were authored by the same team that wrote the rules; they are modelled on public emulation procedures but are NOT an independent benchmark. Scores will overstate real-world detection.",
     "All telemetry is synthetic event data. No real malware, credentials, or exploitation were used, and no attack command was executed.",
-    "Benign hard negatives are a small hand-picked set (70). Production false-positive rates depend on your environment and must be measured on your own telemetry.",
+    "Benign hard negatives are a small hand-picked set (a few dozen kinds of legitimate activity, each appearing once). Production false-positive rates depend on your environment and must be measured on your own telemetry.",
     "LLM quality is not measured: the pipeline runs with a scripted model and an in-memory database stand-in. No live Groq/Supabase behaviour is verified by this report.",
     "Detection is per-event and sequence/threshold correlation within a window; it does not model statistical baselines or UEBA."
   ]

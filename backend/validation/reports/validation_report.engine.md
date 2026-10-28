@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `engine` · commit `29900e3` · rules `2026.10.2` (101 rules) · 2026-10-28T19:10:09Z
+* Result: **PASS**  · mode `engine` · commit `e616bc6` · rules `2026.10.2` (101 rules) · 2026-10-28T19:34:11Z
 * Fidelity: detection engine + correlation only; no database, no LLM
 
 ## Headline metrics
@@ -108,7 +108,7 @@
 
 ## Latency
 
-`{"events": 381, "p50": 0.652, "p95": 1.834, "p99": 2.434, "max": 4.149, "mean": 0.821}`
+`{"events": 381, "p50": 0.619, "p95": 1.364, "p99": 1.706, "max": 2.585, "mean": 0.733}`
 
 ## ATT&CK coverage (catalog subset)
 
@@ -133,6 +133,6 @@
 
 * Scenarios were authored by the same team that wrote the rules; they are modelled on public emulation procedures but are NOT an independent benchmark. Scores will overstate real-world detection.
 * All telemetry is synthetic event data. No real malware, credentials, or exploitation were used, and no attack command was executed.
-* Benign hard negatives are a small hand-picked set (70). Production false-positive rates depend on your environment and must be measured on your own telemetry.
+* Benign hard negatives are a small hand-picked set (a few dozen kinds of legitimate activity, each appearing once). Production false-positive rates depend on your environment and must be measured on your own telemetry.
 * LLM quality is not measured: the pipeline runs with a scripted model and an in-memory database stand-in. No live Groq/Supabase behaviour is verified by this report.
 * Detection is per-event and sequence/threshold correlation within a window; it does not model statistical baselines or UEBA.

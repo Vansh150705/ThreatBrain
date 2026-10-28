@@ -1,0 +1,88 @@
+# Production-shaped stack: API and workers as separate services, a one-shot migration job, hardened containers.
+# The database/auth is Supabase (hosted project or self-hosted); nothing here runs Postgres for you.
+#
+#   cp .env.example .env            # fill in real values; APP_ENV=production is forced below
+#   docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate      # apply database/migrations (see docs/OPERATIONS.md)
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml exec api python -m app.doctor           # self-check
+#
+# Scale workers independently of the API:   docker compose -f docker-compose.prod.yml up -d --scale worker=4
+#
+# STATUS: this file's syntax is validated with `docker compose config`; the images and this stack have NOT been
+# built or run in the environment that produced them (no Docker daemon was available). Do a staging deploy first.
+x-hardened: &hardened
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  init: true
+
+x-backend: &backend
+  <<: *hardened
+  build: ./backend
+  env_file: .env
+  environment: &backend-env
+    APP_ENV: production
+    APP_DEBUG: "false"
+    LOG_FORMAT: json
+    EMBEDDED_WORKER: "false"        # workers are their own service here
+    PYTHONDONTWRITEBYTECODE: "1"
+
+services:
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      PORT: "8000"
+    ports:
+      - "127.0.0.1:8000:8000"       # put a TLS-terminating reverse proxy in front; do not expose this port directly
+    healthcheck:
+      # readiness: 503 until the database answers and the schema is present
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 768M }
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    environment:
+      <<: *backend-env
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      replicas: 2                   # at-least-once delivery + SKIP LOCKED: any number of replicas is safe
+      resources:
+        limits: { cpus: "1.0", memory: 768M }
+
+  frontend:
+    <<: *hardened
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?set VITE_API_BASE_URL to the public API URL, e.g. https://soc.example.com/api/v1}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?}
+    ports:
+      - "127.0.0.1:8080:80"
+    tmpfs: ["/tmp", "/var/cache/nginx", "/var/run"]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # One-shot: `docker compose ... --profile migrate run --rm migrate [--status | --dry-run]`
+  migrate:
+    image: postgres:16
+    profiles: ["migrate"]
+    volumes:
+      - ./database:/database:ro
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-}   # migrate.sh refuses to run without it; use the direct (non-pooled) connection string
+    entrypoint: ["bash", "/database/migrate.sh"]

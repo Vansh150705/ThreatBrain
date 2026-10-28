@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
 
     # Backend Server
-    BACKEND_HOST: str = "0.0.0.0"
+    # Containers must listen on all interfaces; the compose files publish the port on 127.0.0.1 only.
+    BACKEND_HOST: str = "0.0.0.0"  # nosec B104
     BACKEND_PORT: int = 8000
     BACKEND_URL: AnyHttpUrl = Field(default="http://localhost:8000")
 

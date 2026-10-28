@@ -1,5 +1,7 @@
 name: CI
 
+# Release gates. A change merges only if every job here is green. See docs/RELEASE.md for what each gate proves
+# (and what it does not: no job here talks to a live Supabase project or a real LLM).
 on:
   push:
     branches: [main, "claude/**"]
@@ -17,8 +19,32 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.11", cache: pip, cache-dependency-path: backend/requirements-dev.txt }
       - run: pip install -r requirements-dev.txt
-      - run: ruff check app tests
+      - run: ruff check app tests validation bench
       - run: pytest -q
+      # detection quality gates (validation/gates.yaml): recall, precision, false-positive rate, campaign correlation
+      - run: python -m validation.runner --mode engine --gate
+      - run: python -m validation.runner --mode pipeline --gate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: validation-reports, path: backend/validation/reports/*.json }
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Python dependencies (installed tree, not just pins)
+        run: |
+          python -m venv /tmp/v && /tmp/v/bin/pip install -q -U pip setuptools && /tmp/v/bin/pip install -q -r backend/requirements-dev.txt -r collector/requirements-dev.txt pip-audit bandit
+          /tmp/v/bin/pip-audit --skip-editable
+      - name: Python static analysis
+        run: /tmp/v/bin/bandit -q -r backend/app -ll -ii       # medium+ severity and confidence must be clean
+      - name: Frontend production dependencies
+        working-directory: frontend
+        run: npm ci && npm audit --omit=dev --audit-level=low
 
   collector:
     runs-on: ubuntu-latest
@@ -39,10 +65,33 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
       - run: npm run lint
+      - run: npx tsc -b
+      - run: npm test
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://ci.invalid
           VITE_SUPABASE_ANON_KEY: ci
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip, cache-dependency-path: backend/requirements-dev.txt }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: pip install -r backend/requirements-dev.txt
+      - run: npm ci
+        working-directory: frontend
+      - run: npm install --no-save playwright@1.49.1 && npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: node e2e/run.cjs
+        working-directory: frontend
+        env: { PYTHON: python }
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: e2e-screenshots, path: frontend/e2e/screenshots }
 
   database:
     runs-on: ubuntu-latest
@@ -60,7 +109,13 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
-      - run: ./database/verify_migrations.sh
+      - run: ./database/verify_migrations.sh tb_migration_check
+      - name: Queue semantics on real PostgreSQL (concurrency, leases, dead-letter, retention)
+        run: ./database/tests/test_queue.sh tb_migration_check
+      - name: Database security properties (RLS everywhere, tenant isolation, append-only audit)
+        run: ./database/tests/test_security.sh tb_migration_check
+      - name: Migration runner, rollback, backup / verify / atomic restore
+        run: ./database/tests/test_ops.sh
 
   docker:
     runs-on: ubuntu-latest
@@ -69,3 +124,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -t threatbrain-backend backend
       - run: docker build -t threatbrain-frontend --build-arg VITE_SUPABASE_URL=https://ci.invalid --build-arg VITE_SUPABASE_ANON_KEY=ci frontend
+      - name: Compose files are valid
+        run: |
+          cp .env.example .env
+          docker compose config -q
+          docker compose -f docker-compose.prod.yml config -q
+      - name: Production image boots, passes its own doctor and the worker entrypoint starts
+        run: |
+          docker run --rm -e APP_ENV=development -e SUPABASE_URL=http://x -e SUPABASE_ANON_KEY=a -e SUPABASE_SERVICE_ROLE_KEY=s \
+            -e SUPABASE_JWT_SECRET=$(head -c 40 /dev/zero | tr '\0' x) threatbrain-backend python -c "import app.worker, app.main; print('imports ok')"

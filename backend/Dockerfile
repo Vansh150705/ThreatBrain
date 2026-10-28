@@ -14,7 +14,8 @@ WORKDIR /code
 # Dependencies first so code changes don't invalidate the layer cache.
 # All pinned wheels: no compiler toolchain is needed in the image.
 COPY --chown=user:user requirements.txt /code/requirements.txt
-RUN pip install -r /code/requirements.txt
+# Upgrade the build tooling too: pip/setuptools ship with known advisories in older base images.
+RUN pip install --upgrade pip setuptools && pip install -r /code/requirements.txt
 
 COPY --chown=user:user app /code/app
 

@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `pipeline` · commit `29900e3` · rules `2026.10.2` (101 rules) · 2026-10-28T19:10:19Z
+* Result: **PASS**  · mode `pipeline` · commit `e616bc6` · rules `2026.10.2` (101 rules) · 2026-10-28T19:34:21Z
 * Fidelity: real FastAPI app, durable queue and worker; in-memory PostgREST stand-in; scripted LLM (no live services)
 
 ## Headline metrics
@@ -107,7 +107,7 @@
 
 ## Latency
 
-`{"scenarios": 316, "p50": 16.4, "p95": 45.7, "p99": 100.9, "max": 541.6, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
+`{"scenarios": 316, "p50": 16.7, "p95": 47.7, "p99": 129.1, "max": 519.0, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
 
 ## LLM
 
@@ -136,6 +136,6 @@
 
 * Scenarios were authored by the same team that wrote the rules; they are modelled on public emulation procedures but are NOT an independent benchmark. Scores will overstate real-world detection.
 * All telemetry is synthetic event data. No real malware, credentials, or exploitation were used, and no attack command was executed.
-* Benign hard negatives are a small hand-picked set (70). Production false-positive rates depend on your environment and must be measured on your own telemetry.
+* Benign hard negatives are a small hand-picked set (a few dozen kinds of legitimate activity, each appearing once). Production false-positive rates depend on your environment and must be measured on your own telemetry.
 * LLM quality is not measured: the pipeline runs with a scripted model and an in-memory database stand-in. No live Groq/Supabase behaviour is verified by this report.
 * Detection is per-event and sequence/threshold correlation within a window; it does not model statistical baselines or UEBA.
