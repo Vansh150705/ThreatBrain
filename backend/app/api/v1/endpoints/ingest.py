@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from app.agents.triage import TriageInput
-from app.api.deps import CurrentUser, require_ingest
+from app.api.deps import CurrentUser, require_ingest_signed
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.ratelimit import rate_limit
@@ -59,7 +59,7 @@ class IngestEventResponse(BaseModel):
 def ingest_event(
     request: IngestEventRequest,
     response: Response,
-    user: Annotated[CurrentUser, Depends(require_ingest)],
+    user: Annotated[CurrentUser, Depends(require_ingest_signed)],
     background: Annotated[bool, Query(alias="async", description="Store durably, return 202 at once; a worker detects, correlates and triages")] = False,
 ) -> IngestEventResponse:
     """Accept a normalized event from a collector.
@@ -110,7 +110,7 @@ class IngestBatchRequest(BaseModel):
     dependencies=[Depends(_ingest_limit)],
 )
 def ingest_events(
-    request: IngestBatchRequest, user: Annotated[CurrentUser, Depends(require_ingest)]
+    request: IngestBatchRequest, user: Annotated[CurrentUser, Depends(require_ingest_signed)]
 ) -> WebhookResponse:
     if len(request.events) > get_settings().INGEST_MAX_BATCH:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, f"At most {get_settings().INGEST_MAX_BATCH} events per batch.")
@@ -142,7 +142,7 @@ async def _read_body(request: Request) -> Any:
 async def ingest_webhook(
     fmt: str,
     request: Request,
-    user: Annotated[CurrentUser, Depends(require_ingest)],
+    user: Annotated[CurrentUser, Depends(require_ingest_signed)],
 ) -> WebhookResponse:
     """Translate a vendor payload into events and queue each through the pipeline.
 

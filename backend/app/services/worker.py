@@ -79,6 +79,8 @@ def _handle_purge(job: dict[str, Any]) -> dict[str, Any]:
         "p_events_days": s.RETENTION_EVENTS_DAYS, "p_evidence_days": s.RETENTION_EVIDENCE_DAYS,
         "p_jobs_days": s.RETENTION_JOBS_DAYS, "p_runs_days": s.RETENTION_RUNS_DAYS,
     }).execute().data
+    now = datetime.now(UTC).isoformat()
+    get_supabase_admin().table("replay_guard").delete().lt("expires_at", now).execute()
     return {"purged": res}
 
 

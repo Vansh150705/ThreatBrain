@@ -6,6 +6,7 @@ from fastapi import Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from app.core.logging import bind_request_context, get_logger
+from app.core.ratelimit import client_ip
 from app.core.security import (
     AuthError,
     TokenClaims,
@@ -45,6 +46,7 @@ class CurrentUser(BaseModel):
 
     auth_method: Literal["jwt", "api_key"] = "jwt"
     scopes: list[str] = Field(default_factory=list)
+    require_signature: bool = False
 
     @property
     def is_owner(self) -> bool:
@@ -94,9 +96,9 @@ def get_token_claims(
         raise _auth_http_exception(err) from err
 
 
-def _principal_from_api_key(raw_key: str) -> CurrentUser:
+def _principal_from_api_key(raw_key: str, client_ip: str | None = None) -> CurrentUser:
     try:
-        row = api_key_service.authenticate_api_key(raw_key)
+        row = api_key_service.authenticate_api_key(raw_key, client_ip=client_ip)
     except Exception as exc:
         log.exception("api_key_lookup_failed")
         raise HTTPException(
@@ -116,6 +118,7 @@ def _principal_from_api_key(raw_key: str) -> CurrentUser:
         role=row.get("role") or "analyst",
         auth_method="api_key",
         scopes=list(row.get("scopes") or []),
+        require_signature=bool(row.get("require_signature")),
     )
 
 
@@ -127,14 +130,16 @@ def _principal_from_jwt(token: str) -> CurrentUser:
 
     user_id = claims.user_id
     admin = get_supabase_admin()
-    try:
-        result = (
-            admin.table("users")
-            .select("organization_id, full_name, role, status, avatar_url, email, deleted_at")
-            .eq("id", user_id)
-            .limit(1)
-            .execute()
+    if claims.external and not (claims.email and claims.email_verified):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "email_not_verified", "message": "The identity provider did not assert a verified email."},
         )
+    try:
+        query = admin.table("users").select("id, organization_id, full_name, role, status, avatar_url, email, deleted_at")
+        # An external IdP's `sub` means nothing here: map by verified email, to an already provisioned user only.
+        query = query.eq("email", claims.email.lower()) if claims.external else query.eq("id", user_id)
+        result = query.limit(1).execute()
     except Exception as exc:
         log.exception("user_profile_fetch_failed", user_id=user_id)
         raise HTTPException(
@@ -172,7 +177,7 @@ def _principal_from_jwt(token: str) -> CurrentUser:
         )
 
     return CurrentUser(
-        id=user_id,
+        id=str(row.get("id") or user_id),
         email=row.get("email") or claims.email,
         access_token=token,
         organization_id=row.get("organization_id"),
@@ -194,7 +199,7 @@ def get_current_user(
     anything that touches tenant data.
     """
     if x_api_key:
-        user = _principal_from_api_key(x_api_key.strip())
+        user = _principal_from_api_key(x_api_key.strip(), client_ip(request))
     else:
         try:
             token = extract_bearer_token(authorization)
@@ -285,3 +290,27 @@ __all__ = [
     "require_ingest",
     "require_executor_read",
 ]
+
+
+async def require_ingest_signed(
+    request: Request, user: Annotated[CurrentUser, Depends(require_ingest)]
+) -> CurrentUser:
+    """``require_ingest`` plus HMAC signature + replay protection for keys created with require_signature."""
+    if user.auth_method != "api_key" or not user.require_signature:
+        return user
+    from starlette.concurrency import run_in_threadpool
+
+    from app.core import signing
+
+    body = await request.body()
+    path_qs = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    try:
+        sig = signing.verify(
+            user.id, request.headers.get("x-tb-timestamp"), request.headers.get("x-tb-signature"),
+            request.method, path_qs, body,
+        )
+        await run_in_threadpool(api_key_service.record_signature, user.id, sig)
+    except signing.SignatureError as err:
+        log.warning("ingest_signature_rejected", key_id=user.id, code=err.code)
+        raise HTTPException(err.status, detail={"error": err.code, "message": err.message}) from err
+    return user

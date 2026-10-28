@@ -11,6 +11,7 @@ email_validator==2.2.0
 
 # Auth + crypto
 PyJWT==2.10.1
+cryptography==43.0.3   # RS256/ES256 verification for JWKS and OIDC
 
 # Supabase
 supabase==2.10.0
