@@ -26,7 +26,7 @@ def list_incidents(
     user: Annotated[CurrentUser, Depends(require_viewer)],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
-    severity: Annotated[str | None, Query()] = None,
+    severity: Annotated[Literal["critical", "high", "medium", "low", "info"] | None, Query()] = None,
     incident_status: Annotated[str | None, Query(alias="status")] = None,
     priority: Annotated[str | None, Query()] = None,
     sort_by: Annotated[str, Query()] = "created_at",

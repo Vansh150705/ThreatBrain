@@ -49,7 +49,7 @@ class RuleUpdate(BaseModel):
 
 
 def _bad(exc: Exception) -> HTTPException:
-    return HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"error": "invalid_rule", "message": str(exc)})
+    return HTTPException(422, detail={"error": "invalid_rule", "message": str(exc)})
 
 
 @router.get("", summary="Built-in rules (with this tenant's overrides) and custom rules")
@@ -145,6 +145,8 @@ def delete(rule_id: str, user: Annotated[CurrentUser, Depends(require_admin)]) -
 
 @router.get("/{rule_id}/versions")
 def versions(rule_id: str, user: Annotated[CurrentUser, Depends(require_analyst)]) -> dict[str, Any]:
+    if rule_service.get_rule(user.organization_id, rule_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Rule not found.")
     return {"items": rule_service.versions(user.organization_id, rule_id)}
 
 
@@ -174,7 +176,7 @@ class OverrideBody(BaseModel):
 @router.put("/builtin/{rule_key}/override", summary="Disable a built-in rule or change its severity for this tenant")
 def override(rule_key: str, body: OverrideBody, user: Annotated[CurrentUser, Depends(require_admin)]) -> dict[str, Any]:
     if not body.enabled and not (body.reason or "").strip():
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "A reason is required to disable a built-in rule.")
+        raise HTTPException(422, "A reason is required to disable a built-in rule.")
     try:
         row = rule_service.set_override(user.organization_id, user.id, rule_key, enabled=body.enabled,
                                         severity=body.severity_override, reason=body.reason)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, get_current_user, require_admin, require_viewer
@@ -107,7 +107,9 @@ def integrations(_: CurrentUser = Depends(require_viewer)) -> IntegrationStatus:
 def whoami(
     user: CurrentUser = Depends(get_current_user),
 ) -> MeResponse:
-    """Returns the authenticated user's resolved identity, including nested org."""
+    """Returns the authenticated user's resolved identity, including nested org. Humans only."""
+    if user.auth_method != "jwt":
+        raise HTTPException(403, detail={"error": "insufficient_scope", "message": "API keys cannot use this endpoint."})
     org: Optional[OrganizationMini] = None
     if user.organization_id:
         admin = get_supabase_admin()

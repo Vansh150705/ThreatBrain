@@ -91,7 +91,7 @@ def test_tenants_cannot_see_or_modify_each_others_rules(client, auth):
     assert client.put(f"{BASE}/{rid}", json={"severity": "low"}, headers=auth("admin_b")).status_code == 404
     assert client.post(f"{BASE}/{rid}/status", json={"status": "enabled"}, headers=auth("admin_b")).status_code == 404
     assert client.delete(f"{BASE}/{rid}", headers=auth("admin_b")).status_code == 404
-    assert client.get(f"{BASE}/{rid}/versions", headers=auth("analyst_b")).json()["items"] == []
+    assert client.get(f"{BASE}/{rid}/versions", headers=auth("analyst_b")).status_code == 404
     assert client.get(BASE, headers=auth("analyst_b")).json()["custom"] == []
     # and a rule enabled in A does not fire in B
     client.post(f"{BASE}/{rid}/status", json={"status": "enabled"}, headers=auth("admin_a"))

@@ -6,8 +6,10 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
+from postgrest.exceptions import APIError
 from pydantic import ValidationError
 
 from app.agents.base import AgentConfigError
@@ -79,6 +81,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         log.exception("pipeline_shutdown_failed")
     log.info("app_shutting_down")
+
+
+def _route_template(request: Request) -> str:
+    """Low-cardinality route label: the request path with its path parameters replaced by their names.
+
+    Derived from the matched path params rather than ``scope["route"].path``, whose meaning (full vs relative to a
+    nested router) differs between Starlette versions."""
+    if request.scope.get("route") is None:
+        return "unmatched"
+    path = request.url.path
+    for name, value in (request.scope.get("path_params") or {}).items():
+        path = path.replace(str(value), "{" + name + "}", 1)
+    return path
 
 
 _SECURITY_HEADERS = {
@@ -161,8 +176,7 @@ def create_app() -> FastAPI:
             return response
         finally:
             elapsed_ms = (time.perf_counter() - start) * 1000
-            route = request.scope.get("route")
-            template = getattr(route, "path", None) or "unmatched"
+            template = _route_template(request)
             code = response.status_code if response is not None else 500
             metrics.http_requests.inc(route=template, method=request.method, status=f"{code // 100}xx")
             metrics.http_duration.observe(elapsed_ms / 1000, route=template)
@@ -232,6 +246,21 @@ def create_app() -> FastAPI:
                 "message": "The language model returned output that did not match the expected schema.",
             }},
         )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_handler(request: Request, exc: RequestValidationError):
+        """422 without echoing the rejected input: it is attacker-controlled (and may be non-JSON-encodable)."""
+        errors = [{"loc": list(e.get("loc", ())), "msg": str(e.get("msg", ""))[:300], "type": e.get("type", "")} for e in exc.errors()[:50]]
+        return JSONResponse(status_code=422, content={"detail": errors})
+
+    @app.exception_handler(APIError)
+    async def database_rejected_input_handler(request: Request, exc: APIError):
+        """PostgREST rejected a value for data reasons (invalid text, NUL, out of range): the caller's input is at fault."""
+        code = str(getattr(exc, "code", "") or "")
+        if code.startswith("22") or code in {"23514"}:
+            log.warning("database_rejected_input", code=code, path=request.url.path)
+            return JSONResponse(status_code=400, content={"detail": {"error": "invalid_input", "message": "A submitted value was rejected."}})
+        return await unhandled_exception_handler(request, exc)
 
     @app.exception_handler(QueueFull)
     async def queue_full_handler(request: Request, exc: QueueFull):

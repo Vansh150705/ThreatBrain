@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -39,8 +39,8 @@ class AuditListResponse(BaseModel):
 @router.get("", response_model=AuditListResponse)
 def list_audit_logs(
     user: Annotated[CurrentUser, Depends(require_viewer)],
-    severity: Optional[str] = Query(default=None),
-    actor_type: Optional[str] = Query(default=None),
+    severity: Optional[Literal["critical", "high", "medium", "low", "info"]] = Query(default=None),
+    actor_type: Optional[Literal["user", "agent", "system", "api", "webhook", "anonymous"]] = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ) -> AuditListResponse:

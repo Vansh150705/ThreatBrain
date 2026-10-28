@@ -6,8 +6,9 @@ import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.core.sanitize import clean_json
 from app.schemas.common import SeverityLevel
 
 _MITRE_ID = re.compile(r"^(TA\d{4}|T\d{4}(\.\d{3})?)$")
@@ -52,6 +53,12 @@ class TriageInput(BaseModel):
 
     # whatever else the source sent
     raw_data: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sanitize_inputs(cls, data: Any) -> Any:
+        """NUL / lone surrogates / NaN in attacker-controlled fields would make storage or JSON encoding fail."""
+        return clean_json(data) if isinstance(data, dict) else data
 
     @field_validator("source_ip", "destination_ip")
     @classmethod

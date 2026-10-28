@@ -363,7 +363,8 @@ def llm_json(
     else:
         raise LLMError(f"LLM returned invalid JSON: {last_error}")
 
-    assert result is not None
+    if result is None:  # unreachable: the loop either set it or raised
+        raise LLMError("LLM returned no result")
     result.prompt_tokens = prompt_tokens
     result.completion_tokens = completion_tokens
     result.total_tokens = total_tokens

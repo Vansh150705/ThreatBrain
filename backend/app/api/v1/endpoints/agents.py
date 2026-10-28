@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
@@ -321,7 +323,7 @@ def log_analysis_analyze(
     try:
         params = LogAnalysisInput(**request.model_dump())
     except ValueError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+        raise HTTPException(422, str(exc)) from exc
     run_result = LogAnalysisAgent().run(
         AgentInput(
             organization_id=user.organization_id,
@@ -506,7 +508,7 @@ def list_agents(
 def list_recent_runs(
     page: int = Query(default=1, ge=1, le=10_000),
     page_size: int = Query(default=20, ge=1, le=100),
-    run_status: str | None = Query(default=None),
+    run_status: Literal["pending", "running", "completed", "failed", "timeout", "cancelled"] | None = Query(default=None),
     user: CurrentUser = Depends(require_analyst),
 ) -> AgentRunListResponse:
     offset = (page - 1) * page_size
@@ -579,7 +581,7 @@ def list_agent_runs(
     agent_key: str,
     page: int = Query(default=1, ge=1, le=10_000),
     page_size: int = Query(default=20, ge=1, le=100),
-    run_status: str | None = Query(default=None),
+    run_status: Literal["pending", "running", "completed", "failed", "timeout", "cancelled"] | None = Query(default=None),
     user: CurrentUser = Depends(require_analyst),
 ) -> AgentRunListResponse:
     offset = (page - 1) * page_size

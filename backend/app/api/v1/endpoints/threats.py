@@ -95,7 +95,7 @@ def list_threats(
     user: Annotated[CurrentUser, Depends(require_viewer)],
     page: Annotated[int, Query(ge=1, description="Page number, starts at 1")] = 1,
     page_size: Annotated[int, Query(ge=1, le=100, description="Items per page (max 100)")] = 25,
-    severity: Annotated[str | None, Query(description="Filter by severity: critical, high, medium, low, info")] = None,
+    severity: Annotated[Literal["critical", "high", "medium", "low", "info"] | None, Query(description="Filter by severity")] = None,
     threat_status: Annotated[str | None, Query(alias="status", description="Filter by status: open, investigating, resolved, false_positive")] = None,
     sort_by: Annotated[str, Query(description="Sort field: created_at, severity, status, confidence")] = "created_at",
     sort_dir: Annotated[str, Query(description="Sort direction: asc or desc")] = "desc",

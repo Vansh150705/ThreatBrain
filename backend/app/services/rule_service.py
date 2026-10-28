@@ -118,6 +118,10 @@ def _get(org_id: str, rule_id: str) -> dict[str, Any] | None:
     return rows[0] if rows else None
 
 
+def get_rule(org_id: str, rule_id: str) -> dict[str, Any] | None:
+    return _get(org_id, rule_id)
+
+
 def update_rule(org_id: str, user_id: str | None, rule_id: str, changes: dict[str, Any], note: str = "") -> dict[str, Any] | None:
     cur = _get(org_id, rule_id)
     if cur is None:

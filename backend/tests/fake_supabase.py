@@ -27,8 +27,31 @@ _NOT_COLUMN = {
 }
 
 
-class APIError(Exception):
-    """Mirrors postgrest.exceptions.APIError closely enough for the backend."""
+from postgrest.exceptions import APIError as _PostgrestAPIError  # noqa: E402
+
+
+class APIError(_PostgrestAPIError):
+    """A real postgrest APIError with the SQLSTATE code PostgREST would report (inferred from the message)."""
+
+    def __init__(self, message: str, code: str | None = None) -> None:
+        super().__init__({"message": message, "code": code or _sqlstate(message), "hint": None, "details": None})
+
+
+def _sqlstate(message: str) -> str:
+    m = message.lower()
+    if "invalid input" in m or "malformed array" in m:
+        return "22P02"
+    if "not-null" in m:
+        return "23502"
+    if "duplicate key" in m or "already been registered" in m:
+        return "23505"
+    if "column" in m and "does not exist" in m:
+        return "42703"
+    if "does not exist" in m:
+        return "42P01"
+    if "append-only" in m:
+        return "P0001"
+    return "XX000"
 
 
 class Col:

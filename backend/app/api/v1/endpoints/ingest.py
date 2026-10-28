@@ -113,7 +113,7 @@ def ingest_events(
     request: IngestBatchRequest, user: Annotated[CurrentUser, Depends(require_ingest_signed)]
 ) -> WebhookResponse:
     if len(request.events) > get_settings().INGEST_MAX_BATCH:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, f"At most {get_settings().INGEST_MAX_BATCH} events per batch.")
+        raise HTTPException(413, f"At most {get_settings().INGEST_MAX_BATCH} events per batch.")
     out = ingest_service.accept_events(user.organization_id, request.events, source_system=request.source_system or "ingest")
     return WebhookResponse(accepted=out["accepted"], duplicates=out["duplicates"], event_ids=out["event_ids"])
 
@@ -121,10 +121,10 @@ def ingest_events(
 async def _read_body(request: Request) -> Any:
     declared = request.headers.get("content-length")
     if declared and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Payload too large (max 1 MB).")
+        raise HTTPException(413, "Payload too large (max 1 MB).")
     raw = await request.body()
     if len(raw) > MAX_BODY_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Payload too large (max 1 MB).")
+        raise HTTPException(413, "Payload too large (max 1 MB).")
     text = raw.decode("utf-8", errors="replace")
     try:
         return json.loads(text)
@@ -158,7 +158,7 @@ async def ingest_webhook(
     try:
         events = parse_payload(fmt, body, max_events=get_settings().INGEST_MAX_BATCH)
     except AdapterError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+        raise HTTPException(422, str(exc)) from exc
     if not events:
         return WebhookResponse(accepted=0)
 
