@@ -5,6 +5,7 @@ from typing import Annotated, Literal, Optional
 from fastapi import Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from app.core import metrics
 from app.core.logging import bind_request_context, get_logger
 from app.core.ratelimit import client_ip
 from app.core.security import (
@@ -69,6 +70,7 @@ class CurrentUser(BaseModel):
 
 
 def _auth_http_exception(err: AuthError) -> HTTPException:
+    metrics.auth_failures.inc(reason=err.error_code)
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail={"error": err.error_code, "message": err.message},
@@ -106,6 +108,7 @@ def _principal_from_api_key(raw_key: str, client_ip: str | None = None) -> Curre
             detail={"error": "auth_unavailable", "message": "Could not verify the API key."},
         ) from exc
     if row is None:
+        metrics.auth_failures.inc(reason="invalid_api_key")
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"error": "invalid_api_key", "message": "API key is invalid, expired or revoked."},

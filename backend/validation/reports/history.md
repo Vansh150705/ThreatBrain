@@ -86,3 +86,11 @@ Result on the (now fitted) corpus: 169/169 non-gap attacks, 0/125 benign false p
 First-run recall on material written *after* tuning: 0.978 (round 0, fitted corpus), 0.733 (round 1), 0.657 (round 2, which also stressed the adapters).
 The downward trend reflects that round 2 was harder (vendor-shaped payloads), not that quality fell. Even after remediation, expect a materially lower
 recall on real, independent attacker behaviour than the 100% shown on this corpus, because every corpus was written by the rule authors.
+
+### Correctness finding while building the demo campaign (not found by the benchmark)
+
+Correlations were evaluated "when the last event arrives", but events are processed concurrently by independent workers, so two related
+events could each miss the other's detections (or be reported twice). Fixed: each processor first persists its own detections, then evaluates
+the whole entity group symmetrically, and a ledger (`correlation_hits`, migration 026) lets exactly one processor report each completion.
+Verified with order-reversal tests and a two-thread test that forces the race window open. A related defect: `TB-COR-007` counted every tactic
+of a multi-tactic technique, so one event could "span" several attack phases; it now counts one (primary) tactic per detection.

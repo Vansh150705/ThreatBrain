@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.agents.triage import TriageInput
+from app.core import metrics
 from app.core.logging import get_logger
 from app.services import queue_service
 from app.services.orchestrator_service import run_full_pipeline
@@ -65,6 +66,7 @@ def execute_run(run_id: str, organization_id: str, event: TriageInput, options: 
         ).eq("id", run_id).execute()
         raise
     failed_all = result["summary"].get("stages_succeeded", 0) == 0
+    metrics.pipeline_runs.inc(outcome="failed" if failed_all else ("degraded" if result["summary"].get("degraded") else "completed"))
     client.table("pipeline_runs").update(
         {
             "status": "failed" if failed_all else "completed",

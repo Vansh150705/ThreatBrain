@@ -20,6 +20,7 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
@@ -27,7 +28,7 @@ log = get_logger(__name__)
 
 # Errors worth retrying. Client errors (bad request, auth, oversized prompt)
 # fail immediately: retrying them only burns quota and latency.
-_RETRYABLE = (RateLimitError, APIConnectionError, APITimeoutError, InternalServerError)
+_RETRYABLE = (RateLimitError, APIConnectionError, APITimeoutError, InternalServerError)  # + CompatRetryableError, appended below
 
 _groq_client: Groq | None = None
 _client_lock = threading.Lock()
@@ -74,7 +75,66 @@ class LLMResult:
 
 
 def llm_configured() -> bool:
-    return bool(get_settings().GROQ_API_KEY)
+    s = get_settings()
+    if s.LLM_PROVIDER == "none":
+        return False
+    if s.LLM_PROVIDER == "openai_compatible":
+        return bool(s.LLM_BASE_URL)
+    return bool(s.GROQ_API_KEY)
+
+
+def provider_name() -> str:
+    return get_settings().LLM_PROVIDER
+
+
+class CompatRetryableError(Exception):
+    """429 / 5xx / timeout from an OpenAI-compatible endpoint: worth retrying."""
+
+
+class _CompatClient:
+    """Chat-completions client for any OpenAI-compatible server (vLLM, Ollama, LiteLLM, Azure OpenAI proxy, ...).
+
+    Exposes the same `.chat.completions.create(**kw)` surface and response shape as the Groq SDK, so the rest of
+    the service is provider-agnostic. Verified against a local stub server in tests; not against a live provider.
+    """
+
+    def __init__(self) -> None:
+        self.chat = type("Chat", (), {"completions": self})()
+
+    def create(self, **kw: Any) -> Any:
+        import httpx
+
+        s = get_settings()
+        base = s.LLM_BASE_URL.rstrip("/")
+        if not base.startswith(("https://", "http://localhost", "http://127.0.0.1")) and not s.LLM_ALLOW_INSECURE_HTTP:
+            raise LLMUnavailableError("LLM_BASE_URL must be https:// (or set LLM_ALLOW_INSECURE_HTTP for an isolated network)")
+        headers = {"Content-Type": "application/json"}
+        if s.LLM_API_KEY:
+            headers["Authorization"] = f"Bearer {s.LLM_API_KEY}"
+        if s.LLM_MODEL_OVERRIDE:
+            kw = {**kw, "model": s.LLM_MODEL_OVERRIDE}
+        try:
+            r = httpx.post(f"{base}/chat/completions", json=kw, headers=headers, timeout=s.LLM_TIMEOUT_SECONDS,
+                           follow_redirects=False)
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            raise CompatRetryableError(f"transport: {type(exc).__name__}") from exc
+        if r.status_code == 429 or r.status_code >= 500:
+            raise CompatRetryableError(f"HTTP {r.status_code}")
+        if r.status_code >= 400:
+            raise LLMError(f"LLM endpoint rejected the request (HTTP {r.status_code})")
+        try:
+            body = r.json()
+            from types import SimpleNamespace as NS
+
+            u = body.get("usage") or {}
+            return NS(
+                choices=[NS(message=NS(content=body["choices"][0]["message"].get("content") or ""))],
+                model=body.get("model") or kw.get("model", "unknown"),
+                usage=NS(prompt_tokens=u.get("prompt_tokens", 0), completion_tokens=u.get("completion_tokens", 0),
+                         total_tokens=u.get("total_tokens", 0)),
+            )
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise LLMError("LLM endpoint returned an unexpected response shape") from exc
 
 
 def _get_groq_client() -> Groq:
@@ -99,6 +159,16 @@ def _get_groq_client() -> Groq:
     return _groq_client
 
 
+_compat: _CompatClient | None = None
+
+
+def _compat_client() -> _CompatClient:
+    global _compat
+    if _compat is None:
+        _compat = _CompatClient()
+    return _compat
+
+
 def _gate() -> threading.BoundedSemaphore:
     """Cap concurrent in-flight LLM calls (parallel pipelines share one quota)."""
     global _semaphore
@@ -115,7 +185,7 @@ def _create_completion(**kwargs: Any) -> Any:
     settings = get_settings()
 
     @retry(
-        retry=retry_if_exception_type(_RETRYABLE),
+        retry=retry_if_exception_type((*_RETRYABLE, CompatRetryableError)),
         stop=stop_after_attempt(max(1, settings.LLM_MAX_RETRIES + 1)),
         wait=wait_exponential(
             multiplier=settings.LLM_RETRY_BASE_SECONDS,
@@ -126,9 +196,26 @@ def _create_completion(**kwargs: Any) -> Any:
     )
     def _call() -> Any:
         with _gate():
+            if settings.LLM_PROVIDER == "none":
+                raise LLMUnavailableError("LLM_PROVIDER=none: the language model is disabled (rules-only mode)")
+            if settings.LLM_PROVIDER == "openai_compatible":
+                return _compat_client().chat.completions.create(**kwargs)
             return _get_groq_client().chat.completions.create(**kwargs)
 
-    return _call()
+    started = time.perf_counter()
+    try:
+        out = _call()
+    except Exception:
+        metrics.llm_calls.inc(provider=settings.LLM_PROVIDER, result="error")
+        metrics.llm_latency.observe(time.perf_counter() - started, provider=settings.LLM_PROVIDER)
+        raise
+    metrics.llm_calls.inc(provider=settings.LLM_PROVIDER, result="ok")
+    metrics.llm_latency.observe(time.perf_counter() - started, provider=settings.LLM_PROVIDER)
+    usage = getattr(out, "usage", None)
+    if usage:
+        metrics.llm_tokens.inc(getattr(usage, "prompt_tokens", 0) or 0, provider=settings.LLM_PROVIDER, type="prompt")
+        metrics.llm_tokens.inc(getattr(usage, "completion_tokens", 0) or 0, provider=settings.LLM_PROVIDER, type="completion")
+    return out
 
 
 def _to_result(response: Any, started: float) -> LLMResult:

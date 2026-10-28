@@ -134,7 +134,7 @@ def _chain_engine(sc, detect, base, evaluate_all) -> dict[str, Any]:
         hits = detect(ev)
         rec = {
             "id": f"{sc['id']}-{i}", "at": at.replace(tzinfo=None) if False else at,
-            "detections": [h.rule_id for h in hits], "tactics": [t for h in hits for t in h.tactics],
+            "detections": [h.rule_id for h in hits], "tactics": [h.tactics[0] for h in hits if h.tactics],
             "techniques": [t for h in hits for t in h.techniques], "tags": [t for h in hits for t in h.tags],
             "source_ip": ev.get("source_ip"), "destination_ip": ev.get("destination_ip"),
             "username": ev.get("username"), "asset_name": ev.get("asset_name"),

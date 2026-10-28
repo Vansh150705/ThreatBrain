@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     incidents,
     ingest,
     meta,
+    onboarding,
     orchestrator,
     organizations,
     playbooks,
@@ -43,6 +44,9 @@ api_router.include_router(copilot.router)
 
 # Detection content (rules, Sigma, coverage)
 api_router.include_router(rules.router)
+
+# First-run checklist + demo data
+api_router.include_router(onboarding.router)
 
 # Ingest (universal collector front door)
 api_router.include_router(ingest.router)

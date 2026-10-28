@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `pipeline` · commit `32f7a7d` · rules `2026.10.2` (101 rules) · 2026-10-28T18:31:10Z
+* Result: **PASS**  · mode `pipeline` · commit `5a8e764` · rules `2026.10.2` (101 rules) · 2026-10-28T18:51:32Z
 * Fidelity: real FastAPI app, durable queue and worker; in-memory PostgREST stand-in; scripted LLM (no live services)
 
 ## Headline metrics
@@ -83,16 +83,16 @@
 
 ## Campaign correlation
 
-* `CHN-001` Spray, then successful login from same IP: pass (fired ['TB-COR-001', 'TB-COR-007'])
+* `CHN-001` Spray, then successful login from same IP: pass (fired ['TB-COR-001'])
 * `CHN-002` Scan, then SQL injection from same source: pass (fired ['TB-COR-002'])
-* `CHN-003` Exploit, then reverse shell on same host: pass (fired ['TB-COR-003', 'TB-COR-007'])
+* `CHN-003` Exploit, then reverse shell on same host: pass (fired ['TB-COR-003'])
 * `CHN-004` Credential dump, then PsExec by the same account: pass (fired ['TB-COR-004'])
 * `CHN-005` Staging archive, then upload with rclone: pass (fired ['TB-COR-005'])
 * `CHN-006` Defender disabled, then shadow copies deleted: pass (fired ['TB-COR-006', 'TB-COR-012'])
 * `CHN-007` Phishing attachment, then macro-spawned PowerShell for the same user: pass (fired ['TB-COR-008'])
 * `CHN-008` Privilege grant, then CloudTrail disabled by the same principal: pass (fired ['TB-COR-009'])
-* `CHN-009` Web shell then persistence: pass (fired ['TB-COR-003', 'TB-COR-007', 'TB-COR-010'])
-* `CHN-010` Container shell then privileged container: pass (fired ['TB-COR-007', 'TB-COR-011'])
+* `CHN-009` Web shell then persistence: pass (fired ['TB-COR-003', 'TB-COR-010'])
+* `CHN-010` Container shell then privileged container: pass (fired ['TB-COR-011'])
 * `CHN-011` Ransomware precursors: pass (fired ['TB-COR-012'])
 * `CHN-012` Three tactics on one host: pass (fired ['TB-COR-007'])
 * `CHN-013` Twelve failed logins in under ten minutes from one source: pass (fired ['TB-COR-013'])
@@ -107,7 +107,7 @@
 
 ## Latency
 
-`{"scenarios": 316, "p50": 15.3, "p95": 40.8, "p99": 74.5, "max": 386.9, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
+`{"scenarios": 316, "p50": 16.4, "p95": 41.6, "p99": 95.8, "max": 517.8, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
 
 ## LLM
 

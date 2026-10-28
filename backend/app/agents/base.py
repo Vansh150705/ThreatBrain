@@ -294,6 +294,8 @@ class BaseAgent(ABC):
                     "input": {
                         "payload": agent_input.payload,
                         "user_prompt": user_prompt[:8000],
+                        # what produced this output, so a verdict can be reproduced / compared across releases
+                        "versions": self._versions(agent_row, llm_result),
                     },
                     "output": output,
                     "reasoning": reasoning,
@@ -310,6 +312,22 @@ class BaseAgent(ABC):
             .execute()
         )
         return result.data[0]["id"]
+
+    @staticmethod
+    def _versions(agent_row: dict[str, Any], llm_result: LLMResult) -> dict[str, Any]:
+        import hashlib
+
+        from app.core.config import get_settings
+        from app.detection.engine import get_engine
+
+        s = get_settings()
+        return {
+            "app": s.APP_VERSION,
+            "provider": s.LLM_PROVIDER,
+            "model": llm_result.model,
+            "prompt_sha": hashlib.sha256((agent_row.get("system_prompt") or "").encode()).hexdigest()[:12],
+            "rules": get_engine().version,
+        }
 
     def _record_failed_run(
         self,

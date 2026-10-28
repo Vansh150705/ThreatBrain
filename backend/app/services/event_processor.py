@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from app.agents.triage import TriageInput
+from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.detection.engine import SEVERITY_RANK, RuleHit, summarize
@@ -57,12 +58,21 @@ def process_event(org_id: str, event_id: str) -> dict[str, Any]:
     event_dict = inp.model_dump(mode="json")
 
     hits: list[RuleHit] = detection_service.evaluate(org_id, event_dict)
+    rule_summary = summarize(hits)
+    # 1) persist this event's own detections BEFORE looking at its neighbours (see correlation_service.correlate)
+    client.table("events").update({
+        "detections": [h.as_dict() for h in hits], "mitre_tactics": rule_summary["tactics"],
+        "mitre_techniques": rule_summary["techniques"], "alerted": bool(hits),
+    }).eq("organization_id", org_id).eq("id", event_id).execute()
+    # 2) correlate against the store; the ledger lets exactly one processor report each completed pattern
     correlated: list[RuleHit] = []
     try:
-        correlated = correlation_service.correlate(org_id, row, hits)
+        correlated = correlation_service.correlate(org_id, {**row, "detections": [h.as_dict() for h in hits]}, hits)
     except Exception:  # correlation is additive; never lose the primary detection over it
         log.exception("correlation_failed", event_id=event_id)
     all_hits = sorted([*correlated, *hits], key=lambda h: (-SEVERITY_RANK[h.severity], -h.confidence))
+    for h in all_hits:
+        metrics.detections.inc(rule=h.rule_id, kind=h.kind)
     summary = summarize(all_hits)
 
     patch: dict[str, Any] = {

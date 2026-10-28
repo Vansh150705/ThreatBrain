@@ -27,7 +27,8 @@ def _shape(row: dict[str, Any]) -> dict[str, Any]:
         "event_type": row.get("event_type"),
         "at": _parse(row.get("observed_at") or row.get("created_at")),
         "detections": [d["rule_id"] for d in dets if isinstance(d, dict)],
-        "tactics": list(row.get("mitre_tactics") or []),
+        # one tactic per detection (its primary one): a technique that spans four tactics is still ONE attack phase
+        "tactics": [d["tactics"][0] for d in dets if isinstance(d, dict) and d.get("tactics")],
         "techniques": list(row.get("mitre_techniques") or []),
         "tags": [t for d in dets if isinstance(d, dict) for t in d.get("tags", [])],
         "source_ip": row.get("source_ip"),
@@ -37,44 +38,49 @@ def _shape(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _claim(org_id: str, event_id: str, hits: list[RuleHit]) -> list[RuleHit]:
+    """Keep only the hits this processor is first to record. Another worker that saw the same completion loses
+    the INSERT and stays silent, so each completed pattern is reported exactly once."""
+    if not hits:
+        return []
+    rows = [{"organization_id": org_id, "dedupe_key": h.dedupe_key, "correlation_id": h.rule_id, "event_id": event_id} for h in hits]
+    won = (
+        get_supabase_admin().table("correlation_hits")
+        .upsert(rows, on_conflict="organization_id,dedupe_key", ignore_duplicates=True).execute().data or []
+    )
+    won_keys = {r["dedupe_key"] for r in won}
+    return [h for h in hits if h.dedupe_key in won_keys]
+
+
 def correlate(org_id: str, event_row: dict[str, Any], hits: list[RuleHit]) -> list[RuleHit]:
-    """Correlations completed by ``event_row`` (whose own rule ``hits`` are already known)."""
+    """Correlation completions newly visible now that ``event_row`` (already written to the store with its own
+    rule detections) exists. Callers MUST persist the event's detections first: with concurrent workers,
+    write-then-read is what guarantees that at least one processor of any related pair sees the other."""
     rate_types = rate_event_types()
     if not hits and event_row.get("event_type") not in rate_types:
         return []   # nothing to chain and not a countable event: skip the event-store queries
-    current = _shape({**event_row, "detections": [h.as_dict() for h in hits],
-                      "mitre_tactics": [t for h in hits for t in h.tactics],
-                      "mitre_techniques": [t for h in hits for t in h.techniques]})
+    current = _shape(event_row)
+    if hits:   # the stored row may predate the detections just computed; trust the in-memory hits for this event
+        current["detections"] = [h.rule_id for h in hits]
+        current["tactics"] = [h.tactics[0] for h in hits if h.tactics]
+        current["techniques"] = [t for h in hits for t in h.techniques]
+        current["tags"] = [t for h in hits for t in h.tags]
     max_window = max((c.window_minutes for c in load_correlations()), default=60)
     since = (current["at"] - timedelta(minutes=max_window)).isoformat()
     client = get_supabase_admin()
-    recent: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    recent: dict[str, dict[str, Any]] = {}
+    types = sorted(rate_types)
     for field in GROUP_FIELDS:
         value = current.get(field)
         if not value:
             continue
-        rows = (
-            client.table("events").select("*").eq("organization_id", org_id).eq(field, str(value))
-            .eq("alerted", True).gte("observed_at", since).order("observed_at", desc=True).limit(300)
-            .execute().data or []
-        )
-        for r in rows:
-            if str(r["id"]) not in seen and str(r["id"]) != str(event_row["id"]):
-                seen.add(str(r["id"]))
-                recent.append(_shape(r))
-    if event_row.get("event_type") in rate_types:
-        for field in GROUP_FIELDS:
-            value = current.get(field)
-            if not value:
-                continue
-            rows = (
-                client.table("events").select("*").eq("organization_id", org_id).eq(field, str(value))
-                .in_("event_type", sorted(rate_types)).gte("observed_at", since)
-                .order("observed_at", desc=True).limit(300).execute().data or []
-            )
+        base = client.table("events").select("*").eq("organization_id", org_id).eq(field, str(value)).gte("observed_at", since)
+        for rows in (
+            base.eq("alerted", True).order("observed_at", desc=True).limit(300).execute().data or [],
+            (client.table("events").select("*").eq("organization_id", org_id).eq(field, str(value)).gte("observed_at", since)
+             .in_("event_type", types).order("observed_at", desc=True).limit(300).execute().data or []) if types else [],
+        ):
             for r in rows:
-                if str(r["id"]) not in seen and str(r["id"]) != str(event_row["id"]):
-                    seen.add(str(r["id"]))
-                    recent.append(_shape(r))
-    return evaluate_all(current, recent)
+                if str(r["id"]) != str(event_row["id"]):
+                    recent.setdefault(str(r["id"]), _shape(r))
+    return _claim(org_id, str(event_row["id"]), evaluate_all(current, list(recent.values())))

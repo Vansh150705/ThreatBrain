@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from app.agents.base import AgentConfigError
 from app.api.v1.router import api_router
+from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import (
     bind_request_context,
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         host=settings.BACKEND_HOST,
         port=settings.BACKEND_PORT,
         supabase_url=str(settings.SUPABASE_URL),
-        llm_configured=bool(settings.GROQ_API_KEY),
+        llm_provider=settings.LLM_PROVIDER,
     )
 
     # A restart kills in-flight background pipelines; don't leave them "running".
@@ -160,6 +161,11 @@ def create_app() -> FastAPI:
             return response
         finally:
             elapsed_ms = (time.perf_counter() - start) * 1000
+            route = request.scope.get("route")
+            template = getattr(route, "path", None) or "unmatched"
+            code = response.status_code if response is not None else 500
+            metrics.http_requests.inc(route=template, method=request.method, status=f"{code // 100}xx")
+            metrics.http_duration.observe(elapsed_ms / 1000, route=template)
             log.info(
                 "request_completed",
                 duration_ms=round(elapsed_ms, 2),
@@ -175,6 +181,32 @@ def create_app() -> FastAPI:
                     response.headers.setdefault(
                         "Strict-Transport-Security", "max-age=63072000; includeSubDomains"
                     )
+
+    @app.get("/metrics", include_in_schema=False)
+    def prometheus_metrics(request: Request):
+        """Prometheus scrape endpoint. Disabled (404) unless METRICS_TOKEN is set; then requires that bearer token."""
+        import hmac
+
+        from fastapi.responses import PlainTextResponse
+
+        token = settings.METRICS_TOKEN
+        supplied = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+        if not token:
+            return PlainTextResponse("not found", status_code=404)
+        if not hmac.compare_digest(supplied.encode(), token.encode()):
+            return PlainTextResponse("unauthorized", status_code=401, headers={"WWW-Authenticate": "Bearer"})
+        from app.services import ops_service
+
+        gauges: dict = {}
+        try:
+            st = ops_service.check_queue()
+            gauges["tb_queue_jobs"] = ("Queue jobs by status", {(("status", k),): float(st.get(k, 0)) for k in ("queued", "running", "dead")})
+            gauges["tb_queue_oldest_queued_seconds"] = ("Age of the oldest queued job", {(): float(st.get("oldest_queued_seconds", 0))})
+            w = ops_service.check_workers()
+            gauges["tb_workers_live"] = ("Workers with a recent heartbeat", {(): float(w.get("live", 0))})
+        except Exception:
+            log.warning("metrics_db_gauges_failed")
+        return PlainTextResponse(metrics.render(gauges), media_type="text/plain; version=0.0.4")
 
     # Exception handlers
     @app.exception_handler(LLMError)

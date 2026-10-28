@@ -191,6 +191,7 @@ _UNIQUE: dict[str, list[tuple[str, ...]]] = {
     "api_keys": [("key_hash",)],
     "events": [("organization_id", "idempotency_key")],
     "replay_guard": [("key_id", "signature")],
+    "correlation_hits": [("organization_id", "dedupe_key")],
     "detection_rule_versions": [("rule_id", "version")],
     "rule_overrides": [("organization_id", "rule_key")],
 }

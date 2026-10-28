@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     ALLOW_PUBLIC_SIGNUP: bool = True
     # Populate brand-new workspaces with clearly tagged sample threats/incidents
     # so the console is not empty on first login. Turn off for real deployments.
+    ALLOW_DEMO_LOAD: bool = True          # POST /onboarding/demo (admin): load a synthetic campaign; set false in production
     SEED_DEMO_DATA: bool = True
 
     # Supabase
@@ -66,6 +67,8 @@ class Settings(BaseSettings):
     LLM_PROVIDER: Literal["groq", "openai_compatible", "none"] = "groq"
     LLM_BASE_URL: str = ""
     LLM_API_KEY: str = ""
+    LLM_MODEL_OVERRIDE: str = ""          # force one model name for every agent (needed for non-Groq providers)
+    LLM_ALLOW_INSECURE_HTTP: bool = False  # permit http:// endpoints (isolated networks only)
 
     # Durable job queue + workers
     EMBEDDED_WORKER: bool = True          # run a worker thread inside the API process (single-container mode)

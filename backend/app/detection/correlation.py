@@ -145,76 +145,91 @@ def _distinct_values(ev: dict[str, Any], kind: str, sel: dict[str, Any]) -> set[
     return {str(v)} if v else set()
 
 
-def evaluate(
-    correlation: Correlation, current: dict[str, Any], recent: list[dict[str, Any]]
-) -> RuleHit | None:
-    """``current`` and each of ``recent`` are dicts with: id, at (datetime), detections (rule ids),
-    tactics, techniques, tags, and the grouping fields. ``recent`` may include ``current``."""
-    c = correlation
-    key = current.get(c.group_by)
-    if not key or (c.kind != "rate" and not current.get("detections")):
-        return None
-    horizon = current["at"] - timedelta(minutes=c.window_minutes)
-    group = [
-        e for e in recent
-        if e.get(c.group_by) == key and e["at"] >= horizon and e["at"] <= current["at"]
-        and e.get("id") != current.get("id")
-    ][-MAX_EVENTS_PER_GROUP:]
-    group.sort(key=lambda e: e["at"])
-    evidence: list[dict[str, Any]] = []
+@dataclass(frozen=True)
+class Match:
+    key: str                      # stable id of this completion; the ledger uses it to report each completion once
+    evidence: tuple[str, ...]
 
-    if c.kind == "rate":
-        if not _event_matches(current, c.select):
-            return None
-        members = [e for e in group if _event_matches(e, c.select)]
 
-        def _count(evs: list[dict[str, Any]]) -> int:
+def _order(e: dict[str, Any]) -> tuple[Any, str]:
+    return (e["at"], str(e.get("id", "")))
+
+
+def _sequence_matches(c: Correlation, group_value: str, events: list[dict[str, Any]]) -> list[Match]:
+    window = timedelta(minutes=c.window_minutes)
+    out: list[Match] = []
+    for f in events:
+        if not _event_matches(f, c.stages[-1]) or not f.get("detections"):
+            continue
+        idx, chain = 0, []
+        for e in events:
+            if _order(e) >= _order(f) or e["at"] < f["at"] - window:
+                continue
+            if idx < len(c.stages) - 1 and e.get("detections") and _event_matches(e, c.stages[idx]):
+                chain.append(e)
+                idx += 1
+        if idx == len(c.stages) - 1:
+            out.append(Match(f"{c.id}:{group_value}:{f['id']}", tuple(str(x["id"]) for x in [*chain, f])))
+    return out
+
+
+def _count_matches(c: Correlation, group_value: str, events: list[dict[str, Any]]) -> list[Match]:
+    """threshold (distinct values of detections/tactics) and rate (event counts / distinct field) share one scan."""
+    window = timedelta(minutes=c.window_minutes)
+    members = [e for e in events if _event_matches(e, c.select) and (c.kind == "rate" or e.get("detections"))]
+
+    def count(evs: list[dict[str, Any]]) -> int:
+        if c.kind == "rate":
             return len({e.get(c.distinct) for e in evs if e.get(c.distinct)}) if c.distinct else len(evs)
+        vals: set[str] = set()
+        for e in evs:
+            vals |= _distinct_values(e, c.distinct, c.select)
+        return len(vals)
 
-        if _count([*members, current]) < c.min or _count(members) >= c.min:
-            return None  # not reached yet, or already fired on an earlier event in this window
-        evidence = [*members, current]
-    elif c.kind == "sequence":
-        if not _event_matches(current, c.stages[-1]):
-            return None
-        stage_idx, chain = 0, []
-        for ev in group:
-            if stage_idx < len(c.stages) - 1 and _event_matches(ev, c.stages[stage_idx]):
-                chain.append(ev)
-                stage_idx += 1
-        if stage_idx != len(c.stages) - 1:
-            return None
-        evidence = [*chain, current]
-    else:
-        if not _event_matches(current, c.select):
-            return None
-        values: set[str] = set()
-        for ev in [*group, current]:
-            if _event_matches(ev, c.select):
-                got = _distinct_values(ev, c.distinct, c.select)
-                if got - values:
-                    evidence.append(ev)
-                values |= got
-        if len(values) < c.min:
-            return None
-        # fire only on the event that crosses the threshold, not on every event after it
-        before: set[str] = set()
-        for ev in group:
-            if _event_matches(ev, c.select):
-                before |= _distinct_values(ev, c.distinct, c.select)
-        if len(before) >= c.min:
-            return None
+    out: list[Match] = []
+    seen_buckets: set[int] = set()
+    for i, e in enumerate(members):
+        in_window = [m for m in members[: i + 1] if m["at"] >= e["at"] - window]
+        if count(in_window) < c.min:
+            continue
+        bucket = int(in_window[0]["at"].timestamp() // (c.window_minutes * 60))
+        if bucket in seen_buckets:
+            continue
+        seen_buckets.add(bucket)
+        out.append(Match(f"{c.id}:{group_value}:{bucket}", tuple(str(x["id"]) for x in in_window[-c.max_evidence:])))
+        break   # one report per scan; later crossings in the same burst share the bucket key
+    return out
 
-    return RuleHit(
-        rule_id=c.id, name=c.name, severity=c.severity, confidence=c.confidence,
-        tactics=c.tactics, techniques=list(c.techniques), tags=["correlation", f"group:{c.group_by}"],
-        matched_fields=[c.group_by], evidence=[str(e["id"]) for e in evidence if e.get("id")][-c.max_evidence:],
-        kind="correlation",
-    )
+
+def find_matches(c: Correlation, events: list[dict[str, Any]], group_value: str) -> list[Match]:
+    """All completions of ``c`` among ``events`` of one group, independent of the order they were processed in."""
+    ordered = sorted((e for e in events if e.get(c.group_by) == group_value), key=_order)[-MAX_EVENTS_PER_GROUP:]
+    return _sequence_matches(c, group_value, ordered) if c.kind == "sequence" else _count_matches(c, group_value, ordered)
 
 
 def evaluate_all(current: dict[str, Any], recent: list[dict[str, Any]]) -> list[RuleHit]:
-    return [h for c in load_correlations() if (h := evaluate(c, current, recent))]
+    """Correlation hits visible once ``current`` is part of the event store.
+
+    Symmetric by design: events are processed concurrently by independent workers, so the event that
+    happens to be processed *last* is not necessarily the last in time. Every processor therefore looks
+    at the whole group and reports any completion it can see; ``Match.key`` is stable across processors
+    so the ledger (see correlation_service) lets exactly one of them report it.
+    """
+    pool = {str(e["id"]): e for e in recent}
+    pool[str(current["id"])] = current
+    events = list(pool.values())
+    hits: list[RuleHit] = []
+    for c in load_correlations():
+        value = current.get(c.group_by)
+        if not value:
+            continue
+        for m in find_matches(c, events, value):
+            hits.append(RuleHit(
+                rule_id=c.id, name=c.name, severity=c.severity, confidence=c.confidence, tactics=c.tactics,
+                techniques=list(c.techniques), tags=["correlation", f"group:{c.group_by}"], matched_fields=[c.group_by],
+                evidence=list(m.evidence)[-c.max_evidence:], kind="correlation", dedupe_key=m.key,
+            ))
+    return hits
 
 
 def rate_event_types() -> set[str]:
@@ -222,7 +237,12 @@ def rate_event_types() -> set[str]:
 
 
 def run_inline_tests(c: Correlation) -> list[dict[str, Any]]:
-    """Execute a correlation's inline scenarios (events carry ``at`` minutes from t0)."""
+    """Execute a correlation's inline scenarios (events carry ``at`` minutes from t0).
+
+    Each scenario is evaluated with every event in turn as the 'last processed' one, in both the given and the
+    reversed processing order: the result must not depend on order (a completion is seen by someone, and by the
+    same stable key from everyone who sees it).
+    """
     results = []
     t0 = datetime(2026, 1, 1, 12, 0, 0)
     for i, t in enumerate(c.tests):
@@ -231,8 +251,15 @@ def run_inline_tests(c: Correlation) -> list[dict[str, Any]]:
             ev = {**raw, "id": f"e{n}", "at": t0 + timedelta(minutes=raw.get("at", n))}
             ev.setdefault("tactics", [])
             evs.append(ev)
-        current = evs[-1]
-        fired = evaluate(c, current, evs[:-1]) is not None
-        results.append({"name": t.get("name") or f"test {i + 1}", "expected": bool(t["expect_fire"]),
-                        "fired": fired, "passed": fired == bool(t["expect_fire"])})
+        keys_by_order: list[set[str]] = []
+        for processing in (evs, list(reversed(evs))):
+            seen: set[str] = set()
+            for k, cur in enumerate(processing):
+                visible = processing[: k + 1]      # events already written to the store when `cur` is processed
+                seen |= {h.dedupe_key for h in evaluate_all(cur, visible[:-1]) if h.rule_id == c.id}
+            keys_by_order.append(seen)
+        fired = bool(keys_by_order[0])
+        consistent = keys_by_order[0] == keys_by_order[1]
+        results.append({"name": t.get("name") or f"test {i + 1}", "expected": bool(t["expect_fire"]), "fired": fired,
+                        "passed": fired == bool(t["expect_fire"]) and consistent})
     return results

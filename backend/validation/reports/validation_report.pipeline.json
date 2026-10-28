@@ -2,8 +2,8 @@
   "schema": "threatbrain.validation/1",
   "environment": {
     "mode": "pipeline",
-    "generated_at": "2026-10-28T18:31:10Z",
-    "git_sha": "32f7a7d",
+    "generated_at": "2026-10-28T18:51:32Z",
+    "git_sha": "5a8e764",
     "python": "3.13.17",
     "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
     "rule_count": 101,
@@ -3109,8 +3109,7 @@
         "name": "Spray, then successful login from same IP",
         "expected": "TB-COR-001",
         "fired": [
-          "TB-COR-001",
-          "TB-COR-007"
+          "TB-COR-001"
         ],
         "passed": true
       },
@@ -3128,8 +3127,7 @@
         "name": "Exploit, then reverse shell on same host",
         "expected": "TB-COR-003",
         "fired": [
-          "TB-COR-003",
-          "TB-COR-007"
+          "TB-COR-003"
         ],
         "passed": true
       },
@@ -3185,7 +3183,6 @@
         "expected": "TB-COR-010",
         "fired": [
           "TB-COR-003",
-          "TB-COR-007",
           "TB-COR-010"
         ],
         "passed": true
@@ -3195,7 +3192,6 @@
         "name": "Container shell then privileged container",
         "expected": "TB-COR-011",
         "fired": [
-          "TB-COR-007",
           "TB-COR-011"
         ],
         "passed": true
@@ -3453,10 +3449,10 @@
     ],
     "latency_ms": {
       "scenarios": 316,
-      "p50": 15.3,
-      "p95": 40.8,
-      "p99": 74.5,
-      "max": 386.9,
+      "p50": 16.4,
+      "p95": 41.6,
+      "p99": 95.8,
+      "max": 517.8,
       "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"
     },
     "llm": {

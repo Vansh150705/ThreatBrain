@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Any
 
+from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.services import queue_service
@@ -158,17 +159,21 @@ class Worker:
             result = handler(job) or {}
             queue_service.complete(job, self.worker_id, result)
             self.stats["processed"] += 1
+            metrics.jobs_finished.inc(kind=job["kind"], result="succeeded")
         except PermanentJobError as exc:
             queue_service.fail(job, self.worker_id, str(exc), retryable=False)
             self.stats["dead"] += 1
+            metrics.jobs_finished.inc(kind=job["kind"], result="dead")
             log.warning("job_dead_lettered", job_id=job["id"], kind=job["kind"], error=str(exc))
         except Exception as exc:
             status = queue_service.fail(job, self.worker_id, f"{type(exc).__name__}: {exc}")
             self.stats["failed"] += 1
             self.stats["dead"] += int(status == "dead")
+            metrics.jobs_finished.inc(kind=job["kind"], result="dead" if status == "dead" else "retried")
             log.warning("job_failed", job_id=job["id"], kind=job["kind"], attempt=job.get("attempts"),
                         next_status=status, error=f"{type(exc).__name__}: {str(exc)[:200]}")
         finally:
+            metrics.job_duration.observe(time.perf_counter() - t0, kind=job["kind"])
             beat.set()
             with self._lock:
                 self._inflight -= 1

@@ -61,6 +61,7 @@ class RuleHit:
     matched_fields: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)   # ids of the events that completed a correlation
     kind: str = "rule"                                   # rule | correlation
+    dedupe_key: str = ""                                 # stable id of a correlation completion (ledger key)
 
     def as_dict(self) -> dict[str, Any]:
         return {

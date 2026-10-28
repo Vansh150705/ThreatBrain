@@ -12,6 +12,7 @@ import json
 from typing import Any
 
 from app.agents.triage import TriageInput
+from app.core import metrics
 from app.core.logging import get_logger
 from app.services import queue_service
 from app.services.supabase_client import get_supabase_admin
@@ -85,5 +86,7 @@ def accept_events(org_id: str, events: list[TriageInput], *, source_system: str)
             org_id, PROCESS_KIND, [{"event_id": r["id"], "source_system": source_system} for r in stored]
         )
     duplicates = len(events) - len(stored)
+    metrics.events_ingested.inc(len(stored), outcome="accepted")
+    metrics.events_ingested.inc(duplicates, outcome="duplicate")
     log.info("events_accepted", accepted=len(stored), duplicates=duplicates, source_system=source_system)
     return {"accepted": len(stored), "duplicates": duplicates, "event_ids": [r["id"] for r in stored]}

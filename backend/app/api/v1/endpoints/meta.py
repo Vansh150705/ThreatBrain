@@ -6,9 +6,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user, require_viewer
+from app.api.deps import CurrentUser, get_current_user, require_admin, require_viewer
 from app.core.config import get_settings
 from app.schemas.organization import OrganizationMini
+from app.services import llm_service
 from app.services.supabase_client import get_supabase_admin, supabase_health_check
 
 router = APIRouter(tags=["meta"])
@@ -55,6 +56,26 @@ def health_db(response: Response) -> dict[str, object]:
     }
 
 
+@router.get("/ready")
+def ready(response: Response) -> dict[str, object]:
+    """Readiness probe: 503 unless the database answers and the schema is present. Queue/worker problems are
+    returned as `warnings` and do not fail the probe (a stalled worker pool must not drop the API from the LB)."""
+    from app.services import ops_service
+
+    out = ops_service.readiness()
+    if not out["ready"]:
+        response.status_code = 503
+    # Anonymous callers get the verdict only; details are in /system/status for admins.
+    return {"status": "ready" if out["ready"] else "not_ready", "warnings": len(out["warnings"])}
+
+
+@router.get("/system/status")
+def system_status(_: CurrentUser = Depends(require_admin)) -> dict[str, object]:
+    from app.services import ops_service
+
+    return ops_service.system_status()
+
+
 class IntegrationStatus(BaseModel):
     llm: bool
     abuseipdb: bool
@@ -71,7 +92,7 @@ def integrations(_: CurrentUser = Depends(require_viewer)) -> IntegrationStatus:
     """Which optional integrations are configured (never returns the secrets)."""
     s = get_settings()
     return IntegrationStatus(
-        llm=bool(s.GROQ_API_KEY),
+        llm=llm_service.llm_configured(),
         abuseipdb=bool(s.ABUSEIPDB_API_KEY),
         virustotal=bool(s.VIRUSTOTAL_API_KEY),
         otx=bool(s.OTX_API_KEY),

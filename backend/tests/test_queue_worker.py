@@ -184,3 +184,50 @@ def test_correlation_fires_across_events_and_links_evidence(client, auth, db, dr
     # the supporting spray event is attached to the threat as evidence
     roles = {(te["event_id"], te["role"]) for te in db.rows("threat_events")}
     assert (evs[0]["id"], "supporting") in roles and (evs[1]["id"], "trigger") in roles
+
+
+def _two_related_events(client, auth):
+    base = {"source": "authentication", "source_ip": "203.0.113.9", "asset_name": "vpn-01"}
+    spray = {"event": {**base, "title": "Spray", "event_type": "authentication.password_spraying", "occurred_at": "2026-01-01T10:00:00Z"}}
+    success = {"event": {**base, "title": "Success", "event_type": "authentication.brute_force_success", "occurred_at": "2026-01-01T10:20:00Z"}}
+    for body in (spray, success):
+        assert client.post("/api/v1/ingest/event", json=body, headers=auth("analyst_a"), params={"async": "true"}).status_code == 202
+
+
+@pytest.mark.parametrize("order", ["time", "reverse"])
+def test_correlation_does_not_depend_on_processing_order(client, auth, db, order):
+    from app.services import event_processor
+
+    _two_related_events(client, auth)
+    ids = [e["id"] for e in sorted(db.rows("events"), key=lambda e: e["observed_at"])]
+    for eid in ids if order == "time" else reversed(ids):
+        event_processor.process_event(ORG_A, eid)
+    reported = [(e["id"], d["rule_id"]) for e in db.rows("events") for d in e["detections"] if d["rule_id"] == "TB-COR-001"]
+    assert len(reported) == 1, reported                      # reported once, whichever event was processed last
+    assert len(db.rows("correlation_hits")) == 1
+
+
+def test_correlation_survives_true_concurrency_exactly_once(client, auth, db):
+    """Both events processed at the same instant by two threads, with the write-then-read window forced open."""
+    import threading
+
+    from app.services import correlation_service, event_processor
+
+    _two_related_events(client, auth)
+    ids = [e["id"] for e in db.rows("events")]
+    gate = threading.Barrier(2)
+    real = correlation_service.correlate
+
+    def slow(*a, **k):
+        gate.wait(timeout=5)          # both have written their detections; neither has read yet
+        return real(*a, **k)
+
+    import pytest as _p
+    with _p.MonkeyPatch.context() as mp:
+        mp.setattr(correlation_service, "correlate", slow)
+        errs = []
+        ts = [threading.Thread(target=lambda e=e: errs.append(event_processor.process_event(ORG_A, e))) for e in ids]
+        [t.start() for t in ts]
+        [t.join(10) for t in ts]
+    reported = [d for e in db.rows("events") for d in e["detections"] if d["rule_id"] == "TB-COR-001"]
+    assert len(reported) == 1 and len(db.rows("correlation_hits")) == 1
