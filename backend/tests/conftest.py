@@ -16,6 +16,7 @@ os.environ.update(
         "ABUSEIPDB_API_KEY": "",
         "DISCORD_WEBHOOK_URL": "",
         "RATE_LIMIT_ENABLED": "false",
+        "EMBEDDED_WORKER": "false",
         "LLM_RETRY_BASE_SECONDS": "0.01",
         "LOG_LEVEL": "WARNING",
         "LOG_FORMAT": "console",
@@ -136,3 +137,24 @@ def auth(users):
         return {"Authorization": f"Bearer {make_token(users[name])}"}
 
     return _headers
+
+
+@pytest.fixture()
+def drain(db):
+    """Run queued jobs to completion in-process (what the worker does in production)."""
+    from app.services import queue_service
+    from app.services.worker import Worker
+
+    def _drain(max_rounds: int = 50) -> int:
+        queue_service.reset_depth_cache()
+        w = Worker(role="test", concurrency=4)
+        total = 0
+        for _ in range(max_rounds):
+            n = w.run_once(wait=True)
+            total += n
+            if not n:
+                break
+        w._pool.shutdown(wait=True)
+        return total
+
+    return _drain

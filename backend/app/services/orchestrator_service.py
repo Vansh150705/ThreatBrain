@@ -36,11 +36,11 @@ from app.agents.triage import TriageAgent, TriageInput, TriageOutput
 from app.agents.triage.schemas import EvidenceItem
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.detection.engine import SEVERITY_RANK, get_engine, summarize
+from app.detection.engine import SEVERITY_RANK, RuleHit, summarize
 from app.detection.fingerprint import event_fingerprint
 from app.detection.risk import compute_risk_score
 from app.schemas.common import SeverityLevel
-from app.services import incident_service, notifier
+from app.services import detection_service, incident_service, notifier
 from app.services.llm_service import LLMError
 from app.services.supabase_client import get_supabase_admin
 
@@ -333,6 +333,7 @@ def run_full_pipeline(
     investigation_lookback_hours: int = 72,
     response_mode: str = "recommend",
     deduplicate: bool = True,
+    correlation_hits: list[RuleHit] | None = None,
 ) -> dict[str, Any]:
     """Run one event through every stage. Returns ``{stages, summary, trace}``.
 
@@ -374,7 +375,13 @@ def run_full_pipeline(
 
     # ---- Stage 0: deterministic detection --------------------------------
     t0 = time.perf_counter()
-    hits = get_engine().evaluate(event_dict)
+    hits = detection_service.evaluate(org_id, event_dict)
+    if correlation_hits:  # already computed from the event store by the ingest processor
+        known = {h.rule_id for h in hits}
+        hits = sorted(
+            [*hits, *(h for h in correlation_hits if h.rule_id not in known)],
+            key=lambda h: (-SEVERITY_RANK[h.severity], -h.confidence),
+        )
     detection = summarize(hits)
     fingerprint = event_fingerprint(event_dict, [h.rule_id for h in hits])
     context["detection"] = {

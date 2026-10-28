@@ -197,22 +197,20 @@ def test_adapter_limits_and_unknown_format():
         parse_payload("splunk", [{"event": {"signature": "x"}}] * 60, max_events=50)
 
 
-def test_webhook_endpoint_queues_each_event(client, auth, db):
-    import time
+def test_webhook_endpoint_stores_queues_and_processes_each_event(client, auth, db, drain):
     body = {"Records": [
         {"eventName": "StopLogging", "eventSource": "cloudtrail.amazonaws.com", "sourceIPAddress": "198.51.100.1",
          "userIdentity": {"type": "IAMUser", "userName": "eve"}},
     ]}
     r = client.post("/api/v1/ingest/webhook/cloudtrail", json=body, headers=auth("analyst_a"))
-    assert r.status_code == 202 and r.json()["accepted"] == 1
-    run_id = r.json()["runs"][0]["run_id"]
-    for _ in range(100):
-        got = client.get(f"/api/v1/orchestrator/runs/{run_id}", headers=auth("analyst_a")).json()
-        if got["status"] in ("completed", "failed"):
-            break
-        time.sleep(0.05)
-    assert got["status"] == "completed" and got["source"] == "webhook:cloudtrail"
+    assert r.status_code == 202 and r.json()["accepted"] == 1 and r.json()["duplicates"] == 0
+    assert drain() == 1
+    run = db.rows("pipeline_runs")[0]
+    assert run["status"] == "completed" and run["source"] == "ingest:webhook:cloudtrail"
     assert db.rows("threats")[0]["rule_hits"][0]["rule_id"] == "TB-CLOUD-002"
+    # redelivering the same CloudTrail record is recognised, not reprocessed
+    again = client.post("/api/v1/ingest/webhook/cloudtrail", json=body, headers=auth("analyst_a"))
+    assert again.json() == {"accepted": 0, "duplicates": 1, "event_ids": []}
 
 
 def test_webhook_rejects_bad_input(client, auth):

@@ -2,41 +2,23 @@
 
 from __future__ import annotations
 
-import threading
-from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.agents.triage import TriageInput
-from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services import queue_service
 from app.services.orchestrator_service import run_full_pipeline
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
 
-_executor: ThreadPoolExecutor | None = None
-_lock = threading.Lock()
 # Runs left "running" for longer than this at startup died with their process.
 STALE_AFTER = timedelta(minutes=15)
 
 
-def _get_executor() -> ThreadPoolExecutor:
-    global _executor
-    with _lock:
-        if _executor is None:
-            _executor = ThreadPoolExecutor(
-                max_workers=max(1, get_settings().PIPELINE_WORKERS), thread_name_prefix="pipeline"
-            )
-        return _executor
-
-
 def shutdown() -> None:
-    global _executor
-    with _lock:
-        if _executor is not None:
-            _executor.shutdown(wait=False, cancel_futures=True)
-            _executor = None
+    """Kept for the app lifespan hook; background work now lives in the durable queue/worker."""
 
 
 def _now() -> str:
@@ -116,16 +98,18 @@ def submit_async(
     created_by: str | None,
     **options: Any,
 ) -> dict[str, Any]:
-    """Queue a pipeline and return immediately with its run row."""
+    """Create the run row and enqueue a durable ``pipeline.run`` job; a worker executes it.
+
+    Survives process restarts (the job is in Postgres), is retried on transient failure and
+    is applied backpressure (``QueueFull``) rather than spawning unbounded threads.
+    """
+    queue_service.check_capacity(str(organization_id))
     run = create_run(organization_id, event, source=source, created_by=created_by)
-
-    def _job() -> None:
-        try:
-            execute_run(run["id"], organization_id, event, options)
-        except Exception:
-            pass  # already logged and recorded by execute_run
-
-    _get_executor().submit(_job)
+    queue_service.enqueue(
+        str(organization_id), "pipeline.run",
+        {"run_id": run["id"], "event": event.model_dump(mode="json"), "options": options},
+        queue="pipelines", priority=5, max_attempts=3,
+    )
     return run
 
 
@@ -142,6 +126,14 @@ def recover_stale_runs() -> int:
         .data
         or []
     )
+    live: set[str] = set()
+    for j in (
+        client.table("jobs").select("payload").eq("kind", "pipeline.run").in_("status", ["queued", "running"])
+        .limit(5000).execute().data or []
+    ):
+        if (j.get("payload") or {}).get("run_id"):
+            live.add(str(j["payload"]["run_id"]))
+    stuck = [r for r in stuck if str(r["id"]) not in live]  # a queued/leased job will still run these
     for row in stuck:
         client.table("pipeline_runs").update(
             {

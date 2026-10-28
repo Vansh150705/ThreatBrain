@@ -1,0 +1,284 @@
+# Multi-event correlations. Each evaluates the *recent alerted events of one entity*
+# (group_by) and fires when the event being processed completes the pattern.
+#   kind: sequence   stages (ordered in time); the current event must satisfy the LAST stage
+#   kind: threshold  at least `min` distinct values of `distinct` among events satisfying `select`
+# A stage/selector matches an event that has a detection whose rule id is in `rules`,
+# whose tactic is in `tactics`, or whose tag is in `tags`.
+version: "2026.10.1"
+correlations:
+
+- id: TB-COR-001
+  name: Brute force followed by successful login from the same source
+  severity: critical
+  confidence: 90
+  techniques: [T1110, T1078]
+  group_by: source_ip
+  window_minutes: 120
+  kind: sequence
+  stages:
+    - {rules: [TB-AUTH-001, TB-AUTH-003, TB-AUTH-004]}
+    - {rules: [TB-AUTH-002]}
+  tests:
+    - name: spray then success
+      expect_fire: true
+      events:
+        - {source_ip: 203.0.113.9, at: 0, detections: [TB-AUTH-003]}
+        - {source_ip: 203.0.113.9, at: 20, detections: [TB-AUTH-002]}
+    - name: success before the attack does not count
+      expect_fire: false
+      events:
+        - {source_ip: 203.0.113.9, at: 0, detections: [TB-AUTH-002]}
+        - {source_ip: 203.0.113.9, at: 20, detections: [TB-AUTH-003]}
+    - name: different source
+      expect_fire: false
+      events:
+        - {source_ip: 203.0.113.9, at: 0, detections: [TB-AUTH-003]}
+        - {source_ip: 203.0.113.77, at: 20, detections: [TB-AUTH-002]}
+
+- id: TB-COR-002
+  name: Reconnaissance followed by web exploitation from the same source
+  severity: high
+  confidence: 80
+  techniques: [T1595, T1190]
+  group_by: source_ip
+  window_minutes: 240
+  kind: sequence
+  stages:
+    - {rules: [TB-RECON-001, TB-RECON-002, TB-NET-001]}
+    - {rules: [TB-WEB-001, TB-WEB-002, TB-WEB-003, TB-WEB-005, TB-WEB-006, TB-WEB-007]}
+  tests:
+    - name: scan then sqli
+      expect_fire: true
+      events:
+        - {source_ip: 198.51.100.4, at: 0, detections: [TB-RECON-002]}
+        - {source_ip: 198.51.100.4, at: 30, detections: [TB-WEB-003]}
+    - name: sqli only
+      expect_fire: false
+      events:
+        - {source_ip: 198.51.100.4, at: 30, detections: [TB-WEB-003]}
+
+- id: TB-COR-003
+  name: Web exploitation followed by shell or process execution on the same asset
+  severity: critical
+  confidence: 90
+  techniques: [T1190, T1059]
+  group_by: asset_name
+  window_minutes: 60
+  kind: sequence
+  stages:
+    - {rules: [TB-WEB-001, TB-WEB-002, TB-WEB-003, TB-WEB-006, TB-WEB-007, TB-WEB-008]}
+    - {rules: [TB-WEB-009, TB-EXEC-003, TB-EXEC-004, TB-EXEC-001, TB-EXEC-002, TB-C2-006]}
+  tests:
+    - name: exploit then reverse shell
+      expect_fire: true
+      events:
+        - {asset_name: web-01, at: 0, detections: [TB-WEB-002]}
+        - {asset_name: web-01, at: 5, detections: [TB-EXEC-003]}
+    - name: other asset
+      expect_fire: false
+      events:
+        - {asset_name: web-01, at: 0, detections: [TB-WEB-002]}
+        - {asset_name: db-01, at: 5, detections: [TB-EXEC-003]}
+
+- id: TB-COR-004
+  name: Credential theft followed by lateral movement
+  severity: critical
+  confidence: 85
+  techniques: [T1003, T1021]
+  group_by: username
+  window_minutes: 240
+  kind: sequence
+  stages:
+    - {rules: [TB-CRED-001, TB-CRED-002, TB-DISC-002]}
+    - {rules: [TB-LAT-001, TB-LAT-002, TB-LAT-003, TB-LAT-004, TB-EXEC-008]}
+  tests:
+    - name: dump then psexec
+      expect_fire: true
+      events:
+        - {username: svc-backup, at: 0, detections: [TB-CRED-001]}
+        - {username: svc-backup, at: 45, detections: [TB-EXEC-008]}
+    - name: psexec alone
+      expect_fire: false
+      events:
+        - {username: svc-backup, at: 45, detections: [TB-EXEC-008]}
+
+- id: TB-COR-005
+  name: Collection, staging and exfiltration on one asset
+  severity: critical
+  confidence: 85
+  techniques: [T1074, T1048]
+  group_by: asset_name
+  window_minutes: 360
+  kind: sequence
+  stages:
+    - {rules: [TB-EXFIL-002, TB-CRED-003, TB-INSIDER-001, TB-INSIDER-003]}
+    - {rules: [TB-EXFIL-001, TB-EXFIL-003, TB-EXFIL-004, TB-C2-003]}
+  tests:
+    - name: archive then upload
+      expect_fire: true
+      events:
+        - {asset_name: fin-ws-12, at: 0, detections: [TB-EXFIL-002]}
+        - {asset_name: fin-ws-12, at: 90, detections: [TB-EXFIL-003]}
+    - name: upload only
+      expect_fire: false
+      events:
+        - {asset_name: fin-ws-12, at: 90, detections: [TB-EXFIL-003]}
+
+- id: TB-COR-006
+  name: Defense evasion followed by destructive impact
+  severity: critical
+  confidence: 90
+  techniques: [T1562, T1486]
+  group_by: asset_name
+  window_minutes: 120
+  kind: sequence
+  stages:
+    - {rules: [TB-EVADE-001, TB-EVADE-002, TB-EVADE-006]}
+    - {rules: [TB-IMPACT-001, TB-IMPACT-002, TB-IMPACT-004, TB-IMPACT-005]}
+  tests:
+    - name: defender disabled then shadow copies deleted
+      expect_fire: true
+      events:
+        - {asset_name: srv-fs-01, at: 0, detections: [TB-EVADE-002]}
+        - {asset_name: srv-fs-01, at: 12, detections: [TB-IMPACT-001]}
+    - name: impact then evasion (wrong order)
+      expect_fire: false
+      events:
+        - {asset_name: srv-fs-01, at: 0, detections: [TB-IMPACT-001]}
+        - {asset_name: srv-fs-01, at: 12, detections: [TB-EVADE-002]}
+
+- id: TB-COR-007
+  name: Several attack phases observed on one asset in a short window
+  severity: high
+  confidence: 75
+  techniques: [T1059]
+  group_by: asset_name
+  window_minutes: 120
+  kind: threshold
+  select: {tactics: [TA0001, TA0002, TA0003, TA0004, TA0005, TA0006, TA0007, TA0008, TA0009, TA0010, TA0011, TA0040]}
+  distinct: tactic
+  min: 3
+  tests:
+    - name: three tactics
+      expect_fire: true
+      events:
+        - {asset_name: app-02, at: 0, detections: [TB-EXEC-001], tactics: [TA0002]}
+        - {asset_name: app-02, at: 10, detections: [TB-PERSIST-002], tactics: [TA0003]}
+        - {asset_name: app-02, at: 20, detections: [TB-CRED-003], tactics: [TA0006]}
+    - name: one tactic repeated
+      expect_fire: false
+      events:
+        - {asset_name: app-02, at: 0, detections: [TB-EXEC-001], tactics: [TA0002]}
+        - {asset_name: app-02, at: 10, detections: [TB-EXEC-002], tactics: [TA0002]}
+        - {asset_name: app-02, at: 20, detections: [TB-EXEC-004], tactics: [TA0002]}
+
+- id: TB-COR-008
+  name: Phishing delivery followed by code execution for the same user
+  severity: high
+  confidence: 80
+  techniques: [T1566, T1204]
+  group_by: username
+  window_minutes: 180
+  kind: sequence
+  stages:
+    - {rules: [TB-INIT-001, TB-INIT-002]}
+    - {rules: [TB-EXEC-006, TB-EXEC-001, TB-EXEC-002, TB-EXEC-005, TB-MAL-003]}
+  tests:
+    - name: phish then macro spawn
+      expect_fire: true
+      events:
+        - {username: alice, at: 0, detections: [TB-INIT-001]}
+        - {username: alice, at: 25, detections: [TB-EXEC-006]}
+    - name: execution without phishing
+      expect_fire: false
+      events:
+        - {username: alice, at: 25, detections: [TB-EXEC-006]}
+
+- id: TB-COR-009
+  name: Cloud account takeover indicators followed by logging tamper, destruction or data movement
+  severity: critical
+  confidence: 85
+  techniques: [T1078.004, T1562.008]
+  group_by: username
+  window_minutes: 240
+  kind: sequence
+  stages:
+    - {rules: [TB-CLOUD-003, TB-CLOUD-004, TB-CLOUD-005, TB-AUTH-006, TB-AUTH-007, TB-IDP-001]}
+    - {rules: [TB-CLOUD-002, TB-CLOUD-007, TB-CLOUD-008, TB-CLOUD-001, TB-EXFIL-003]}
+  tests:
+    - name: priv grant then trail disabled
+      expect_fire: true
+      events:
+        - {username: ci-bot, at: 0, detections: [TB-CLOUD-003]}
+        - {username: ci-bot, at: 8, detections: [TB-CLOUD-002]}
+    - name: trail disabled only
+      expect_fire: false
+      events:
+        - {username: ci-bot, at: 8, detections: [TB-CLOUD-002]}
+
+- id: TB-COR-010
+  name: Web shell followed by persistence on the same asset
+  severity: critical
+  confidence: 90
+  techniques: [T1505.003, T1053]
+  group_by: asset_name
+  window_minutes: 240
+  kind: sequence
+  stages:
+    - {rules: [TB-WEB-008, TB-WEB-009]}
+    - {rules: [TB-PERSIST-001, TB-PERSIST-002, TB-PERSIST-003, TB-PERSIST-004, TB-PERSIST-006]}
+  tests:
+    - name: shell then cron
+      expect_fire: true
+      events:
+        - {asset_name: web-01, at: 0, detections: [TB-WEB-008]}
+        - {asset_name: web-01, at: 30, detections: [TB-PERSIST-002]}
+    - name: cron only
+      expect_fire: false
+      events:
+        - {asset_name: web-01, at: 30, detections: [TB-PERSIST-002]}
+
+- id: TB-COR-011
+  name: Container execution followed by escape or cluster privilege escalation
+  severity: critical
+  confidence: 85
+  techniques: [T1609, T1611]
+  group_by: asset_name
+  window_minutes: 120
+  kind: sequence
+  stages:
+    - {rules: [TB-EXEC-009, TB-CONT-001, TB-CONT-002, TB-DISC-003]}
+    - {rules: [TB-PRIV-004, TB-PRIV-005]}
+  tests:
+    - name: exec then privileged container
+      expect_fire: true
+      events:
+        - {asset_name: k8s-node-3, at: 0, detections: [TB-CONT-001]}
+        - {asset_name: k8s-node-3, at: 15, detections: [TB-PRIV-004]}
+    - name: privileged alone
+      expect_fire: false
+      events:
+        - {asset_name: k8s-node-3, at: 15, detections: [TB-PRIV-004]}
+
+- id: TB-COR-012
+  name: Ransomware precursors (recovery destroyed and services stopped)
+  severity: critical
+  confidence: 90
+  techniques: [T1490, T1489]
+  group_by: asset_name
+  window_minutes: 60
+  kind: threshold
+  select: {rules: [TB-IMPACT-001, TB-IMPACT-005, TB-IMPACT-004, TB-EVADE-001, TB-EVADE-002]}
+  distinct: rule
+  min: 2
+  tests:
+    - name: two precursors
+      expect_fire: true
+      events:
+        - {asset_name: srv-fs-01, at: 0, detections: [TB-IMPACT-005]}
+        - {asset_name: srv-fs-01, at: 9, detections: [TB-IMPACT-001]}
+    - name: same rule repeated
+      expect_fire: false
+      events:
+        - {asset_name: srv-fs-01, at: 0, detections: [TB-IMPACT-005]}
+        - {asset_name: srv-fs-01, at: 9, detections: [TB-IMPACT-005]}

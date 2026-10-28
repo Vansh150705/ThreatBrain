@@ -21,6 +21,7 @@ from app.core.logging import (
 )
 from app.core.ratelimit import client_ip, limiter
 from app.services.llm_service import LLMError
+from app.services.queue_service import QueueFull
 
 # Initialize logging immediately so import-time logs are captured too.
 setup_logging()
@@ -51,6 +52,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         log.exception("pipeline_recovery_failed")
 
+    from app.services import worker as worker_service
+
+    worker_service.start_embedded()  # no-op when EMBEDDED_WORKER=false (run `python -m app.worker` instead)
+
     scheduler = None
     if settings.HUNT_INTERVAL_MINUTES > 0:
         from app.services.scheduler import HuntScheduler
@@ -62,6 +67,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     if scheduler is not None:
         scheduler.stop()
+    try:
+        worker_service.stop_embedded()
+    except Exception:
+        log.exception("worker_shutdown_failed")
     try:
         from app.services import pipeline_service
 
@@ -190,6 +199,15 @@ def create_app() -> FastAPI:
                 "error": "agent_output_invalid",
                 "message": "The language model returned output that did not match the expected schema.",
             }},
+        )
+
+    @app.exception_handler(QueueFull)
+    async def queue_full_handler(request: Request, exc: QueueFull):
+        log.warning("ingest_backpressure", path=request.url.path)
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            headers={"Retry-After": str(exc.retry_after)},
+            content={"detail": {"error": "queue_full", "message": str(exc)}},
         )
 
     @app.exception_handler(AgentConfigError)

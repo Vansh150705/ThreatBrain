@@ -15,7 +15,7 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.ratelimit import rate_limit
 from app.ingest import SUPPORTED_FORMATS, AdapterError, parse_payload
-from app.services import pipeline_service
+from app.services import ingest_service, pipeline_service
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 log = get_logger(__name__)
@@ -45,22 +45,29 @@ class IngestEventResponse(BaseModel):
     trace: list[dict[str, Any]] = Field(default_factory=list)
     run_id: str | None = None
     status: str | None = None
+    event_id: str | None = None
+    duplicate: bool = False
 
 
 @router.post(
     "/event",
     response_model=IngestEventResponse,
     status_code=status.HTTP_200_OK,
-    summary="Ingest one normalized security event and run the agent pipeline",
+    summary="Ingest one normalized security event (synchronous pipeline, or ?async=true to queue durably)",
     dependencies=[Depends(_ingest_limit)],
 )
 def ingest_event(
     request: IngestEventRequest,
     response: Response,
     user: Annotated[CurrentUser, Depends(require_ingest)],
-    background: Annotated[bool, Query(alias="async", description="Return 202 immediately; poll /orchestrator/runs/{id}")] = False,
+    background: Annotated[bool, Query(alias="async", description="Store durably, return 202 at once; a worker detects, correlates and triages")] = False,
 ) -> IngestEventResponse:
-    """Accept a normalized event from a collector. Waits for the result unless ``?async=true``."""
+    """Accept a normalized event from a collector.
+
+    Default: run the whole pipeline and wait (handy for tests and manual use).
+    ``?async=true``: the event is stored idempotently and queued; the response says whether it
+    was a duplicate delivery. Detection/correlation/triage then happen in a worker.
+    """
     source = request.source_system or "ingest"
     log.info(
         "ingest_event_received",
@@ -71,11 +78,13 @@ def ingest_event(
         background=background,
     )
     if background:
-        run = pipeline_service.submit_async(
-            user.organization_id, request.event, source=source, created_by=user.display_name
-        )
+        accepted = ingest_service.accept_events(user.organization_id, [request.event], source_system=source)
         response.status_code = status.HTTP_202_ACCEPTED
-        return IngestEventResponse(run_id=run["id"], status="queued")
+        return IngestEventResponse(
+            status="duplicate" if accepted["duplicates"] else "queued",
+            event_id=(accepted["event_ids"] or [None])[0],
+            duplicate=bool(accepted["duplicates"]),
+        )
     result = pipeline_service.run_sync(
         user.organization_id, request.event, source=source, created_by=user.display_name
     )
@@ -84,7 +93,29 @@ def ingest_event(
 
 class WebhookResponse(BaseModel):
     accepted: int
-    runs: list[dict[str, str]]
+    duplicates: int = 0
+    event_ids: list[str] = Field(default_factory=list)
+
+
+class IngestBatchRequest(BaseModel):
+    events: list[TriageInput] = Field(min_length=1, max_length=200)
+    source_system: str | None = Field(default=None, max_length=100)
+
+
+@router.post(
+    "/events",
+    response_model=WebhookResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Ingest a batch of normalized events (durable, idempotent, asynchronous)",
+    dependencies=[Depends(_ingest_limit)],
+)
+def ingest_events(
+    request: IngestBatchRequest, user: Annotated[CurrentUser, Depends(require_ingest)]
+) -> WebhookResponse:
+    if len(request.events) > get_settings().INGEST_MAX_BATCH:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, f"At most {get_settings().INGEST_MAX_BATCH} events per batch.")
+    out = ingest_service.accept_events(user.organization_id, request.events, source_system=request.source_system or "ingest")
+    return WebhookResponse(accepted=out["accepted"], duplicates=out["duplicates"], event_ids=out["event_ids"])
 
 
 async def _read_body(request: Request) -> Any:
@@ -129,17 +160,11 @@ async def ingest_webhook(
     except AdapterError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     if not events:
-        return WebhookResponse(accepted=0, runs=[])
+        return WebhookResponse(accepted=0)
 
-    def _queue() -> list[dict[str, str]]:
-        queued: list[dict[str, str]] = []
-        for ev in events:
-            row = pipeline_service.submit_async(
-                user.organization_id, ev, source=f"webhook:{fmt}", created_by=user.display_name
-            )
-            queued.append({"run_id": row["id"], "title": ev.title[:120]})
-        return queued
+    def _queue() -> dict[str, Any]:
+        return ingest_service.accept_events(user.organization_id, events, source_system=f"webhook:{fmt}")
 
-    runs = await run_in_threadpool(_queue)  # DB writes must not block the event loop
-    log.info("ingest_webhook_accepted", fmt=fmt, count=len(runs))
-    return WebhookResponse(accepted=len(runs), runs=runs)
+    result = await run_in_threadpool(_queue)  # DB writes must not block the event loop
+    log.info("ingest_webhook_accepted", fmt=fmt, count=result["accepted"], duplicates=result["duplicates"])
+    return WebhookResponse(accepted=result["accepted"], duplicates=result["duplicates"], event_ids=result["event_ids"])

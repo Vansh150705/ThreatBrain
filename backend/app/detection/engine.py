@@ -23,6 +23,10 @@ _MAX_TEXT = 20_000  # bound regex work on attacker-controlled input
 _OPERATORS = {"equals", "contains", "startswith", "endswith", "regex", "in", "gt", "gte", "lt", "lte", "exists", "cidr"}
 
 
+# a group containing an unbounded quantifier that is itself repeated: (a+)+  (a*)*  (a|b+)*  (.{1,}){2,}
+_NESTED_QUANTIFIER = re.compile(r"\((?:[^()\\]|\\.)*(?:[+*]|\{\d*,\})(?:[^()\\]|\\.)*\)(?:[+*]|\{\d*,\})")
+
+
 class RuleError(ValueError):
     """Raised when a rule file is malformed."""
 
@@ -55,6 +59,8 @@ class RuleHit:
     techniques: list[str]
     tags: list[str]
     matched_fields: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)   # ids of the events that completed a correlation
+    kind: str = "rule"                                   # rule | correlation
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -66,6 +72,8 @@ class RuleHit:
             "techniques": self.techniques,
             "tags": self.tags,
             "matched_fields": self.matched_fields,
+            "kind": self.kind,
+            **({"evidence": self.evidence} if self.evidence else {}),
         }
 
 
@@ -197,6 +205,12 @@ def _validate(node: Any, rule_id: str) -> None:
             re.compile(node["regex"])
         except re.error as exc:
             raise RuleError(f"{rule_id}: bad regex: {exc}") from exc
+        if len(node["regex"]) > 2000:
+            raise RuleError(f"{rule_id}: regex longer than 2000 characters")
+        if _NESTED_QUANTIFIER.search(node["regex"]):
+            raise RuleError(
+                f"{rule_id}: nested quantifier such as (a+)+ or (a*)* can backtrack catastrophically; rewrite it"
+            )
         if re.search(r"\.\*|\.\+|\(\.\*\)|\+\+|\*\*", node["regex"]):
             raise RuleError(
                 f"{rule_id}: unbounded wildcard (.* / .+) in regex; use a bounded gap such as .{{0,200}} "

@@ -190,19 +190,27 @@ def test_repeated_pipeline_does_not_duplicate_pending_approvals(client, auth, db
     assert len(approvals) == 1
 
 
-def test_async_ingest_returns_202_and_run_completes(client, auth, db):
-    import time
-
+def test_async_ingest_stores_queues_and_worker_completes(client, auth, db, drain):
     r = _ingest(client, auth, **{"async": "true"})
-    assert r.status_code == 202 and r.json()["status"] == "queued"
-    run_id = r.json()["run_id"]
-    for _ in range(100):
-        got = client.get(f"/api/v1/orchestrator/runs/{run_id}", headers=auth("analyst_a")).json()
-        if got["status"] in ("completed", "failed"):
-            break
-        time.sleep(0.05)
-    assert got["status"] == "completed"
-    assert got["trace"] and got["summary"]["promoted_threat_id"]
+    assert r.status_code == 202 and r.json()["status"] == "queued" and r.json()["event_id"]
+    assert len(db.rows("jobs")) == 1 and db.rows("jobs")[0]["status"] == "queued"
+    assert drain() == 1
+    job = db.rows("jobs")[0]
+    assert job["status"] == "succeeded" and job["result"]["threat_id"]
+    ev = db.rows("events")[0]
+    assert ev["processed"] and ev["alerted"] and ev["threat_id"] == job["result"]["threat_id"]
+    assert any(d["rule_id"] == "TB-AUTH-001" for d in ev["detections"])
+    assert len(db.rows("threat_events")) == 1
+    run = db.rows("pipeline_runs")[0]
+    assert run["status"] == "completed" and run["trace"]
+
+
+def test_async_ingest_is_idempotent(client, auth, db, drain):
+    first = _ingest(client, auth, **{"async": "true"}).json()
+    again = _ingest(client, auth, **{"async": "true"})
+    assert again.status_code == 202 and again.json()["status"] == "duplicate" and again.json()["duplicate"] is True
+    assert len(db.rows("events")) == 1 and len(db.rows("jobs")) == 1
+    assert first["event_id"] == db.rows("events")[0]["id"]
 
 
 def test_viewer_cannot_run_pipeline(client, auth):
