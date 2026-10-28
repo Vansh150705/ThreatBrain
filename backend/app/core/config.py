@@ -61,6 +61,42 @@ class Settings(BaseSettings):
     LLM_RETRY_BASE_SECONDS: float = 1.0
     LLM_MAX_CONCURRENCY: int = 4
 
+    # LLM provider: groq (default) | openai_compatible (OpenAI, Azure OpenAI gateways, vLLM,
+    # Ollama ... anything exposing /chat/completions) | none (rules-only operation)
+    LLM_PROVIDER: Literal["groq", "openai_compatible", "none"] = "groq"
+    LLM_BASE_URL: str = ""
+    LLM_API_KEY: str = ""
+
+    # Durable job queue + workers
+    EMBEDDED_WORKER: bool = True          # run a worker thread inside the API process (single-container mode)
+    WORKER_CONCURRENCY: int = 4
+    WORKER_POLL_SECONDS: float = 1.0
+    JOB_LEASE_SECONDS: int = 300
+    JOB_MAX_ATTEMPTS: int = 5
+    JOB_RETRY_BASE_SECONDS: float = 5.0
+    QUEUE_MAX_DEPTH: int = 5000           # global queued-job ceiling; ingest answers 503 above it
+    QUEUE_MAX_DEPTH_PER_ORG: int = 2000   # per-tenant ceiling so one noisy tenant cannot starve the rest
+
+    # Ingestion behaviour. matched: run the agents only for events a rule/correlation flagged
+    # (or that carry a medium+ severity hint); all: triage everything; none: detect + store only.
+    INGEST_TRIAGE_MODE: Literal["matched", "all", "none"] = "matched"
+
+    # Retention (days). audit_logs is append-only and is never purged by the application.
+    RETENTION_EVENTS_DAYS: int = 30
+    RETENTION_EVIDENCE_DAYS: int = 365
+    RETENTION_JOBS_DAYS: int = 14
+    RETENTION_RUNS_DAYS: int = 90
+
+    # Secrets / identity
+    APP_SECRET: str = ""                  # derives per-key webhook signing secrets (>= 32 chars)
+    METRICS_TOKEN: str = ""               # bearer token for GET /metrics (empty = endpoint disabled)
+    MAX_TOKEN_AGE_MINUTES: int = 0        # reject JWTs older than this (0 = rely on exp only)
+    SUPABASE_JWKS_URL: str = ""           # asymmetric Supabase signing keys (default derived from SUPABASE_URL)
+    OIDC_ISSUER: str = ""                 # optional external IdP: accept its tokens for provisioned users
+    OIDC_AUDIENCE: str = ""
+    OIDC_JWKS_URL: str = ""
+    OIDC_ALLOWED_ALGS: str = "RS256,ES256"
+
     # Agent pipeline
     PIPELINE_STAGE_TIMEOUT_SECONDS: int = 120
     PIPELINE_WORKERS: int = 4
@@ -142,6 +178,10 @@ class Settings(BaseSettings):
                 problems.append("CORS_ORIGINS must not contain '*' in production")
             if len(self.SUPABASE_JWT_SECRET) < 16:
                 problems.append("SUPABASE_JWT_SECRET looks too short")
+            if self.APP_SECRET and len(self.APP_SECRET) < 32:
+                problems.append("APP_SECRET must be at least 32 characters")
+            if self.OIDC_ISSUER and not (self.OIDC_AUDIENCE and self.OIDC_ISSUER.startswith("https://")):
+                problems.append("OIDC_ISSUER requires an https:// issuer and OIDC_AUDIENCE")
             if problems:
                 raise ValueError("; ".join(problems))
         return self

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
 from dataclasses import dataclass, field
@@ -12,13 +13,14 @@ from typing import Any
 import yaml
 
 from app.core.logging import get_logger
+from app.detection.attack_catalog import tactics_for, validate_ids
 
 log = get_logger(__name__)
 
 RULES_PATH = Path(__file__).with_name("rules.yaml")
 SEVERITY_RANK = {"info": 1, "low": 2, "medium": 3, "high": 4, "critical": 5}
 _MAX_TEXT = 20_000  # bound regex work on attacker-controlled input
-_OPERATORS = {"equals", "contains", "startswith", "regex", "in", "gt", "gte", "lt", "lte", "exists"}
+_OPERATORS = {"equals", "contains", "startswith", "endswith", "regex", "in", "gt", "gte", "lt", "lte", "exists", "cidr"}
 
 
 class RuleError(ValueError):
@@ -35,6 +37,12 @@ class Rule:
     techniques: tuple[str, ...]
     tags: tuple[str, ...]
     match: dict[str, Any]
+    description: str = ""
+    references: tuple[str, ...] = ()
+    tuning: str = ""
+    tests: tuple[dict[str, Any], ...] = ()   # [{name, event, expect_match}]
+    source: str = "builtin"                    # builtin | custom | sigma
+    version: int = 1
 
 
 @dataclass
@@ -133,6 +141,14 @@ def _leaf(cond: dict[str, Any], view: dict[str, Any]) -> tuple[bool, str | None]
         wanted = {str(x).lower() for x in arg}
         return str(value).lower() in wanted, path
 
+    if op == "cidr":
+        try:
+            ip = ipaddress.ip_address(str(value).strip())
+            nets = [ipaddress.ip_network(n, strict=False) for n in (arg if isinstance(arg, list) else [arg])]
+        except ValueError:
+            return False, None
+        return any(ip in n for n in nets if n.version == ip.version), path
+
     text = value if isinstance(value, str) else json.dumps(value, default=str)
     text = text[:_MAX_TEXT]
     if op == "equals":
@@ -141,6 +157,8 @@ def _leaf(cond: dict[str, Any], view: dict[str, Any]) -> tuple[bool, str | None]
         return str(arg).lower() in text.lower(), path
     if op == "startswith":
         return text.lower().startswith(str(arg).lower()), path
+    if op == "endswith":
+        return text.lower().endswith(str(arg).lower()), path
     if op == "regex":
         return re.search(arg, text, re.IGNORECASE) is not None, path
     return False, None  # pragma: no cover - guarded by validation
@@ -179,38 +197,111 @@ def _validate(node: Any, rule_id: str) -> None:
             re.compile(node["regex"])
         except re.error as exc:
             raise RuleError(f"{rule_id}: bad regex: {exc}") from exc
+        if re.search(r"\.\*|\.\+|\(\.\*\)|\+\+|\*\*", node["regex"]):
+            raise RuleError(
+                f"{rule_id}: unbounded wildcard (.* / .+) in regex; use a bounded gap such as .{{0,200}} "
+                "to avoid catastrophic backtracking"
+            )
+    if ops[0] == "cidr":
+        for n in node["cidr"] if isinstance(node["cidr"], list) else [node["cidr"]]:
+            try:
+                ipaddress.ip_network(n, strict=False)
+            except ValueError as exc:
+                raise RuleError(f"{rule_id}: bad cidr {n!r}") from exc
 
 
-def load_rules(path: Path = RULES_PATH) -> list[Rule]:
+def rule_from_dict(item: dict[str, Any], *, source: str = "builtin") -> Rule:
+    """Validate and build a Rule from its mapping form (YAML file row or DB row)."""
+    rid = str(item.get("id") or item.get("rule_key") or "")
+    if not rid:
+        raise RuleError("rule is missing an id")
+    sev = item.get("severity")
+    if sev not in SEVERITY_RANK:
+        raise RuleError(f"{rid}: invalid severity {sev!r}")
+    if not item.get("name"):
+        raise RuleError(f"{rid}: missing name")
+    conf = int(item.get("confidence", 60))
+    if not 0 <= conf <= 100:
+        raise RuleError(f"{rid}: confidence must be 0-100")
+    if "match" not in item:
+        raise RuleError(f"{rid}: missing match")
+    _validate(item["match"], rid)
+    for t in item.get("tactics", []):
+        if not re.fullmatch(r"TA\d{4}", str(t)):
+            raise RuleError(f"{rid}: malformed tactic id {t!r}")
+    for t in item.get("techniques", []):
+        if not re.fullmatch(r"T\d{4}(\.\d{3})?", str(t)):
+            raise RuleError(f"{rid}: malformed technique id {t!r}")
+    techniques = list(item.get("techniques", []))
+    tactics = list(item.get("tactics", []))
+    if source == "builtin":
+        # built-in rules must use real, mutually consistent ATT&CK ids
+        problems = validate_ids(techniques, tactics)
+        if problems:
+            raise RuleError(f"{rid}: " + "; ".join(problems))
+    if not tactics:
+        tactics = tactics_for(techniques)
+    item = {**item, "tactics": tactics}
+    return Rule(
+        id=rid,
+        name=str(item["name"]),
+        severity=sev,
+        confidence=conf,
+        tactics=tuple(item.get("tactics", [])),
+        techniques=tuple(item.get("techniques", [])),
+        tags=tuple(item.get("tags", [])),
+        match=item["match"],
+        description=str(item.get("description") or ""),
+        references=tuple(item.get("references") or item.get("rule_references") or []),
+        tuning=str(item.get("tuning") or item.get("tuning_guidance") or ""),
+        tests=tuple(item.get("tests") or []),
+        source=source,
+        version=int(item.get("version", 1)),
+    )
+
+
+def load_rule_file(path: Path = RULES_PATH) -> tuple[str, list[Rule]]:
+    """Load a rules file. Accepts a bare list or ``{version: ..., rules: [...]}``."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or []
+    version = "0"
+    if isinstance(raw, dict):
+        version = str(raw.get("version", "0"))
+        raw = raw.get("rules") or []
     rules: list[Rule] = []
     seen: set[str] = set()
     for item in raw:
-        rid = item["id"]
-        if rid in seen:
-            raise RuleError(f"duplicate rule id {rid}")
-        seen.add(rid)
-        if item["severity"] not in SEVERITY_RANK:
-            raise RuleError(f"{rid}: invalid severity {item['severity']!r}")
-        _validate(item["match"], rid)
-        rules.append(
-            Rule(
-                id=rid,
-                name=item["name"],
-                severity=item["severity"],
-                confidence=int(item.get("confidence", 60)),
-                tactics=tuple(item.get("tactics", [])),
-                techniques=tuple(item.get("techniques", [])),
-                tags=tuple(item.get("tags", [])),
-                match=item["match"],
-            )
-        )
-    return rules
+        rule = rule_from_dict(item)
+        if rule.id in seen:
+            raise RuleError(f"duplicate rule id {rule.id}")
+        seen.add(rule.id)
+        rules.append(rule)
+    return version, rules
+
+
+def load_rules(path: Path = RULES_PATH) -> list[Rule]:
+    return load_rule_file(path)[1]
+
+
+def run_rule_tests(rule: Rule) -> list[dict[str, Any]]:
+    """Execute a rule's inline test events. Returns one result per test."""
+    engine = RuleEngine([rule])
+    results = []
+    for i, t in enumerate(rule.tests):
+        ev = dict(t.get("event") or {})
+        ev.setdefault("title", "test event")
+        ev.setdefault("event_type", "generic.event")
+        ev.setdefault("raw_data", {})
+        matched = bool(engine.evaluate(ev))
+        expected = bool(t.get("expect_match", t.get("match", True)))
+        results.append({"name": t.get("name") or f"test {i + 1}", "expected": expected, "matched": matched,
+                        "passed": matched == expected})
+    return results
 
 
 class RuleEngine:
-    def __init__(self, rules: list[Rule]) -> None:
+    def __init__(self, rules: list[Rule], version: str = "adhoc") -> None:
         self.rules = rules
+        self.version = version
 
     def evaluate(self, event: dict[str, Any]) -> list[RuleHit]:
         """Return every rule that matches ``event`` (most severe first)."""
@@ -242,9 +333,10 @@ class RuleEngine:
 
 @lru_cache(maxsize=1)
 def get_engine() -> RuleEngine:
-    rules = load_rules()
-    log.info("detection_rules_loaded", count=len(rules))
-    return RuleEngine(rules)
+    """The built-in rule set (shared by every tenant; per-org tuning is layered on top)."""
+    version, rules = load_rule_file()
+    log.info("detection_rules_loaded", count=len(rules), version=version)
+    return RuleEngine(rules, version=version)
 
 
 def summarize(hits: list[RuleHit]) -> dict[str, Any]:

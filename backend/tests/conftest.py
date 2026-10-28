@@ -79,7 +79,7 @@ def seed(db: FakeSupabase) -> dict[str, str]:
         for name, action in (("Block Malicious IP", "block_ip"), ("Disable Compromised User", "disable_user"),
                              ("Isolate Compromised Host", "isolate_host")):
             db.table("playbooks").insert(
-                {"organization_id": org, "name": name, "category": action, "enabled": True,
+                {"organization_id": org, "name": name, "category": "containment", "enabled": True,
                  "auto_execute": False, "approval_required": True, "min_confidence": 0,
                  "steps": [{"action": action}]}
             ).execute()

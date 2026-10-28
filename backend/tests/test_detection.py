@@ -50,10 +50,10 @@ def test_all_builtin_rules_load_and_are_well_formed():
         (ev(command_line="schtasks /create /tn x /tr evil.exe"), "TB-PERSIST-002"),
         (ev(raw_data={"bytes_out": 900_000_000}), "TB-EXFIL-001"),
         (ev(raw_data={"eventName": "StopLogging"}), "TB-CLOUD-002"),
-        (ev(raw_data={"eventName": "AttachUserPolicy"}), "TB-CLOUD-003"),
+        (ev(raw_data={"eventName": "AttachUserPolicy", "requestParameters": {"policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"}}), "TB-CLOUD-003"),
         (ev(raw_data={"userIdentity": {"type": "Root"}}), "TB-CLOUD-004"),
-        (ev(raw_data={"eventName": "ConsoleLogin", "additionalEventData": {"MFAUsed": "No"}}), "TB-CLOUD-005"),
-        (ev(event_type="network.firewall.allow", destination_port=3389), "TB-LAT-001"),
+        (ev(raw_data={"eventName": "ConsoleLogin", "additionalEventData": {"MFAUsed": "No"}, "responseElements": {"ConsoleLogin": "Success"}}), "TB-CLOUD-005"),
+        (ev(event_type="network.firewall.allow", destination_port=3389, source_ip="203.0.113.50"), "TB-LAT-001"),
     ],
 )
 def test_rule_matches(event, expected):

