@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { AlertCircle, Check, Copy, KeyRound, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Copy, KeyRound, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { api } from "@/lib/api";
 import type { ApiKeyCreated, ApiKeyItem, IntegrationStatus } from "@/lib/api/admin";
-import type { Member } from "@/lib/api/cases";
+import type { MemberRow } from "@/lib/api/ops";
 import { useUserStore } from "@/store/useUserStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
 }
 
 const INTEGRATION_LABELS: Array<[keyof IntegrationStatus, string, string]> = [
-  ["llm", "LLM (Groq)", "GROQ_API_KEY — without it the agents cannot run; rule-based degraded mode still classifies known attacks."],
+  ["llm", "Language model", "GROQ_API_KEY (or LLM_PROVIDER=openai_compatible) — without it the agents cannot run; rule-based degraded mode still classifies known attacks."],
   ["abuseipdb", "AbuseIPDB", "ABUSEIPDB_API_KEY — IP reputation."],
   ["virustotal", "VirusTotal", "VIRUSTOTAL_API_KEY — IP reputation."],
   ["otx", "AlienVault OTX", "OTX_API_KEY — pulse-based IP reputation."],
@@ -74,6 +74,7 @@ function ApiKeys() {
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<Array<"ingest" | "executor">>(["ingest"]);
   const [days, setDays] = useState("");
+  const [signed, setSigned] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fresh, setFresh] = useState<ApiKeyCreated | null>(null);
   const [copied, setCopied] = useState(false);
@@ -104,10 +105,12 @@ function ApiKeys() {
         name: name.trim(),
         scopes,
         expires_in_days: days ? Number(days) : undefined,
+        require_signature: signed,
       });
       setFresh(created);
       setName("");
       setDays("");
+      setSigned(false);
       setCopied(false);
       load();
     } catch (e) {
@@ -125,6 +128,19 @@ function ApiKeys() {
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not revoke key");
+    }
+  }
+
+  async function rotate(k: ApiKeyItem) {
+    if (!window.confirm(`Rotate “${k.name}”? A new key is issued; the old one keeps working for 24 hours so you can update your collectors.`)) return;
+    try {
+      const r = await api.ops.rotateApiKey(k.id, 24);
+      setFresh({ ...(k as ApiKeyCreated), api_key: r.api_key, signing_secret: r.signing_secret });
+      setCopied(false);
+      toast.success("New key issued; the old key expires in 24 hours");
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not rotate key");
     }
   }
 
@@ -156,6 +172,12 @@ function ApiKeys() {
               Done
             </Button>
           </div>
+          {fresh.signing_secret && (
+            <div className="space-y-1">
+              <div className="text-[12px] text-muted-foreground">Signing secret (HMAC-SHA256; shown once):</div>
+              <code className="block font-mono text-[12px] bg-background border border-border rounded px-2 py-1.5 break-all">{fresh.signing_secret}</code>
+            </div>
+          )}
         </div>
       )}
 
@@ -199,6 +221,9 @@ function ApiKeys() {
             className="w-full rounded-lg border border-input bg-transparent px-3 h-9 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           />
         </label>
+        <label className="inline-flex items-center gap-1.5 text-[12.5px] h-9" title="Requires every request to carry an HMAC signature and timestamp; captured requests cannot be replayed">
+          <input type="checkbox" checked={signed} onChange={(e) => setSigned(e.target.checked)} /> Require signed requests
+        </label>
         <Button type="submit" disabled={busy || !name.trim() || scopes.length === 0}>
           {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <KeyRound className="w-4 h-4 mr-2" />}
           Create key
@@ -220,6 +245,7 @@ function ApiKeys() {
                 <th className="py-1.5 pr-3 font-medium">Key</th>
                 <th className="py-1.5 pr-3 font-medium">Scopes</th>
                 <th className="py-1.5 pr-3 font-medium">Last used</th>
+                <th className="py-1.5 pr-3 font-medium">Calls</th>
                 <th className="py-1.5 pr-3 font-medium">Status</th>
                 <th />
               </tr>
@@ -232,16 +258,28 @@ function ApiKeys() {
                   <tr key={k.id}>
                     <td className="py-2 pr-3">{k.name}</td>
                     <td className="py-2 pr-3 font-mono text-[11px]">{k.key_prefix}…</td>
-                    <td className="py-2 pr-3 font-mono text-[11px]">{k.scopes.join(", ")}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}</td>
+                    <td className="py-2 pr-3 font-mono text-[11px]">
+                      {k.scopes.join(", ")}
+                      {k.require_signature && <span className="ml-1 text-severity-low" title="Requests must be HMAC-signed">· signed</span>}
+                    </td>
+                    <td className="py-2 pr-3 text-muted-foreground">
+                      {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}
+                      {k.last_used_ip && <span className="block font-mono text-[10.5px]">{k.last_used_ip}</span>}
+                    </td>
+                    <td className="py-2 pr-3 tabular text-muted-foreground">{k.use_count ?? 0}</td>
                     <td className="py-2 pr-3">
                       <span className={cn("font-mono text-[10px] uppercase", state === "active" ? "text-severity-low" : "text-muted-foreground")}>{state}</span>
                     </td>
                     <td className="py-2 text-right">
                       {state === "active" && (
-                        <Button size="sm" variant="ghost" onClick={() => void revoke(k)} aria-label={`Revoke ${k.name}`}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => void rotate(k)} aria-label={`Rotate ${k.name}`} title="Issue a replacement; the old key stays valid for 24 hours">
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => void revoke(k)} aria-label={`Revoke ${k.name}`}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -274,21 +312,52 @@ curl -X POST ${base}/ingest/event -H "X-API-Key: tbk_..." \\
   );
 }
 
-function Members() {
-  const [members, setMembers] = useState<Member[] | null>(null);
+function Members({ canManage, selfId }: { canManage: boolean; selfId?: string }) {
+  const [members, setMembers] = useState<MemberRow[] | null>(null);
+  const [reload, setReload] = useState(0);
   useEffect(() => {
-    api.cases.listMembers().then(setMembers).catch(() => setMembers([]));
-  }, []);
+    const load = canManage ? api.ops.listAllMembers() : api.cases.listMembers().then((m) => m as unknown as MemberRow[]);
+    load.then(setMembers).catch(() => setMembers([]));
+  }, [canManage, reload]);
+
+  async function change(m: MemberRow, patch: { role?: MemberRow["role"]; status?: MemberRow["status"] }) {
+    try {
+      await api.ops.updateMember(m.id, patch);
+      toast.success("Member updated");
+      setReload((n) => n + 1);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update member");
+    }
+  }
+
   return (
-    <Card title="Team" subtitle="Members of your organization and their roles.">
+    <Card title="Team" subtitle={canManage ? "Change roles or disable access. A disabled member is locked out immediately." : "Members of your organization and their roles."}>
       {!members ? (
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
       ) : (
         <ul className="divide-y divide-border">
           {members.map((m) => (
-            <li key={m.id} className="py-2 flex items-center justify-between text-[13px]">
-              <span>{m.full_name || m.email}</span>
-              <span className="font-mono text-[10.5px] uppercase text-muted-foreground">{m.role}</span>
+            <li key={m.id} className="py-2 flex items-center justify-between gap-3 text-[13px]">
+              <span className={cn(m.status === "disabled" && "line-through text-muted-foreground")}>{m.full_name || m.email}</span>
+              {canManage && m.id !== selfId ? (
+                <span className="flex items-center gap-2">
+                  <select
+                    aria-label={`Role for ${m.full_name || m.email}`}
+                    value={m.role}
+                    onChange={(e) => void change(m, { role: e.target.value as MemberRow["role"] })}
+                    className="rounded-md border border-input bg-transparent px-2 h-8 text-[12px]"
+                  >
+                    {(["viewer", "analyst", "admin", "owner"] as const).map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <Button size="sm" variant="outline" onClick={() => void change(m, { status: m.status === "active" ? "disabled" : "active" })}>
+                    {m.status === "active" ? "Disable" : "Enable"}
+                  </Button>
+                </span>
+              ) : (
+                <span className="font-mono text-[10.5px] uppercase text-muted-foreground">{m.role}</span>
+              )}
             </li>
           ))}
         </ul>
@@ -299,6 +368,7 @@ function Members() {
 
 export default function SettingsPage() {
   const role = useUserStore((s) => s.profile?.role);
+  const selfId = useUserStore((s) => s.profile?.id);
   const isAdmin = role === "owner" || role === "admin";
   const isAnalyst = isAdmin || role === "analyst";
   return (
@@ -316,7 +386,7 @@ export default function SettingsPage() {
         </Card>
       )}
       {isAnalyst && <Webhooks />}
-      {isAnalyst && <Members />}
+      {isAnalyst && <Members canManage={isAdmin} selfId={selfId} />}
     </div>
   );
 }

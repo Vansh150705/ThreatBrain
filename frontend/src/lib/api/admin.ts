@@ -10,10 +10,15 @@ export interface ApiKeyItem {
   last_used_at: string | null;
   expires_at: string | null;
   revoked_at: string | null;
+  require_signature?: boolean;
+  last_used_ip?: string | null;
+  use_count?: number;
+  rotated_from?: string | null;
 }
 
 export interface ApiKeyCreated extends ApiKeyItem {
   api_key: string;
+  signing_secret?: string | null;
 }
 
 export interface IntegrationStatus {
@@ -36,6 +41,7 @@ export async function createApiKey(body: {
   name: string;
   scopes: Array<"ingest" | "executor">;
   expires_in_days?: number;
+  require_signature?: boolean;
 }): Promise<ApiKeyCreated> {
   const { data } = await http.post<ApiKeyCreated>("/api-keys", body);
   return data;

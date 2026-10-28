@@ -9,6 +9,8 @@ import * as soc from "./soc";
 import * as admin from "./admin";
 import * as pipelines from "./pipelines";
 import * as logAnalysis from "./logAnalysis";
+import * as detection from "./detection";
+import * as ops from "./ops";
 
 export { default as http } from "./client";
 export { ApiError, AuthError, ForbiddenError, NotFoundError } from "./errors";
@@ -46,6 +48,8 @@ export const api = {
   admin,
   pipelines,
   logAnalysis,
+  detection,
+  ops,
 };
 
 export type * from "./types";

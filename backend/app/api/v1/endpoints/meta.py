@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
+from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, get_current_user, require_admin, require_viewer
@@ -74,6 +74,32 @@ def system_status(_: CurrentUser = Depends(require_admin)) -> dict[str, object]:
     from app.services import ops_service
 
     return ops_service.system_status()
+
+
+@router.get("/system/jobs", summary="Queue jobs for this organization (admin). Payloads are never returned.")
+def list_jobs(
+    job_status: Literal["queued", "running", "succeeded", "dead"] = Query(default="dead", alias="status"),
+    limit: int = Query(default=50, ge=1, le=200),
+    user: CurrentUser = Depends(require_admin),
+) -> dict[str, object]:
+    rows = (
+        get_supabase_admin().table("jobs")
+        .select("id, kind, status, attempts, max_attempts, last_error, created_at, started_at, finished_at, run_after")
+        .eq("organization_id", user.organization_id).eq("status", job_status)
+        .order("created_at", desc=True).limit(limit).execute().data or []
+    )
+    return {"items": rows}
+
+
+@router.post("/system/jobs/{job_id}/requeue", summary="Give a dead-lettered job a fresh set of attempts (admin)")
+def requeue_job(job_id: str, user: CurrentUser = Depends(require_admin)) -> dict[str, object]:
+    from app.services import case_service, queue_service
+
+    job = queue_service.requeue_dead(user.organization_id, job_id)
+    if job is None:
+        raise HTTPException(404, "Job not found or not dead-lettered.")
+    case_service.audit(user, action="job.requeued", target_type="job", row={"id": job_id, "title": job["kind"]}, changes={})
+    return {"id": job["id"], "status": job["status"]}
 
 
 class IntegrationStatus(BaseModel):

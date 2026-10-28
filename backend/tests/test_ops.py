@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 
 from app.core.config import get_settings
 from app.services import ops_service
+from tests.conftest import ORG_A, ORG_B
 from tests.test_pipeline import BRUTE
 
 
@@ -99,3 +100,24 @@ def test_doctor_cli_fails_loudly_on_bad_production_config():
     p = subprocess.run([sys.executable, "-m", "app.doctor"], env=env, capture_output=True, text=True, timeout=60)
     assert p.returncode == 1
     assert "APP_DEBUG must be false" in p.stdout and "CORS_ORIGINS must not contain" in p.stdout and "too short" in p.stdout
+
+
+def test_dead_jobs_are_listed_and_requeueable_by_admins_only_without_payloads(client, auth, db):
+    from app.services import queue_service
+
+    job = queue_service.enqueue(ORG_A, "event.process", {"event_id": "secret-payload-marker"}, max_attempts=1)
+    queue_service.claim("w1", 1)
+    queue_service.fail({**job, "attempts": 1}, "w1", "boom", retryable=False)
+    other = queue_service.enqueue(ORG_B, "event.process", {"event_id": "x"}, max_attempts=1)
+    queue_service.claim("w2", 5)
+    queue_service.fail({**other, "attempts": 1}, "w2", "boom", retryable=False)
+
+    assert client.get("/api/v1/system/jobs", headers=auth("analyst_a")).status_code == 403
+    r = client.get("/api/v1/system/jobs", headers=auth("admin_a"))
+    assert r.status_code == 200 and [j["id"] for j in r.json()["items"]] == [job["id"]]
+    assert "secret-payload-marker" not in r.text and "payload" not in r.json()["items"][0]
+    assert client.post(f"/api/v1/system/jobs/{other['id']}/requeue", headers=auth("admin_a")).status_code == 404   # other tenant
+    ok = client.post(f"/api/v1/system/jobs/{job['id']}/requeue", headers=auth("admin_a"))
+    assert ok.status_code == 200 and ok.json()["status"] == "queued"
+    assert client.post(f"/api/v1/system/jobs/{job['id']}/requeue", headers=auth("admin_a")).status_code == 404       # no longer dead
+    assert client.get("/api/v1/system/jobs", params={"status": "bogus"}, headers=auth("admin_a")).status_code == 422

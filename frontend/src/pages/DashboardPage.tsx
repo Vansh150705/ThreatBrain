@@ -17,6 +17,7 @@ import { useUserStore } from "@/store/useUserStore";
 import TriggerPipelineDialog from "@/components/TriggerPipelineDialog";
 import ColdStartNotice from "@/components/ColdStartNotice";
 import SocMetrics from "@/components/SocMetrics";
+import OnboardingCard from "@/components/OnboardingCard";
 import { Olivia, Henry, Nathan, Rachel, Frank, Claire } from "@/components/CrewPortraits";
 import {
   useRealtimeThreats,
@@ -278,6 +279,7 @@ export default function DashboardPage() {
         </div>
       </motion.section>
 
+      <OnboardingCard />
       <SocMetrics />
 
       {/* two-column: threats + agents */}

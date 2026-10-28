@@ -18,8 +18,12 @@ import sys
 # conftest sets the environment (must happen before app import)
 import tests.conftest as c  # noqa: F401  (side effect: env vars)
 
-os.environ["CORS_ORIGINS"] = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173"
+os.environ["CORS_ORIGINS"] = ",".join(["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173"]
+                                      + [o for o in os.environ.get("E2E_EXTRA_ORIGINS", "").split(",") if o])
 os.environ["RATE_LIMIT_ENABLED"] = "false"
+os.environ["EMBEDDED_WORKER"] = "true"       # so ingested events / the demo campaign are actually processed
+os.environ["WORKER_POLL_SECONDS"] = "0.2"
+os.environ["APP_SECRET"] = "e2e-rig-secret-" + "x" * 40     # enables signed API keys in the rig
 os.environ["LLM_RETRY_BASE_SECONDS"] = "0.01"
 
 

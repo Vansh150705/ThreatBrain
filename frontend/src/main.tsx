@@ -27,6 +27,8 @@ const ApprovalsPage = lazy(() => import("./pages/ApprovalsPage"));
 const PipelinesPage = lazy(() => import("./pages/PipelinesPage"));
 const LogAnalysisPage = lazy(() => import("./pages/LogAnalysisPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const DetectionPage = lazy(() => import("./pages/DetectionPage"));
+const OperationsPage = lazy(() => import("./pages/OperationsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 import "leaflet/dist/leaflet.css";
@@ -75,6 +77,8 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="approvals" element={<ApprovalsPage />} />
                 <Route path="pipelines" element={<PipelinesPage />} />
                 <Route path="log-analysis" element={<LogAnalysisPage />} />
+                <Route path="detection" element={<DetectionPage />} />
+                <Route path="operations" element={<OperationsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
 

@@ -26,4 +26,6 @@ dist-ssr
 # Local env files
 .env
 .env.local
-.env.*.local
+.env.*.localdist-e2e/
+e2e/screenshots/
+e2e/last-run.json
