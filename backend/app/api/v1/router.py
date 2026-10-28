@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     orchestrator,
     organizations,
     playbooks,
+    rules,
     stats,
 )
 from app.api.v1.endpoints import (
@@ -39,6 +40,9 @@ api_router.include_router(playbooks.router)
 
 # Copilot
 api_router.include_router(copilot.router)
+
+# Detection content (rules, Sigma, coverage)
+api_router.include_router(rules.router)
 
 # Ingest (universal collector front door)
 api_router.include_router(ingest.router)

@@ -226,7 +226,7 @@ def _validate(node: Any, rule_id: str) -> None:
 
 def rule_from_dict(item: dict[str, Any], *, source: str = "builtin") -> Rule:
     """Validate and build a Rule from its mapping form (YAML file row or DB row)."""
-    rid = str(item.get("id") or item.get("rule_key") or "")
+    rid = str(item.get("rule_key") or item.get("id") or "")  # DB rows carry both; the key is the identity
     if not rid:
         raise RuleError("rule is missing an id")
     sev = item.get("severity")

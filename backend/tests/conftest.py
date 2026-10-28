@@ -51,6 +51,7 @@ USERS = {
     "analyst_a": (ORG_A, "analyst"),
     "viewer_a": (ORG_A, "viewer"),
     "owner_b": (ORG_B, "owner"),
+    "admin_b": (ORG_B, "admin"),
     "analyst_b": (ORG_B, "analyst"),
 }
 

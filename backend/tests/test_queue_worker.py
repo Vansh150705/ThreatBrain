@@ -11,7 +11,6 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.services import queue_service
-from app.services.queue_service import QueueFull
 from app.services.worker import PermanentJobError, Worker, register
 from tests.conftest import ORG_A, ORG_B
 from tests.test_pipeline import BRUTE
