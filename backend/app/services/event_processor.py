@@ -90,13 +90,14 @@ def process_event(org_id: str, event_id: str) -> dict[str, Any]:
         "processed": True,
         "processed_at": _now(),
     }
-    if summary["severity_floor"]:
-        patch["severity"] = summary["severity_floor"]
+    alerting = [h for h in all_hits if not h.signal]       # signals are context for correlation; they do not raise a threat on their own
+    if alerting:
+        patch["severity"] = alerting[0].severity
     client.table("events").update(patch).eq("organization_id", org_id).eq("id", event_id).execute()
 
     result: dict[str, Any] = {"status": "processed", "detections": [h.rule_id for h in all_hits]}
     mode = settings.INGEST_TRIAGE_MODE
-    if mode == "none" or (mode == "matched" and not all_hits):
+    if mode == "none" or (mode == "matched" and not alerting):
         return result
 
     run = pipeline_service.run_sync(

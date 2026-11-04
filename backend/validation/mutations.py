@@ -143,3 +143,4 @@ def mutate_event(ev: dict[str, Any], name: str, rnd: random.Random) -> dict[str,
 
 
 ALL = [*MUTATORS_COMMAND, "url_encode_twice"]
+WRAPPERS = {"ps_encodedcommand_wrap", "sh_base64_pipe"}    # mutations that change what the event IS, not just how it is spelled

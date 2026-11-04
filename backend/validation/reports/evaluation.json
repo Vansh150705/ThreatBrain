@@ -1,14 +1,14 @@
 {
  "schema": "threatbrain.evaluation/1",
  "environment": {
-  "generated_at": "2026-11-04T06:12:08Z",
-  "git_sha": "3518c25",
+  "generated_at": "2026-11-04T06:20:34Z",
+  "git_sha": "1bfcb65",
   "python": "3.11.17",
   "rules": {
-   "count": 125,
+   "count": 126,
    "version": "2026.11.1"
   },
-  "seconds": 27.3,
+  "seconds": 59.7,
   "mode": "engine"
  },
  "freeze": {
@@ -47,7 +47,7 @@
    "passed": true
   },
   "tuning.attack_recall": {
-   "value": 0.9783,
+   "value": 0.9839,
    "threshold": 0.88,
    "op": ">=",
    "passed": true
@@ -64,32 +64,56 @@
    "op": ">=",
    "passed": false
   },
+  "tuning.adversarial_detect": {
+   "value": 1.0,
+   "threshold": 0.8,
+   "op": ">=",
+   "passed": true
+  },
+  "tuning.adversarial_benign_fpr": {
+   "value": 0.0,
+   "threshold": 0.05,
+   "op": "<=",
+   "passed": true
+  },
+  "tuning.behavior_attack_recall": {
+   "value": 1.0,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "tuning.behavior_benign_fpr": {
+   "value": 0.0833,
+   "threshold": 0.1,
+   "op": "<=",
+   "passed": true
+  },
   "heldout.attack_recall": {
-   "value": 0.9894,
+   "value": 0.9487,
    "threshold": 0.8,
    "op": ">=",
    "passed": true
   },
   "heldout.benign_fpr": {
-   "value": 0.0196,
+   "value": 0.0,
    "threshold": 0.05,
    "op": "<=",
    "passed": true
   },
   "heldout.mapping_accuracy": {
-   "value": 0.9462,
+   "value": 0.7838,
    "threshold": 0.7,
    "op": ">=",
    "passed": true
   },
   "heldout.severity_within_one": {
-   "value": 0.9677,
+   "value": 0.9459,
    "threshold": 0.8,
    "op": ">=",
    "passed": true
   },
   "heldout.severity_underrated": {
-   "value": 0.0108,
+   "value": 0.0541,
    "threshold": 0.1,
    "op": "<=",
    "passed": true
@@ -104,18 +128,6 @@
    "value": 1.0,
    "threshold": 1.0,
    "op": ">=",
-   "passed": true
-  },
-  "heldout.adversarial_detect": {
-   "value": 1.0,
-   "threshold": 0.8,
-   "op": ">=",
-   "passed": true
-  },
-  "heldout.adversarial_benign_fpr": {
-   "value": 0.0,
-   "threshold": 0.05,
-   "op": "<=",
    "passed": true
   },
   "heldout.art_high_signal_recall": {
@@ -137,13 +149,61 @@
    "passed": true
   },
   "heldout.behavior_noise": {
-   "value": 0.442,
+   "value": 0.262,
    "threshold": 0.5,
    "op": "<=",
    "passed": true
   },
+  "metamorphic.development_and_tuning.retention": {
+   "value": 0.9973,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "metamorphic.development_and_tuning.benign_mutation_fpr": {
+   "value": 0.0,
+   "threshold": 0.03,
+   "op": "<=",
+   "passed": true
+  },
+  "metamorphic.heldout.retention": {
+   "value": 1.0,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "metamorphic.heldout.benign_mutation_fpr": {
+   "value": 0.0,
+   "threshold": 0.03,
+   "op": "<=",
+   "passed": true
+  },
+  "degraded.reordered_chains": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.duplicated_chains": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.truncated_commands": {
+   "value": 0.9949,
+   "threshold": 0.75,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.field_loss": {
+   "value": 0.9924,
+   "threshold": 0.9,
+   "op": ">=",
+   "passed": true
+  },
   "performance.engine_ms_p95": {
-   "value": 2.159,
+   "value": 2.062,
    "threshold": 25.0,
    "op": "<=",
    "passed": true
@@ -173,6 +233,7 @@
         1.0
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
        "k": 81,
        "n": 81,
@@ -189,6 +250,15 @@
        "ci95": [
         0.701,
         1.0
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 88,
+       "n": 90,
+       "rate": 0.9778,
+       "ci95": [
+        0.923,
+        0.994
        ]
       }
      },
@@ -397,12 +467,13 @@
        0.0,
        0.052
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.744,
-      "p95": 2.159
+      "p50": 0.639,
+      "p95": 2.062
      },
      "missed": [],
      "false_positives": [],
@@ -479,60 +550,32 @@
    },
    "tuning": {
     "scenario_counts": {
-     "attacks": 821,
-     "benign": 55,
-     "campaigns": 0
+     "attacks": 947,
+     "benign": 115,
+     "campaigns": 17
     },
     "handwritten": {
      "attacks": {
       "all": {
-       "k": 90,
-       "n": 92,
-       "rate": 0.9783,
+       "k": 183,
+       "n": 186,
+       "rate": 0.9839,
        "ci95": [
-        0.924,
+        0.954,
         0.994
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
-       "k": 84,
-       "n": 86,
-       "rate": 0.9767,
+       "k": 171,
+       "n": 174,
+       "rate": 0.9828,
        "ci95": [
-        0.919,
+        0.951,
         0.994
        ]
       },
       "other_tactics": {
-       "k": 6,
-       "n": 6,
-       "rate": 1.0,
-       "ci95": [
-        0.61,
-        1.0
-       ]
-      }
-     },
-     "recall_by_tactic": {
-      "TA0001": {
-       "k": 15,
-       "n": 15,
-       "rate": 1.0,
-       "ci95": [
-        0.796,
-        1.0
-       ]
-      },
-      "TA0002": {
-       "k": 6,
-       "n": 6,
-       "rate": 1.0,
-       "ci95": [
-        0.61,
-        1.0
-       ]
-      },
-      "TA0003": {
        "k": 12,
        "n": 12,
        "rate": 1.0,
@@ -541,70 +584,72 @@
         1.0
        ]
       },
-      "TA0004": {
-       "k": 4,
-       "n": 4,
+      "alerted_not_just_signalled": {
+       "k": 179,
+       "n": 186,
+       "rate": 0.9624,
+       "ci95": [
+        0.924,
+        0.982
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 31,
+       "n": 31,
        "rate": 1.0,
        "ci95": [
-        0.51,
+        0.89,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 22,
+       "n": 22,
+       "rate": 1.0,
+       "ci95": [
+        0.851,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 10,
+       "n": 10,
+       "rate": 1.0,
+       "ci95": [
+        0.722,
         1.0
        ]
       },
       "TA0005": {
-       "k": 18,
-       "n": 18,
+       "k": 32,
+       "n": 32,
        "rate": 1.0,
        "ci95": [
-        0.824,
+        0.893,
         1.0
        ]
       },
       "TA0006": {
-       "k": 10,
-       "n": 11,
-       "rate": 0.9091,
+       "k": 21,
+       "n": 22,
+       "rate": 0.9545,
        "ci95": [
-        0.623,
-        0.984
+        0.782,
+        0.992
        ]
       },
       "TA0007": {
-       "k": 3,
-       "n": 3,
-       "rate": 1.0,
-       "ci95": [
-        0.438,
-        1.0
-       ]
-      },
-      "TA0008": {
-       "k": 4,
-       "n": 4,
-       "rate": 1.0,
-       "ci95": [
-        0.51,
-        1.0
-       ]
-      },
-      "TA0009": {
-       "k": 3,
-       "n": 3,
-       "rate": 1.0,
-       "ci95": [
-        0.438,
-        1.0
-       ]
-      },
-      "TA0010": {
-       "k": 2,
-       "n": 3,
-       "rate": 0.6667,
-       "ci95": [
-        0.208,
-        0.939
-       ]
-      },
-      "TA0011": {
        "k": 5,
        "n": 5,
        "rate": 1.0,
@@ -613,12 +658,48 @@
         1.0
        ]
       },
-      "TA0040": {
-       "k": 8,
-       "n": 8,
+      "TA0008": {
+       "k": 7,
+       "n": 7,
        "rate": 1.0,
        "ci95": [
-        0.676,
+        0.646,
+        1.0
+       ]
+      },
+      "TA0009": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "TA0010": {
+       "k": 6,
+       "n": 8,
+       "rate": 0.75,
+       "ci95": [
+        0.409,
+        0.929
+       ]
+      },
+      "TA0011": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
+        1.0
+       ]
+      },
+      "TA0040": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
         1.0
        ]
       }
@@ -634,12 +715,12 @@
        ]
       },
       "adapter:cloudtrail": {
-       "k": 3,
-       "n": 4,
-       "rate": 0.75,
+       "k": 12,
+       "n": 13,
+       "rate": 0.9231,
        "ci95": [
-        0.301,
-        0.954
+        0.667,
+        0.986
        ]
       },
       "adapter:ecs": {
@@ -661,11 +742,11 @@
        ]
       },
       "cloud/identity": {
-       "k": 7,
-       "n": 7,
+       "k": 9,
+       "n": 9,
        "rate": 1.0,
        "ci95": [
-        0.646,
+        0.701,
         1.0
        ]
       },
@@ -688,69 +769,109 @@
        ]
       },
       "network/auth": {
-       "k": 4,
-       "n": 5,
-       "rate": 0.8,
+       "k": 9,
+       "n": 11,
+       "rate": 0.8182,
        "ci95": [
-        0.376,
-        0.964
+        0.523,
+        0.949
        ]
       },
       "process": {
-       "k": 54,
-       "n": 54,
+       "k": 117,
+       "n": 117,
        "rate": 1.0,
        "ci95": [
-        0.934,
+        0.968,
         1.0
        ]
       },
       "web": {
-       "k": 10,
-       "n": 10,
+       "k": 24,
+       "n": 24,
        "rate": 1.0,
        "ci95": [
-        0.722,
+        0.862,
         1.0
        ]
       }
      },
      "mapping_accuracy": {
-      "k": 87,
-      "n": 90,
-      "rate": 0.9667,
+      "k": 175,
+      "n": 183,
+      "rate": 0.9563,
       "ci95": [
-       0.907,
-       0.989
+       0.916,
+       0.978
       ]
      },
      "technique_coverage": {
-      "techniques_tested": 62,
-      "techniques_with_a_detected_scenario": 60
+      "techniques_tested": 85,
+      "techniques_with_a_detected_scenario": 83
+     },
+     "severity": {
+      "labelled": 93,
+      "exact": {
+       "k": 63,
+       "n": 93,
+       "rate": 0.6774,
+       "ci95": [
+        0.577,
+        0.764
+       ]
+      },
+      "within_one": {
+       "k": 89,
+       "n": 93,
+       "rate": 0.957,
+       "ci95": [
+        0.895,
+        0.983
+       ]
+      },
+      "underrated_2plus": {
+       "k": 2,
+       "n": 93,
+       "rate": 0.0215,
+       "ci95": [
+        0.006,
+        0.075
+       ]
+      },
+      "overrated_2plus": {
+       "k": 2,
+       "n": 93,
+       "rate": 0.0215,
+       "ci95": [
+        0.006,
+        0.075
+       ]
+      }
      },
      "evidence_correct": {
-      "k": 90,
-      "n": 90,
+      "k": 183,
+      "n": 183,
       "rate": 1.0,
       "ci95": [
-       0.959,
+       0.979,
        1.0
       ]
      },
      "benign": {
       "k": 0,
-      "n": 55,
+      "n": 106,
       "rate": 0.0,
       "ci95": [
-       0.0,
-       0.065
+       -0.0,
+       0.035
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 1
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.78,
-      "p95": 2.696
+      "p50": 0.786,
+      "p95": 2.976
      },
      "missed": [
       {
@@ -766,26 +887,39 @@
        "techniques": [
         "T1041"
        ]
+      },
+      {
+       "id": "HO3-090",
+       "tactic": "TA0010",
+       "techniques": [
+        "T1048"
+       ]
       }
      ],
      "false_positives": [],
      "wrong_mapping": [
       "HL2-014",
       "EVA-001",
-      "EVA-007"
+      "EVA-007",
+      "HO3-027",
+      "HO3-057",
+      "HO3-058",
+      "HO3-091",
+      "HO3-093"
      ]
     },
     "atomic_red_team": {
      "attacks": {
       "all": {
-       "k": 255,
+       "k": 260,
        "n": 580,
-       "rate": 0.4397,
+       "rate": 0.4483,
        "ci95": [
-        0.4,
-        0.48
+        0.408,
+        0.489
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
        "k": 188,
        "n": 323,
@@ -796,12 +930,21 @@
        ]
       },
       "other_tactics": {
-       "k": 67,
+       "k": 72,
        "n": 257,
-       "rate": 0.2607,
+       "rate": 0.2802,
        "ci95": [
-        0.211,
-        0.318
+        0.229,
+        0.338
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 250,
+       "n": 580,
+       "rate": 0.431,
+       "ci95": [
+        0.391,
+        0.472
        ]
       }
      },
@@ -861,12 +1004,12 @@
        ]
       },
       "TA0007": {
-       "k": 29,
+       "k": 34,
        "n": 84,
-       "rate": 0.3452,
+       "rate": 0.4048,
        "ci95": [
-        0.252,
-        0.452
+        0.306,
+        0.512
        ]
       },
       "TA0008": {
@@ -926,31 +1069,31 @@
      },
      "recall_by_category": {
       "art:linux": {
-       "k": 45,
+       "k": 46,
        "n": 150,
-       "rate": 0.3,
+       "rate": 0.3067,
        "ci95": [
-        0.232,
-        0.378
+        0.238,
+        0.385
        ]
       },
       "art:windows": {
-       "k": 210,
+       "k": 214,
        "n": 430,
-       "rate": 0.4884,
+       "rate": 0.4977,
        "ci95": [
-        0.441,
-        0.536
+        0.451,
+        0.545
        ]
       }
      },
      "mapping_accuracy": {
-      "k": 160,
-      "n": 255,
-      "rate": 0.6275,
+      "k": 165,
+      "n": 260,
+      "rate": 0.6346,
       "ci95": [
-       0.567,
-       0.684
+       0.575,
+       0.691
       ]
      },
      "technique_coverage": {
@@ -958,8 +1101,8 @@
       "techniques_with_a_detected_scenario": 93
      },
      "evidence_correct": {
-      "k": 255,
-      "n": 255,
+      "k": 260,
+      "n": 260,
       "rate": 1.0,
       "ci95": [
        0.985,
@@ -974,12 +1117,13 @@
        0.0,
        1.0
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 3.136,
-      "p95": 18.095
+      "p50": 3.328,
+      "p95": 18.842
      },
      "missed": [
       {
@@ -1117,13 +1261,6 @@
       },
       {
        "id": "ART-T1018-08",
-       "tactic": "TA0007",
-       "techniques": [
-        "T1018"
-       ]
-      },
-      {
-       "id": "ART-T1018-11",
        "tactic": "TA0007",
        "techniques": [
         "T1018"
@@ -1401,6 +1538,13 @@
        "techniques": [
         "T1055"
        ]
+      },
+      {
+       "id": "ART-T1055-11",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1055"
+       ]
       }
      ],
      "false_positives": [],
@@ -1416,6 +1560,7 @@
       "ART-T1016-04",
       "ART-T1018-01",
       "ART-T1018-10",
+      "ART-T1018-11",
       "ART-T1020-01",
       "ART-T1021.001-02",
       "ART-T1021.001-03",
@@ -1436,7 +1581,6 @@
       "ART-T1059.001-12",
       "ART-T1059.004-04",
       "ART-T1059.006-01",
-      "ART-T1069.002-05",
       "ART-T1070.004-08",
       "ART-T1070.006-04",
       "ART-T1071.004-04",
@@ -1458,6 +1602,7 @@
         0.802
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
        "k": 110,
        "n": 148,
@@ -1474,6 +1619,15 @@
        "ci95": [
         0.0,
         0.793
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 110,
+       "n": 149,
+       "rate": 0.7383,
+       "ci95": [
+        0.662,
+        0.802
        ]
       }
      },
@@ -1700,12 +1854,13 @@
        0.0,
        1.0
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 1.285,
-      "p95": 3.559
+      "p50": 1.293,
+      "p95": 3.469
      },
      "missed": [
       {
@@ -2021,91 +2176,49 @@
       "LOL-OtherMSBinaries_Remote-03",
       "LOL-OtherMSBinaries_Wsl-02"
      ]
-    }
-   },
-   "heldout": {
-    "scenario_counts": {
-     "attacks": 880,
-     "benign": 60,
-     "campaigns": 17
     },
-    "handwritten": {
+    "adversarial_variants": {
      "attacks": {
       "all": {
-       "k": 93,
-       "n": 94,
-       "rate": 0.9894,
+       "k": 32,
+       "n": 32,
+       "rate": 1.0,
        "ci95": [
-        0.942,
-        0.998
+        0.893,
+        1.0
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
-       "k": 87,
-       "n": 88,
-       "rate": 0.9886,
+       "k": 32,
+       "n": 32,
+       "rate": 1.0,
        "ci95": [
-        0.938,
-        0.998
+        0.893,
+        1.0
        ]
       },
       "other_tactics": {
-       "k": 6,
-       "n": 6,
+       "k": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        0.0,
+        1.0
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 32,
+       "n": 32,
        "rate": 1.0,
        "ci95": [
-        0.61,
+        0.893,
         1.0
        ]
       }
      },
      "recall_by_tactic": {
       "TA0001": {
-       "k": 16,
-       "n": 16,
-       "rate": 1.0,
-       "ci95": [
-        0.806,
-        1.0
-       ]
-      },
-      "TA0002": {
-       "k": 8,
-       "n": 8,
-       "rate": 1.0,
-       "ci95": [
-        0.676,
-        1.0
-       ]
-      },
-      "TA0003": {
-       "k": 10,
-       "n": 10,
-       "rate": 1.0,
-       "ci95": [
-        0.722,
-        1.0
-       ]
-      },
-      "TA0004": {
-       "k": 6,
-       "n": 6,
-       "rate": 1.0,
-       "ci95": [
-        0.61,
-        1.0
-       ]
-      },
-      "TA0005": {
-       "k": 14,
-       "n": 14,
-       "rate": 1.0,
-       "ci95": [
-        0.785,
-        1.0
-       ]
-      },
-      "TA0006": {
        "k": 11,
        "n": 11,
        "rate": 1.0,
@@ -2114,16 +2227,34 @@
         1.0
        ]
       },
-      "TA0007": {
-       "k": 2,
-       "n": 2,
+      "TA0002": {
+       "k": 7,
+       "n": 7,
        "rate": 1.0,
        "ci95": [
-        0.342,
+        0.646,
         1.0
        ]
       },
-      "TA0008": {
+      "TA0003": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 5,
+       "n": 5,
+       "rate": 1.0,
+       "ci95": [
+        0.566,
+        1.0
+       ]
+      },
+      "TA0011": {
        "k": 3,
        "n": 3,
        "rate": 1.0,
@@ -2132,34 +2263,355 @@
         1.0
        ]
       },
-      "TA0009": {
-       "k": 4,
-       "n": 4,
+      "TA0040": {
+       "k": 5,
+       "n": 5,
        "rate": 1.0,
        "ci95": [
-        0.51,
+        0.566,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "cmd": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "posix": {
+       "k": 8,
+       "n": 8,
+       "rate": 1.0,
+       "ci95": [
+        0.676,
+        1.0
+       ]
+      },
+      "powershell": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      },
+      "web": {
+       "k": 11,
+       "n": 11,
+       "rate": 1.0,
+       "ci95": [
+        0.741,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 30,
+      "n": 32,
+      "rate": 0.9375,
+      "ci95": [
+       0.799,
+       0.983
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 11,
+      "techniques_with_a_detected_scenario": 11
+     },
+     "evidence_correct": {
+      "k": 32,
+      "n": 32,
+      "rate": 1.0,
+      "ci95": [
+       0.893,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 9,
+      "rate": 0.0,
+      "ci95": [
+       0.0,
+       0.299
+      ],
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 0.921,
+      "p95": 4.053
+     },
+     "missed": [],
+     "false_positives": [],
+     "wrong_mapping": [
+      "ADV-015",
+      "ADV-016"
+     ]
+    },
+    "campaigns": {
+     "campaigns": {
+      "k": 11,
+      "n": 11,
+      "rate": 1.0,
+      "ci95": [
+       0.741,
+       1.0
+      ]
+     },
+     "near_misses_stay_quiet": {
+      "k": 6,
+      "n": 6,
+      "rate": 1.0,
+      "ci95": [
+       0.61,
+       1.0
+      ]
+     },
+     "evidence_correct": {
+      "k": 8,
+      "n": 11,
+      "rate": 0.7273,
+      "ci95": [
+       0.434,
+       0.903
+      ]
+     },
+     "minutes_from_first_to_last_stage_median": 60,
+     "minutes_to_first_alert_median": 0.0,
+     "failed": []
+    },
+    "behavior": {
+     "attacks_detected": {
+      "k": 15,
+      "n": 15,
+      "rate": 1.0,
+      "ci95": [
+       0.796,
+       1.0
+      ]
+     },
+     "benign_alerted": {
+      "k": 2,
+      "n": 24,
+      "rate": 0.0833,
+      "ci95": [
+       0.023,
+       0.258
+      ]
+     },
+     "documented_cold_start_gaps": 0,
+     "median_hours_to_first_alert": 6.0,
+     "failed": [
+      {
+       "id": "BEH-H19",
+       "label": "benign"
+      },
+      {
+       "id": "BEH-H20",
+       "label": "benign"
+      }
+     ],
+     "noise_simulation": {
+      "entities": 233,
+      "days": 50,
+      "warmup_days": 14,
+      "entity_days": 6794,
+      "alerts": 30,
+      "alerts_per_100_entity_days": 0.442,
+      "by_family": {
+       "auth_location": 29,
+       "auth_time": 29,
+       "net_dest": 1,
+       "volume": 1
+      },
+      "seed": 2027
+     }
+    }
+   },
+   "heldout": {
+    "scenario_counts": {
+     "attacks": 793,
+     "benign": 37,
+     "campaigns": 10
+    },
+    "handwritten": {
+     "attacks": {
+      "all": {
+       "k": 37,
+       "n": 39,
+       "rate": 0.9487,
+       "ci95": [
+        0.831,
+        0.986
+       ]
+      },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
+      "high_signal_tactics": {
+       "k": 36,
+       "n": 38,
+       "rate": 0.9474,
+       "ci95": [
+        0.827,
+        0.985
+       ]
+      },
+      "other_tactics": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 36,
+       "n": 39,
+       "rate": 0.9231,
+       "ci95": [
+        0.797,
+        0.973
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 9,
+       "n": 10,
+       "rate": 0.9,
+       "ci95": [
+        0.596,
+        0.982
+       ]
+      },
+      "TA0006": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0008": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "TA0009": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
         1.0
        ]
       },
       "TA0010": {
-       "k": 4,
-       "n": 5,
-       "rate": 0.8,
+       "k": 3,
+       "n": 4,
+       "rate": 0.75,
        "ci95": [
-        0.376,
-        0.964
+        0.301,
+        0.954
        ]
       },
       "TA0011": {
-       "k": 9,
-       "n": 9,
+       "k": 2,
+       "n": 2,
        "rate": 1.0,
        "ci95": [
-        0.701,
+        0.342,
         1.0
        ]
       },
       "TA0040": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "adapter:cloudtrail": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "network/auth": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "process": {
+       "k": 27,
+       "n": 29,
+       "rate": 0.931,
+       "ci95": [
+        0.78,
+        0.981
+       ]
+      },
+      "web": {
        "k": 6,
        "n": 6,
        "rate": 1.0,
@@ -2169,141 +2621,96 @@
        ]
       }
      },
-     "recall_by_category": {
-      "adapter:cloudtrail": {
-       "k": 9,
-       "n": 9,
-       "rate": 1.0,
-       "ci95": [
-        0.701,
-        1.0
-       ]
-      },
-      "cloud/identity": {
-       "k": 2,
-       "n": 2,
-       "rate": 1.0,
-       "ci95": [
-        0.342,
-        1.0
-       ]
-      },
-      "network/auth": {
-       "k": 5,
-       "n": 6,
-       "rate": 0.8333,
-       "ci95": [
-        0.436,
-        0.97
-       ]
-      },
-      "process": {
-       "k": 63,
-       "n": 63,
-       "rate": 1.0,
-       "ci95": [
-        0.943,
-        1.0
-       ]
-      },
-      "web": {
-       "k": 14,
-       "n": 14,
-       "rate": 1.0,
-       "ci95": [
-        0.785,
-        1.0
-       ]
-      }
-     },
      "mapping_accuracy": {
-      "k": 88,
-      "n": 93,
-      "rate": 0.9462,
+      "k": 29,
+      "n": 37,
+      "rate": 0.7838,
       "ci95": [
-       0.88,
-       0.977
+       0.628,
+       0.886
       ]
      },
      "technique_coverage": {
-      "techniques_tested": 60,
-      "techniques_with_a_detected_scenario": 60
+      "techniques_tested": 30,
+      "techniques_with_a_detected_scenario": 28
      },
      "severity": {
-      "labelled": 93,
+      "labelled": 37,
       "exact": {
-       "k": 63,
-       "n": 93,
-       "rate": 0.6774,
+       "k": 27,
+       "n": 37,
+       "rate": 0.7297,
        "ci95": [
-        0.577,
-        0.764
+        0.57,
+        0.846
        ]
       },
       "within_one": {
-       "k": 90,
-       "n": 93,
-       "rate": 0.9677,
+       "k": 35,
+       "n": 37,
+       "rate": 0.9459,
        "ci95": [
-        0.909,
-        0.989
+        0.823,
+        0.985
        ]
       },
       "underrated_2plus": {
-       "k": 1,
-       "n": 93,
-       "rate": 0.0108,
+       "k": 2,
+       "n": 37,
+       "rate": 0.0541,
        "ci95": [
-        0.002,
-        0.058
+        0.015,
+        0.177
        ]
       },
       "overrated_2plus": {
-       "k": 2,
-       "n": 93,
-       "rate": 0.0215,
+       "k": 0,
+       "n": 37,
+       "rate": 0.0,
        "ci95": [
-        0.006,
-        0.075
+        0.0,
+        0.094
        ]
       }
      },
      "evidence_correct": {
-      "k": 93,
-      "n": 93,
+      "k": 37,
+      "n": 37,
       "rate": 1.0,
       "ci95": [
-       0.96,
+       0.906,
        1.0
       ]
      },
      "benign": {
-      "k": 1,
-      "n": 51,
-      "rate": 0.0196,
+      "k": 0,
+      "n": 37,
+      "rate": 0.0,
       "ci95": [
-       0.003,
-       0.103
+       0.0,
+       0.094
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 1
      },
-     "precision": 0.9894,
+     "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 1.106,
-      "p95": 4.083
+      "p50": 1.06,
+      "p95": 3.256
      }
     },
     "atomic_red_team": {
      "attacks": {
       "all": {
-       "k": 245,
+       "k": 247,
        "n": 607,
-       "rate": 0.4036,
+       "rate": 0.4069,
        "ci95": [
-        0.365,
-        0.443
+        0.369,
+        0.446
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
        "k": 155,
        "n": 334,
@@ -2314,12 +2721,21 @@
        ]
       },
       "other_tactics": {
-       "k": 90,
+       "k": 92,
        "n": 273,
-       "rate": 0.3297,
+       "rate": 0.337,
        "ci95": [
-        0.277,
-        0.387
+        0.284,
+        0.395
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 237,
+       "n": 607,
+       "rate": 0.3904,
+       "ci95": [
+        0.352,
+        0.43
        ]
       }
      },
@@ -2379,12 +2795,12 @@
        ]
       },
       "TA0007": {
-       "k": 24,
+       "k": 26,
        "n": 70,
-       "rate": 0.3429,
+       "rate": 0.3714,
        "ci95": [
-        0.242,
-        0.46
+        0.268,
+        0.489
        ]
       },
       "TA0008": {
@@ -2453,22 +2869,22 @@
        ]
       },
       "art:windows": {
-       "k": 202,
+       "k": 204,
        "n": 481,
-       "rate": 0.42,
+       "rate": 0.4241,
        "ci95": [
-        0.377,
-        0.465
+        0.381,
+        0.469
        ]
       }
      },
      "mapping_accuracy": {
-      "k": 147,
-      "n": 245,
-      "rate": 0.6,
+      "k": 153,
+      "n": 247,
+      "rate": 0.6194,
       "ci95": [
-       0.538,
-       0.659
+       0.557,
+       0.678
       ]
      },
      "technique_coverage": {
@@ -2476,8 +2892,8 @@
       "techniques_with_a_detected_scenario": 97
      },
      "evidence_correct": {
-      "k": 245,
-      "n": 245,
+      "k": 247,
+      "n": 247,
       "rate": 1.0,
       "ci95": [
        0.985,
@@ -2492,12 +2908,13 @@
        0.0,
        1.0
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 3.234,
-      "p95": 20.351
+      "p50": 3.485,
+      "p95": 19.456
      }
     },
     "lolbas": {
@@ -2511,6 +2928,7 @@
         0.636
        ]
       },
+      "note": "'all' counts an attack as detected when ANY hit (alert or signal) names it",
       "high_signal_tactics": {
        "k": 82,
        "n": 146,
@@ -2527,6 +2945,15 @@
        "ci95": [
         0.0,
         0.793
+       ]
+      },
+      "alerted_not_just_signalled": {
+       "k": 82,
+       "n": 147,
+       "rate": 0.5578,
+       "ci95": [
+        0.477,
+        0.636
        ]
       }
      },
@@ -2744,206 +3171,45 @@
        0.0,
        1.0
       ],
-      "note": "rate = false-positive rate"
+      "note": "rate = false-positive rate (alerts only)",
+      "benign_with_any_hit_including_signals": 0
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 1.186,
-      "p95": 3.317
-     }
-    },
-    "adversarial_variants": {
-     "attacks": {
-      "all": {
-       "k": 32,
-       "n": 32,
-       "rate": 1.0,
-       "ci95": [
-        0.893,
-        1.0
-       ]
-      },
-      "high_signal_tactics": {
-       "k": 32,
-       "n": 32,
-       "rate": 1.0,
-       "ci95": [
-        0.893,
-        1.0
-       ]
-      },
-      "other_tactics": {
-       "k": 0,
-       "n": 0,
-       "rate": null,
-       "ci95": [
-        0.0,
-        1.0
-       ]
-      }
-     },
-     "recall_by_tactic": {
-      "TA0001": {
-       "k": 11,
-       "n": 11,
-       "rate": 1.0,
-       "ci95": [
-        0.741,
-        1.0
-       ]
-      },
-      "TA0002": {
-       "k": 7,
-       "n": 7,
-       "rate": 1.0,
-       "ci95": [
-        0.646,
-        1.0
-       ]
-      },
-      "TA0003": {
-       "k": 1,
-       "n": 1,
-       "rate": 1.0,
-       "ci95": [
-        0.207,
-        1.0
-       ]
-      },
-      "TA0005": {
-       "k": 5,
-       "n": 5,
-       "rate": 1.0,
-       "ci95": [
-        0.566,
-        1.0
-       ]
-      },
-      "TA0011": {
-       "k": 3,
-       "n": 3,
-       "rate": 1.0,
-       "ci95": [
-        0.438,
-        1.0
-       ]
-      },
-      "TA0040": {
-       "k": 5,
-       "n": 5,
-       "rate": 1.0,
-       "ci95": [
-        0.566,
-        1.0
-       ]
-      }
-     },
-     "recall_by_category": {
-      "cmd": {
-       "k": 7,
-       "n": 7,
-       "rate": 1.0,
-       "ci95": [
-        0.646,
-        1.0
-       ]
-      },
-      "posix": {
-       "k": 8,
-       "n": 8,
-       "rate": 1.0,
-       "ci95": [
-        0.676,
-        1.0
-       ]
-      },
-      "powershell": {
-       "k": 6,
-       "n": 6,
-       "rate": 1.0,
-       "ci95": [
-        0.61,
-        1.0
-       ]
-      },
-      "web": {
-       "k": 11,
-       "n": 11,
-       "rate": 1.0,
-       "ci95": [
-        0.741,
-        1.0
-       ]
-      }
-     },
-     "mapping_accuracy": {
-      "k": 30,
-      "n": 32,
-      "rate": 0.9375,
-      "ci95": [
-       0.799,
-       0.983
-      ]
-     },
-     "technique_coverage": {
-      "techniques_tested": 11,
-      "techniques_with_a_detected_scenario": 11
-     },
-     "evidence_correct": {
-      "k": 32,
-      "n": 32,
-      "rate": 1.0,
-      "ci95": [
-       0.893,
-       1.0
-      ]
-     },
-     "benign": {
-      "k": 0,
-      "n": 9,
-      "rate": 0.0,
-      "ci95": [
-       0.0,
-       0.299
-      ],
-      "note": "rate = false-positive rate"
-     },
-     "precision": 1.0,
-     "engine_ms_per_scenario": {
-      "p50": 1.257,
-      "p95": 4.767
+      "p50": 0.935,
+      "p95": 2.486
      }
     },
     "campaigns": {
      "campaigns": {
-      "k": 11,
-      "n": 11,
+      "k": 7,
+      "n": 7,
       "rate": 1.0,
       "ci95": [
-       0.741,
+       0.646,
        1.0
       ]
      },
      "near_misses_stay_quiet": {
-      "k": 6,
-      "n": 6,
+      "k": 3,
+      "n": 3,
       "rate": 1.0,
       "ci95": [
-       0.61,
+       0.438,
        1.0
       ]
      },
      "evidence_correct": {
-      "k": 8,
-      "n": 11,
-      "rate": 0.7273,
+      "k": 5,
+      "n": 7,
+      "rate": 0.7143,
       "ci95": [
-       0.434,
-       0.903
+       0.359,
+       0.918
       ]
      },
-     "minutes_from_first_to_last_stage_median": 60,
-     "minutes_to_first_alert_median": 0.0
+     "minutes_from_first_to_last_stage_median": 25,
+     "minutes_to_first_alert_median": 0
     },
     "behavior": {
      "attacks_detected": {
@@ -2965,22 +3231,433 @@
       ]
      },
      "documented_cold_start_gaps": 0,
-     "median_hours_to_first_alert": 6.0,
+     "median_hours_to_first_alert": 7.0,
      "noise_simulation": {
-      "entities": 233,
-      "days": 50,
+      "entities": 303,
+      "days": 55,
       "warmup_days": 14,
-      "entity_days": 6794,
-      "alerts": 30,
-      "alerts_per_100_entity_days": 0.442,
+      "entity_days": 9908,
+      "alerts": 26,
+      "alerts_per_100_entity_days": 0.262,
       "by_family": {
-       "auth_location": 29,
-       "auth_time": 29,
-       "net_dest": 1,
-       "volume": 1
+       "auth_location": 26,
+       "auth_time": 26
       },
-      "seed": 2027
+      "seed": 4242
      }
+    }
+   }
+  },
+  "metamorphic": {
+   "development_and_tuning": {
+    "base_scenarios_detected": 483,
+    "variants": 1869,
+    "retention": {
+     "k": 1864,
+     "n": 1869,
+     "rate": 0.9973,
+     "ci95": [
+      0.994,
+      0.999
+     ]
+    },
+    "retention_same_technique": {
+     "k": 1861,
+     "n": 1869,
+     "rate": 0.9957,
+     "ci95": [
+      0.992,
+      0.998
+     ]
+    },
+    "by_mutation": {
+     "case_swap": {
+      "applicable": 237,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "space_pad": {
+      "applicable": 319,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "caret_insert": {
+      "applicable": 194,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "quote_split": {
+      "applicable": 273,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "comspec_wrap": {
+      "applicable": 215,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "absolute_path": {
+      "applicable": 246,
+      "retention": 0.9919,
+      "same_technique": 0.9919
+     },
+     "ps_string_concat": {
+      "applicable": 9,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_backtick": {
+      "applicable": 26,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_encodedcommand_wrap": {
+      "applicable": 237,
+      "retention": 1.0,
+      "same_technique": 0.9873
+     },
+     "sh_base64_pipe": {
+      "applicable": 41,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ifs_spaces": {
+      "applicable": 40,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "url_encode_twice": {
+      "applicable": 32,
+      "retention": 0.9062,
+      "same_technique": 0.9062
+     }
+    },
+    "benign_mutations": {
+     "k": 0,
+     "n": 306,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.012
+     ],
+     "note": "rate = alerts on benign events after cosmetic mutations (case, spacing, quoting, paths, concatenation)"
+    },
+    "benign_wrapped_in_encoding": {
+     "k": 46,
+     "n": 46,
+     "rate": 1.0,
+     "ci95": [
+      0.923,
+      1.0
+     ],
+     "note": "EXPECTED to alert: a benign command re-sent as -EncodedCommand or base64|sh is the evasion pattern itself"
+    }
+   },
+   "heldout": {
+    "base_scenarios_detected": 119,
+    "variants": 641,
+    "retention": {
+     "k": 641,
+     "n": 641,
+     "rate": 1.0,
+     "ci95": [
+      0.994,
+      1.0
+     ]
+    },
+    "retention_same_technique": {
+     "k": 640,
+     "n": 641,
+     "rate": 0.9984,
+     "ci95": [
+      0.991,
+      1.0
+     ]
+    },
+    "by_mutation": {
+     "case_swap": {
+      "applicable": 91,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "space_pad": {
+      "applicable": 92,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "caret_insert": {
+      "applicable": 80,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "quote_split": {
+      "applicable": 93,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "comspec_wrap": {
+      "applicable": 90,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "absolute_path": {
+      "applicable": 90,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_backtick": {
+      "applicable": 1,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_encodedcommand_wrap": {
+      "applicable": 91,
+      "retention": 1.0,
+      "same_technique": 0.989
+     },
+     "sh_base64_pipe": {
+      "applicable": 6,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ifs_spaces": {
+      "applicable": 6,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "url_encode_twice": {
+      "applicable": 1,
+      "retention": 1.0,
+      "same_technique": 1.0
+     }
+    },
+    "benign_mutations": {
+     "k": 0,
+     "n": 101,
+     "rate": 0.0,
+     "ci95": [
+      -0.0,
+      0.037
+     ],
+     "note": "rate = alerts on benign events after cosmetic mutations (case, spacing, quoting, paths, concatenation)"
+    },
+    "benign_wrapped_in_encoding": {
+     "k": 16,
+     "n": 16,
+     "rate": 1.0,
+     "ci95": [
+      0.806,
+      1.0
+     ],
+     "note": "EXPECTED to alert: a benign command re-sent as -EncodedCommand or base64|sh is the evasion pattern itself"
+    }
+   }
+  },
+  "degraded_telemetry": {
+   "development_and_tuning": {
+    "chains_correlating_cleanly": 25,
+    "reordered_arrival": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "duplicated_events": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "timestamps_jittered_within_window": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "clock_skew_all_events_plus_3h": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "one_non_final_event_lost": {
+     "k": 23,
+     "n": 25,
+     "rate": 0.92,
+     "ci95": [
+      0.75,
+      0.978
+     ]
+    },
+    "final_event_delayed_beyond_all_windows": {
+     "k": 5,
+     "n": 25,
+     "rate": 0.2,
+     "ci95": [
+      0.089,
+      0.391
+     ],
+     "note": "rate = still correlated; EXPECTED LOW: a correlation window is a limit by design"
+    },
+    "identity_field_lost_on_one_stage": {
+     "k": 7,
+     "n": 25,
+     "rate": 0.28,
+     "ci95": [
+      0.143,
+      0.476
+     ]
+    },
+    "command_line_truncated_to_120_chars": {
+     "k": 391,
+     "n": 393,
+     "rate": 0.9949,
+     "ci95": [
+      0.982,
+      0.999
+     ]
+    },
+    "username_asset_and_process_name_missing": {
+     "k": 390,
+     "n": 393,
+     "rate": 0.9924,
+     "ci95": [
+      0.978,
+      0.997
+     ]
+    },
+    "event_type_unknown": {
+     "k": 378,
+     "n": 393,
+     "rate": 0.9618,
+     "ci95": [
+      0.938,
+      0.977
+     ]
+    },
+    "raw_data_dropped_keeping_command_line": {
+     "k": 392,
+     "n": 393,
+     "rate": 0.9975,
+     "ci95": [
+      0.986,
+      1.0
+     ]
+    }
+   },
+   "heldout_chains_and_attacks": {
+    "chains_correlating_cleanly": 7,
+    "reordered_arrival": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "duplicated_events": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "timestamps_jittered_within_window": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "clock_skew_all_events_plus_3h": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "one_non_final_event_lost": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "final_event_delayed_beyond_all_windows": {
+     "k": 2,
+     "n": 7,
+     "rate": 0.2857,
+     "ci95": [
+      0.082,
+      0.641
+     ],
+     "note": "rate = still correlated; EXPECTED LOW: a correlation window is a limit by design"
+    },
+    "identity_field_lost_on_one_stage": {
+     "k": 2,
+     "n": 7,
+     "rate": 0.2857,
+     "ci95": [
+      0.082,
+      0.641
+     ]
+    },
+    "command_line_truncated_to_120_chars": {
+     "k": 115,
+     "n": 116,
+     "rate": 0.9914,
+     "ci95": [
+      0.953,
+      0.998
+     ]
+    },
+    "username_asset_and_process_name_missing": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
+    },
+    "event_type_unknown": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
+    },
+    "raw_data_dropped_keeping_command_line": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
     }
    }
   },

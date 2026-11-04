@@ -48,6 +48,7 @@ class Rule:
     tests: tuple[dict[str, Any], ...] = ()   # [{name, event, expect_match}]
     source: str = "builtin"                    # builtin | custom | sigma
     version: int = 1
+    signal: bool = False                        # context, not an alert: recorded and usable by correlation, never pages anyone by itself
 
 
 @dataclass
@@ -64,6 +65,7 @@ class RuleHit:
     kind: str = "rule"                                   # rule | correlation
     dedupe_key: str = ""                                 # stable id of a correlation completion (ledger key)
     explanation: dict[str, Any] | None = None            # behavioural hits: why this is unusual (observed vs baseline, peers)
+    signal: bool = False                                 # a rule marked `signal: true` (e.g. enumeration commands) - see Rule.signal
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +80,7 @@ class RuleHit:
             "kind": self.kind,
             **({"evidence": self.evidence} if self.evidence else {}),
             **({"explanation": self.explanation} if self.explanation else {}),
+            **({"signal": True} if self.signal else {}),
         }
 
 
@@ -442,6 +445,7 @@ def rule_from_dict(item: dict[str, Any], *, source: str = "builtin") -> Rule:
         tests=tuple(item.get("tests") or []),
         source=source,
         version=int(item.get("version", 1)),
+        signal=bool(item.get("signal", False)),
     )
 
 
@@ -511,6 +515,7 @@ class RuleEngine:
                         techniques=list(rule.techniques),
                         tags=list(rule.tags),
                         matched_fields=sorted(set(fields)),
+                        signal=rule.signal,
                     )
                 )
         hits.sort(key=lambda h: (-SEVERITY_RANK[h.severity], -h.confidence))

@@ -12,6 +12,8 @@ gates:
     attack_recall_min: 0.88
     benign_fpr_max: 0.03
     art_high_signal_recall_min: 0.60
+    adversarial_attack_detect_min: 0.80  # unseen-variant set v1 (consumed in round 3: regression guard now)
+    adversarial_benign_fpr_max: 0.05
   heldout:
     attack_recall_min: 0.80              # handwritten held-out attacks (HO3)
     benign_fpr_max: 0.05                 # difficult negatives (HB3)
@@ -20,8 +22,6 @@ gates:
     severity_underrated_max: 0.10        # alerts rated two or more levels BELOW the label
     chain_pass_min: 0.80
     chain_negative_pass_min: 1.0
-    adversarial_attack_detect_min: 0.80  # previously unseen obfuscation/encoding variants
-    adversarial_benign_fpr_max: 0.05
     art_high_signal_recall_min: 0.60     # independently authored (Red Canary) commands, high-signal tactics only
     behavior_attack_recall_min: 0.75
     behavior_benign_fpr_max: 0.10
