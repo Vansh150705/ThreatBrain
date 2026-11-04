@@ -47,7 +47,7 @@ def test_all_builtin_rules_load_and_are_well_formed():
         (ev(command_line="wevtutil cl Security"), "TB-EVADE-001"),
         (ev(command_line="vssadmin delete shadows /all /quiet"), "TB-IMPACT-001"),
         (ev(command_line="useradd -m backdoor"), "TB-PERSIST-001"),
-        (ev(command_line="schtasks /create /tn x /tr evil.exe"), "TB-PERSIST-002"),
+        (ev(command_line="schtasks /create /tn x /tr C:\\Users\\Public\\evil.exe /sc onlogon"), "TB-PERSIST-002"),
         (ev(raw_data={"bytes_out": 900_000_000}), "TB-EXFIL-001"),
         (ev(raw_data={"eventName": "StopLogging"}), "TB-CLOUD-002"),
         (ev(raw_data={"eventName": "AttachUserPolicy", "requestParameters": {"policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"}}), "TB-CLOUD-003"),

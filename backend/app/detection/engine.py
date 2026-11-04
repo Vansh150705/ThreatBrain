@@ -380,6 +380,19 @@ def _validate(node: Any, rule_id: str) -> None:
                 raise RuleError(f"{rule_id}: bad cidr {n!r}") from exc
 
 
+# A rule family names the attack phase it is *about*. A technique can belong to several tactics (T1053 is Execution,
+# Persistence and Privilege Escalation); the family decides which one a hit counts as when phases are tallied.
+_FAMILY_TACTIC = {"RECON": "TA0043", "INIT": "TA0001", "WEB": "TA0001", "EXEC": "TA0002", "PERSIST": "TA0003", "PRIV": "TA0004",
+                  "EVADE": "TA0005", "CRED": "TA0006", "AUTH": "TA0006", "DISC": "TA0007", "LAT": "TA0008", "EXFIL": "TA0010",
+                  "C2": "TA0011", "IMPACT": "TA0040", "NET": "TA0011"}
+
+
+def _primary_first(rid: str, tactics: list[str]) -> list[str]:
+    m = re.match(r"TB-([A-Z0-9]+)-\d+$", rid)
+    fam = _FAMILY_TACTIC.get(m.group(1)) if m else None
+    return [fam, *[t for t in tactics if t != fam]] if fam and fam in tactics else tactics
+
+
 def rule_from_dict(item: dict[str, Any], *, source: str = "builtin") -> Rule:
     """Validate and build a Rule from its mapping form (YAML file row or DB row)."""
     rid = str(item.get("rule_key") or item.get("id") or "")  # DB rows carry both; the key is the identity
@@ -411,6 +424,8 @@ def rule_from_dict(item: dict[str, Any], *, source: str = "builtin") -> Rule:
             raise RuleError(f"{rid}: " + "; ".join(problems))
     if not tactics:
         tactics = tactics_for(techniques)
+        if source == "builtin":
+            tactics = _primary_first(rid, tactics)
     item = {**item, "tactics": tactics}
     return Rule(
         id=rid,

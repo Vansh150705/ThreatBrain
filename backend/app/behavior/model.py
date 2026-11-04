@@ -115,11 +115,16 @@ def hours_observe(state: dict[str, Any], ts: float, *, learn: bool) -> None:
         state["days"] = (state["days"] + [d])[-60:]
 
 
+_KERNEL = {0: 1.0, 1: 0.6, 2: 0.3}      # people work in contiguous stretches: an hour next to busy ones is not rare
+_KERNEL_NORM = 1.0 + 2 * (0.6 + 0.3)
+
+
 def hour_probability(state: dict[str, Any], ts: float) -> float:
+    """Smoothed probability of the clock hour of ``ts``. The histogram is blurred over +-2 hours (circularly, weights 1/.6/.3,
+    normalised so probabilities still sum to one) so a sparse sample of someone's day does not make gaps inside it look odd."""
     h = int(ts % DAY // HOUR)
-    # adjacent hours are 'near' normal: a login 20 minutes after the usual window is not a deviation
-    near = state["h"][h] + 0.5 * (state["h"][(h - 1) % 24] + state["h"][(h + 1) % 24])
-    return (near + 0.5) / (state["n"] + 12.0)
+    smooth = sum(w * state["h"][(h + d) % 24] for d0, w in _KERNEL.items() for d in ((d0, -d0) if d0 else (0,))) / _KERNEL_NORM
+    return (smooth + 0.5) / (state["n"] + 12.0)
 
 
 # --------------------------------------------------------------------------------------- numeric

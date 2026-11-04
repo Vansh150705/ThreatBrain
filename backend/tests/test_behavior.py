@@ -65,7 +65,8 @@ def test_hour_probability_is_smoothed_and_neighbouring_hours_are_near_normal():
     st = model.hours_new()
     for h in [9] * 50 + [10] * 50:
         model.hours_observe(st, h * 3600 + 5, learn=True)
-    assert model.hour_probability(st, 11 * 3600) > 0.2          # adjacent to a busy hour
+    assert model.hour_probability(st, 11 * 3600) > 0.1          # adjacent to a busy hour (smoothed over +-2h)
+    assert model.hour_probability(st, 12 * 3600) > model.hour_probability(st, 15 * 3600)
     assert model.hour_probability(st, 3 * 3600) < 0.01
 
 
@@ -123,7 +124,7 @@ def test_sensitivity_changes_the_decision_not_the_evidence():
         st = engine.new_state()
         cfg = bconfig.build(level)
         train_user(st, cfg=cfg)
-        _r, dec = run(st, login(T0 + timedelta(days=13, hours=9), ip="10.77.3.5", host="dc-01"), cfg=cfg)
+        _r, dec = run(st, login(T0 + timedelta(days=13, hours=9), ip="203.0.113.50"), cfg=cfg)
         results[level] = dec.alert
     assert results["high"] and not results["low"]
 

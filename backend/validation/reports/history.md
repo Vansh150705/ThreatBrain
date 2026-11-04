@@ -94,3 +94,45 @@ events could each miss the other's detections (or be reported twice). Fixed: eac
 the whole entity group symmetrically, and a ledger (`correlation_hits`, migration 026) lets exactly one processor report each completion.
 Verified with order-reversal tests and a two-thread test that forces the race window open. A related defect: `TB-COR-007` counted every tactic
 of a multi-tactic technique, so one event could "span" several attack phases; it now counts one (primary) tactic per detection.
+
+---
+
+# Round 3 (enterprise phase 2): independent datasets, multi-split evaluation
+
+Honest-measurement changes made BEFORE any of the numbers below were seen:
+* `validation/datasets.yaml` assigns every scenario to one split (development / tuning / held-out). Results are never pooled.
+* Held-out sets were written **without consulting `rules.yaml`/`correlations.yaml`** and frozen by hash in `validation/FROZEN.json` (committed in `3518c25`,
+  before the first evaluation): 94 hand-written attacks (HO3), 51 difficult negatives (HB3), 17 campaigns (HC3), 41 previously-unseen obfuscation variants and
+  look-alikes (ADV), 39 behavioural scenarios (BEH-H) and the **blind half of Atomic Red Team** (607 tests; the other 580 are the tuning half). The ART split is
+  `sha256(auto_generated_guid)` parity, fixed before evaluation, so nobody can choose which tests count.
+* ART labels (technique ids) and command strings come from Red Canary's authors, not from this project. 163 technique files were imported (12 requested ones do not exist upstream and were skipped).
+* Gate thresholds (`validation/gates_v2.yaml`) were fixed before the held-out run.
+
+## First run on the frozen held-out sets (no remediation yet) - the official independent measurement for this round
+
+| Held-out set | Result | 95% CI |
+|---|---|---|
+| Hand-written attacks (HO3, 94) recall | **69/94 = 73.4%** | 63.7-81.3% |
+| Difficult negatives (HB3, 51) false-positive rate | **9/51 = 17.6%** | 9.6-30.3% |
+| Detected attacks mapped to the right technique family | 92.8% | |
+| Severity within one level of the analyst label / exact | 97.1% / 68.1% (0 under-rated by 2+) | |
+| Unseen obfuscation variants (ADV) detected | 29/32 = 90.6% (0/9 benign look-alikes alerted) | 75.8-96.8% |
+| **Atomic Red Team blind half, all tactics** | **172/607 = 28.3%** | 24.9-32.0% |
+| **Atomic Red Team blind half, high-signal tactics** | **108/334 = 32.3%** | 27.5-37.5% |
+| Campaign correlation (HC3) | 5/11 = 45.5% (6/6 near-misses stayed quiet; evidence ids correct for 2/5) | 21.3-72.0% |
+| Behavioural attacks detected (BEH-H) | 15/15 | 79.6-100% |
+| Behavioural benign scenarios that alerted | 3/24 = 12.5% | 4.3-31.0% |
+| Behavioural alert volume on a 50-day benign simulation | 0.60 alerts / 100 entity-days (gate 0.5) | |
+
+Gates failed on this first run: held-out attack recall (0.734 < 0.80), held-out benign FPR (0.176 > 0.05), ART high-signal recall (0.323 < 0.60),
+campaigns (0.455 < 0.80), behavioural benign FPR (0.125 > 0.10), behavioural noise (0.60 > 0.5). They stay failed in this history; the sections below
+say what was changed and what the re-measurement was.
+
+What this says: the 100% on the tuned corpus is not evidence of real-world coverage. Against an independently authored corpus of ordinary adversary
+procedures the rule set detects roughly a third of high-signal tests. The largest classes of miss (from the TUNING half only) are registry modification (T1112),
+ingress tool transfer (T1105), credentials in files (T1552.001), decode/deobfuscation (T1140), UAC bypass (T1548.002), proxy execution through signed binaries
+(T1218.*), remote-access tools (T1219) and secure deletion (T1070.004).
+
+Protocol from here: the held-out detail written in this run is archived in `reports/baselines/` for the record. Anything fixed using that detail turns the
+set into a TUNING set (it is moved in `datasets.yaml` and re-frozen with a reason). A fresh frozen held-out set (v4) plus the never-inspected ART blind half
+are used for the re-measurement.

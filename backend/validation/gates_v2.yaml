@@ -1,0 +1,38 @@
+# Release gates for the multi-split evaluation (validation/evaluate.py). Thresholds were chosen BEFORE the held-out sets were
+# run and are never lowered to pass: raising is fine, lowering needs a documented reason in reports/history.md and shows in git.
+# The held-out section is what decides whether detection generalises; development/tuning only guard against regression.
+gates:
+  development:
+    attack_recall_min: 0.95
+    benign_fpr_max: 0.02
+    chain_pass_min: 1.0
+    behavior_attack_recall_min: 0.85
+    behavior_benign_fpr_max: 0.05
+  tuning:
+    attack_recall_min: 0.88
+    benign_fpr_max: 0.03
+    art_high_signal_recall_min: 0.60
+  heldout:
+    attack_recall_min: 0.80              # handwritten held-out attacks (HO3)
+    benign_fpr_max: 0.05                 # difficult negatives (HB3)
+    mapping_accuracy_min: 0.70           # detected attacks mapped to the right technique family
+    severity_within_one_min: 0.80        # alert severity within one level of the analyst label
+    severity_underrated_max: 0.10        # alerts rated two or more levels BELOW the label
+    chain_pass_min: 0.80
+    chain_negative_pass_min: 1.0
+    adversarial_attack_detect_min: 0.80  # previously unseen obfuscation/encoding variants
+    adversarial_benign_fpr_max: 0.05
+    art_high_signal_recall_min: 0.60     # independently authored (Red Canary) commands, high-signal tactics only
+    behavior_attack_recall_min: 0.75
+    behavior_benign_fpr_max: 0.10
+    behavior_noise_per_100_entity_days_max: 0.5
+  metamorphic:                           # mechanical evasion mutations of already-detected attacks
+    retention_min: 0.85
+    benign_mutation_fpr_max: 0.03
+  degraded_telemetry:
+    reorder_chain_retention_min: 1.0     # processing order must not matter
+    duplicate_chain_retention_min: 1.0
+    truncated_command_retention_min: 0.75
+    field_loss_single_event_retention_min: 0.90
+  performance:
+    engine_event_p95_ms_max: 25.0

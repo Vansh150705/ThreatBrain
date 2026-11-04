@@ -1,7 +1,6 @@
 """Curated MITRE ATT&CK (Enterprise) catalogue: technique id -> (name, tactic ids).
 
-A *subset* sufficient for the platform's rules, correlations and the validation
-coverage matrix, not the full framework. It exists so that
+Curated entries for the technique ids the platform's rules use, plus the rest of the Enterprise framework from MITRE's data. It exists so that
   * rule/agent output can be validated against real technique ids (no invented IDs),
   * tactics can be derived from techniques consistently,
   * the validation lab can report coverage per tactic.
@@ -205,6 +204,26 @@ _T = {
 TECHNIQUES: dict[str, dict[str, object]] = {
     tid: {"name": name, "tactics": tactics} for tid, (name, tactics) in _T.items()
 }
+
+# The curated entries above stay authoritative for the ids rules already use (tactic order is meaningful: the first tactic is the
+# primary phase). Every other Enterprise technique comes from MITRE's published data (app/detection/attack_full.json), so
+# imported test corpora and agent output can be validated against, and mapped to, the whole framework.
+def _load_full() -> tuple[dict[str, dict[str, object]], str]:
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).with_name("attack_full.json")
+    if not path.exists():
+        return {}, ""
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    return ({tid: {"name": name, "tactics": tactics} for tid, (name, tactics) in doc["techniques"].items()},
+            f"Enterprise ATT&CK v{doc.get('attack_version')}")
+
+
+_FULL, FULL_CATALOG_VERSION = _load_full()
+CURATED_IDS: frozenset[str] = frozenset(TECHNIQUES)
+for _tid, _meta in _FULL.items():
+    TECHNIQUES.setdefault(_tid, _meta)
 
 
 def technique_name(tid: str) -> str | None:

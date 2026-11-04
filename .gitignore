@@ -129,3 +129,4 @@ storybook-static/
 *.jsonl
 .pytest_cache/
 .ruff_cache/
+backend/validation/scenarios/external/

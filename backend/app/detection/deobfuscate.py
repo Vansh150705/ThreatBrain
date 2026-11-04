@@ -122,6 +122,14 @@ def shell(text: str) -> str:
     return _WS.sub(" ", t)
 
 
+_EXE = re.compile(r"(?<=[\w\"'])\.exe\b", re.I)
+
+
+def no_exe(text: str) -> str:
+    """wmic.exe shadowcopy delete == wmic shadowcopy delete: rules are written once, for the tool, not for each spelling."""
+    return _EXE.sub("", text)
+
+
 def squash(text: str) -> str:
     """The original, conservative layer (kept as a distinct form): quotes, carets, whitespace."""
     return _WS.sub(" ", text.replace('"', "").replace("^", ""))
@@ -139,7 +147,20 @@ def _unescape(text: str) -> str:
     return _OCTAL_ESC.sub(lambda m: chr(int(m.group(1), 8)) if int(m.group(1), 8) < 256 else m.group(0), t)
 
 
+_OVERLONG = {"%c0%af": "/", "%c0%2f": "/", "%e0%80%af": "/", "%c0%ae": ".", "%c0%2e": ".", "%c1%1c": "\\", "%c1%9c": "\\",
+             "%c0%5c": "\\", "%u2215": "/", "%u2216": "\\", "%uff0f": "/", "%uff0e": "."}
+_OVERLONG_RX = re.compile("|".join(re.escape(k) for k in _OVERLONG), re.I)
+_SQL_COMMENT = re.compile(r"/\*[^*]{0,40}\*/")
+
+
+def sql_comments(text: str) -> str:
+    """UNI/**/ON SEL/**/ECT -> UNION SELECT (comments dropped), the other common form being comments used as spaces."""
+    return _SQL_COMMENT.sub("", text)
+
+
 def url_decode(text: str, layers: int = 3) -> str:
+    if "%" in text:      # overlong UTF-8 / Unicode look-alikes of / . \ that decoders normalise but filters do not
+        text = _OVERLONG_RX.sub(lambda m: _OVERLONG[m.group(0).lower()], text)
     t = text
     for _ in range(layers):
         if not _URL_ESC.search(t):
@@ -198,6 +219,10 @@ def alternates(text: str, *, command: bool = False) -> tuple[str, ...]:
     )
     if command and (shell_needed or "  " in text or "\t" in text):
         add(squash(text))
+    if command and ".exe" in low:
+        add(no_exe(text))
+        if shell_needed:
+            add(no_exe(squash(text)))
     ps = None
     if command and ("`" in text or "[char]" in low or _PS_MARKER.search(text) or ("-f" in low and "{0}" in text)):
         ps = powershell(text)
@@ -209,6 +234,11 @@ def alternates(text: str, *, command: bool = False) -> tuple[str, ...]:
             add(shell(ps))
     if "%" in text:
         add(url_decode(text))
+    if "/*" in text:
+        add(sql_comments(text))
+        add(_SQL_COMMENT.sub(" ", text))
+        if "%" in text:
+            add(sql_comments(url_decode(text)))
     if "${" in text:
         add(lookups(text))
     if "\\u" in low or "\\x" in low or "%u" in low or re.search(r"\\[0-7]{3}", text):

@@ -153,10 +153,13 @@ def _cat(state, feat: Feature, o: Obs, cfg, pop, mature, learn) -> tuple[Anomaly
     ext = 1.0
     if feat.name == "net.dest":
         ext = 1.0 if o.meta.get("external") else 0.4
-    elif feat.name == "auth.source_net" and o.meta.get("external"):
-        had_external = any(not k.startswith(("10.", "192.168.", "172.")) for k in fs["seen"])
-        ext = 1.0 if had_external else 1.1
-        detail["external_source"] = True
+    elif feat.name == "auth.source_net":
+        if o.meta.get("external"):
+            had_external = any(not k.startswith(("10.", "192.168.", "172.")) for k in fs["seen"])
+            ext = 1.0 if had_external else 1.1
+            detail["external_source"] = True
+        else:
+            ext = 0.55      # another PRIVATE network (new VLAN, floor, VPN pool) is far weaker evidence than a first public one
     if not mature:
         # cold start: only a strong peer signal can flag an entity with no history of its own
         if feat.name in COLD_START_FEATURES and peer and peer["prevalence"] <= cfg.cold_start_peer_prevalence:
@@ -223,7 +226,7 @@ def _hour(state, feat: Feature, o: Obs, cfg, mature, learn) -> Anomaly | None:
         # an unusual hour is learned only if it recurs on several days (a changed schedule), never on first sight
         if model.cat_observe(hc, o.key, o.ts, cfg, learn=True) == "promoted":
             h = int(o.key)
-            fs["h"][h] += max(3, fs["n"] // 20)
+            fs["h"][h] += max(8, fs["n"] // 10)     # recurred on several days: now an ordinary hour for this account
             fs["n"] = sum(fs["h"])
     return anomaly
 

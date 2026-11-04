@@ -17,6 +17,18 @@
       "sha256": "9ce8197b2210294d79b96cfef3cb9c2ffb561f99561bf88932162de0002bd394",
       "scenarios": 39
     },
+    "heldout_v4.yaml": {
+      "sha256": "d178d2b547afb1d0f0095628aecbf188f395e8ce255b3d89db618a50bef9a5a0",
+      "scenarios": 76
+    },
+    "heldout_v4_chains.yaml": {
+      "sha256": "7349b2895ea1dbb707cfde2f3c881831ce4079ef00ba8e10d96930ef354b4601",
+      "scenarios": 10
+    },
+    "behavior_heldout_v4.yaml": {
+      "sha256": "fe5eb421c9417aefdae79575a554e1c26758815eda0cb59e6106a658a55ea70b",
+      "scenarios": 39
+    },
     "art_derived.yaml#blind": {
       "sha256": "2060719bd53cbee90bcb55d2155f37014ed8a49d5239155d931d1a057dad3fe7",
       "scenarios": 607
@@ -26,6 +38,10 @@
     {
       "at": "2026-11-04T05:43:34Z",
       "reason": "Initial freeze of held-out v3, unseen adversarial variants, behavioural held-out and the blind half of Atomic Red Team before any of them was evaluated"
+    },
+    {
+      "at": "2026-11-04T06:14:03Z",
+      "reason": "Round 3 remediation done using v3 held-out detail: v3 files stay hashed but are now TUNING data. Freezing held-out v4 (modelled on public intrusion reports, fresh behavioural draws) BEFORE its first evaluation; ART blind half untouched."
     }
   ]
 }

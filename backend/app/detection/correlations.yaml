@@ -66,14 +66,19 @@ correlations:
   window_minutes: 60
   kind: sequence
   stages:
-    - {rules: [TB-WEB-001, TB-WEB-002, TB-WEB-003, TB-WEB-006, TB-WEB-007, TB-WEB-008]}
-    - {rules: [TB-WEB-009, TB-EXEC-003, TB-EXEC-004, TB-EXEC-001, TB-EXEC-002, TB-C2-006]}
+    - {rules: [TB-WEB-001, TB-WEB-002, TB-WEB-003, TB-WEB-006, TB-WEB-007, TB-WEB-008], tags: [web-attack]}
+    - {rules: [TB-WEB-009, TB-EXEC-003, TB-EXEC-004, TB-EXEC-001, TB-EXEC-002, TB-C2-006], tags: [reverse-shell]}
   tests:
     - name: exploit then reverse shell
       expect_fire: true
       events:
         - {asset_name: web-01, at: 0, detections: [TB-WEB-002]}
         - {asset_name: web-01, at: 5, detections: [TB-EXEC-003]}
+    - name: a rule added later is covered through its tags
+      expect_fire: true
+      events:
+        - {asset_name: web-01, at: 0, detections: [TB-WEB-099], tags: [web-attack]}
+        - {asset_name: web-01, at: 5, detections: [TB-EXEC-099], tags: [reverse-shell]}
     - name: other asset
       expect_fire: false
       events:

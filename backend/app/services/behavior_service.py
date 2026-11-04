@@ -9,6 +9,7 @@ deterministic detections already computed are never lost because baselines could
 
 from __future__ import annotations
 
+import random
 import threading
 import time
 from datetime import UTC, datetime, timedelta
@@ -29,7 +30,7 @@ log = get_logger(__name__)
 
 SETTINGS_TTL = 30.0
 POP_TTL = 20.0
-CAS_ATTEMPTS = 4
+CAS_ATTEMPTS = 8
 _lock = threading.Lock()
 _settings_cache: dict[str, tuple[float, bool, bconfig.BehaviorConfig, dict[str, Any]]] = {}
 _pop_cache: dict[tuple[str, str, str], tuple[float, engine.PopulationView]] = {}
@@ -309,6 +310,7 @@ def evaluate_and_learn(org_id: str, event: dict[str, Any], deterministic_hits: l
             changed = learn or bool(res.anomalies)
             if changed and not save_profile(org_id, etype, eid, state, version):
                 behavior_conflicts.inc()
+                time.sleep(random.uniform(0, 0.004 * (attempt + 1)))     # jittered back-off: contending workers stop colliding in lock-step
                 if attempt == CAS_ATTEMPTS - 1:
                     behavior_errors.inc()
                     log.warning("behavior_cas_exhausted", entity=eid)
@@ -424,7 +426,7 @@ def teach(org_id: str, anomaly: dict[str, Any]) -> None:
             fs["seen"][key] = [max(2, fs["seen"].get(key, [0])[0]), ts, ts, 2, d]
         elif feat.kind == "hour":
             h = int(anomaly["value_key"]) if str(anomaly["value_key"]).isdigit() else int(ts % 86400 // 3600)
-            fs["h"][h] += max(5, fs["n"] // 10)
+            fs["h"][h] += max(10, fs["n"] // 8)
             fs["n"] = sum(fs["h"])
         elif feat.kind in ("num", "bucket", "breadth"):
             obs = (anomaly.get("explanation") or {}).get("observed")

@@ -32,6 +32,9 @@ TARGETS = [
     ("heldout_v3_chains.yaml", None),
     ("adversarial_unseen.yaml", None),
     ("behavior_heldout.yaml", None),
+    ("heldout_v4.yaml", None),
+    ("heldout_v4_chains.yaml", None),
+    ("behavior_heldout_v4.yaml", None),
     ("art_derived.yaml", "blind"),
 ]
 

