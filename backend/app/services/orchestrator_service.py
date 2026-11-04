@@ -17,7 +17,9 @@ Design rules:
 
 from __future__ import annotations
 
+import threading
 import time
+from contextvars import ContextVar
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from datetime import UTC, datetime, timedelta
@@ -40,6 +42,7 @@ from app.detection.engine import SEVERITY_RANK, RuleHit, summarize
 from app.detection.fingerprint import event_fingerprint
 from app.detection.risk import compute_risk_score
 from app.schemas.common import SeverityLevel
+from app.agents.grounding import ground_triage
 from app.services import detection_service, incident_service, notifier
 from app.services.llm_service import LLMError
 from app.services.supabase_client import get_supabase_admin
@@ -136,11 +139,39 @@ def _safe_error(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {str(exc)[:200]}"
 
 
+_CANCEL: ContextVar[threading.Event | None] = ContextVar("stage_cancel", default=None)
+
+
+class StageCancelled(Exception):
+    """The stage's time budget ran out while it was still working; its remaining side effects must not happen."""
+
+
+def stage_checkpoint() -> None:
+    """Call immediately before any write a stage makes (queueing an approval, filing a timeline, creating an incident).
+
+    A stage that exceeds its budget is reported failed and the pipeline moves on. Python threads cannot be killed, so the
+    straggler would otherwise carry on and, minutes later, queue an action or file a record the run never accounted for.
+    """
+    ev = _CANCEL.get()
+    if ev is not None and ev.is_set():
+        raise StageCancelled("stage exceeded its time budget; late result discarded")
+
+
 def _call_with_timeout(fn: Callable[[], Any], timeout: float) -> Any:
-    future: Future = _get_pool().submit(fn)
+    cancel = threading.Event()
+
+    def runner() -> Any:
+        token = _CANCEL.set(cancel)
+        try:
+            return fn()
+        finally:
+            _CANCEL.reset(token)
+
+    future: Future = _get_pool().submit(runner)
     try:
         return future.result(timeout=timeout)
     except FutureTimeout as exc:
+        cancel.set()
         future.cancel()
         raise TimeoutError(f"stage exceeded {int(timeout)}s") from exc
 
@@ -173,7 +204,7 @@ def _run_agent_stage(
             last_exc = exc
             log.warning("pipeline_stage_retryable_failure", stage=name, attempt=attempts, error=_safe_error(exc))
             continue
-        except (LLMError, AgentConfigError, TimeoutError) as exc:
+        except (LLMError, AgentConfigError, TimeoutError, StageCancelled) as exc:
             last_exc = exc
             break
         except Exception as exc:  # unexpected: record and move on, don't crash the pipeline
@@ -196,8 +227,11 @@ def _agent_fields(result: Any, **extra: Any) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 # Deterministic reconciliation of the LLM verdict with rule evidence
 # --------------------------------------------------------------------------
+UNCORROBORATED_CONFIDENCE_CAP = 75
+
+
 def reconcile_verdict(
-    verdict: TriageOutput, detection: dict[str, Any]
+    verdict: TriageOutput, detection: dict[str, Any], *, grounding: dict[str, Any] | None = None, degraded: bool = False
 ) -> tuple[TriageOutput, dict[str, Any]]:
     """Merge the model's verdict with deterministic rule evidence.
 
@@ -238,12 +272,32 @@ def reconcile_verdict(
             out.promote_to_threat = True
             notes.append("promoted to threat: medium+ severity corroborated by detection rules")
 
+    # Confidence is only as good as its corroboration: a model that is certain about something no deterministic rule recognises is
+    # reported as confident-but-uncorroborated, not as 95%.
+    if not detection.get("matched") and out.confidence > UNCORROBORATED_CONFIDENCE_CAP and SEVERITY_RANK[out.severity.value] >= SEVERITY_RANK["medium"]:
+        notes.append(f"confidence {out.confidence} -> {UNCORROBORATED_CONFIDENCE_CAP}: no deterministic rule corroborates the model")
+        out.confidence = UNCORROBORATED_CONFIDENCE_CAP
+    llm_tech = [t for t in verdict.mitre_techniques]
+    rule_tech = list(detection.get("techniques") or [])
+    raised = out.severity.value != original
     return out, {
         "adjusted": bool(notes),
         "notes": notes,
         "llm_severity": original,
         "final_severity": out.severity.value,
         "rule_ids": [r["rule_id"] for r in detection.get("rules", [])],
+        # Who decided what. Deterministic rules and model output are different kinds of evidence; every consumer can tell them apart.
+        "provenance": {
+            "severity": "rules" if degraded else ("rules_floor_over_model" if raised else "model"),
+            "model_severity": None if degraded else original,
+            "rule_severity_floor": detection.get("severity_floor"),
+            "techniques": {"from_rules": rule_tech, "from_model": [] if degraded else llm_tech},
+            "evidence": {"deterministic": sum(1 for e in out.evidence if e.source.startswith("rule:")),
+                         "model": sum(1 for e in out.evidence if not e.source.startswith("rule:")),
+                         "model_unverified": sum(1 for e in out.evidence if e.verified is False)},
+            "model_used": not degraded,
+        },
+        **({"grounding": grounding} if grounding else {}),
     }
 
 
@@ -445,7 +499,11 @@ def run_full_pipeline(
             run.skip(name, "triage produced no verdict")
         return _finish()
 
-    verdict, reconciliation = reconcile_verdict(raw_verdict, detection)
+    degraded_verdict = bool(summary.get("degraded"))
+    grounding: dict[str, Any] | None = None
+    if not degraded_verdict:     # a rules-only verdict contains nothing a model could have invented
+        raw_verdict, grounding = ground_triage(raw_verdict, event_dict, detection, context)
+    verdict, reconciliation = reconcile_verdict(raw_verdict, detection, grounding=grounding, degraded=degraded_verdict)
     run.stages["triage"]["verdict"] = verdict.model_dump(mode="json")
     run.stages["triage"]["reconciliation"] = reconciliation
     context["triage"] = {
@@ -578,6 +636,7 @@ def run_full_pipeline(
             )
         )
         out = ResponseOutput.model_validate(res.output)
+        stage_checkpoint()
         out = agent.apply_actions(
             organization_id=org_id, verdict=out, agent_run_id=res.run_id,
             dry_run=(response_mode == "simulate"),
@@ -593,6 +652,7 @@ def run_full_pipeline(
                 context=context,
             )
         )
+        stage_checkpoint()
         _persist_timeline(org_id, incident_id, res.output, res.run_id)
         return _agent_fields(res, verdict=res.output)
 
@@ -604,6 +664,7 @@ def run_full_pipeline(
                 context=context,
             )
         )
+        stage_checkpoint()
         _persist_compliance(org_id, incident_id, res.output, res.run_id)
         return _agent_fields(res, verdict=res.output)
 
@@ -739,6 +800,7 @@ def _correlate(
             )
         )
         out = InvestigationOutput.model_validate(res.output)
+        stage_checkpoint()
         created = agent.create_incidents_from_output(
             organization_id=org_id, verdict=out, agent_run_id=res.run_id
         )

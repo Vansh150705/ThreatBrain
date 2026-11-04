@@ -124,6 +124,11 @@ class EvidenceItem(BaseModel):
 
     source: str = Field(default="event", description="event | rule:<id> | threat_intel | log | llm")
     detail: str
+    verified: bool | None = Field(
+        default=None,
+        description="True when every concrete token (IP, hash, path...) in the detail appears in the evidence the model was given; "
+                    "False when one does not; null when the item contains nothing checkable. Set by the platform, never by the model.",
+    )
 
 
 class TriageOutput(BaseModel):
@@ -181,6 +186,7 @@ class TriageOutput(BaseModel):
                     {
                         "source": str(item.get("source") or "llm"),
                         "detail": str(item.get("detail") or item.get("description")),
+                        # `verified` is assigned by the platform (agents/grounding.py); a model's claim of it is discarded
                     }
                 )
         return out[:20]

@@ -142,6 +142,8 @@ class TriageAgent(BaseAgent):
         # IOC bundle (explicit fields + anything extracted from the event text)
         found = event_iocs(triage_input.model_dump(mode="json"))
         iocs: dict[str, Any] = {k: v for k, v in found.items() if v}
+        if triage_input.asset_name:
+            iocs["hosts"] = [triage_input.asset_name.strip().lower()]      # the host this event came from: evidence for host-level response actions
 
         if risk_score is None:
             risk_score, _ = compute_risk_score(

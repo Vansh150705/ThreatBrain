@@ -96,6 +96,16 @@ def seed(db: FakeSupabase) -> dict[str, str]:
     return ids
 
 
+@pytest.fixture(autouse=True)
+def _fresh_process_caches():
+    """Per-tenant rule engines and behavioural settings are cached in-process for performance; one test's overrides must not leak into the next."""
+    from app.services import behavior_service, detection_service
+
+    detection_service.invalidate()
+    behavior_service.invalidate()
+    yield
+
+
 @pytest.fixture()
 def db(monkeypatch) -> FakeSupabase:
     from app.services import supabase_client

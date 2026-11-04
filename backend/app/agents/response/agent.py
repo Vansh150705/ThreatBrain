@@ -54,7 +54,7 @@ class ResponseAgent(BaseAgent):
             client.table("threats")
             .select(
                 "short_id, title, severity, source_ips, target_ips, "
-                "affected_users, mitre_techniques, tags"
+                "affected_users, mitre_techniques, tags, iocs"
             )
             .eq("organization_id", organization_id)
             .eq("incident_id", incident_id)
@@ -253,6 +253,14 @@ class ResponseAgent(BaseAgent):
             users.update(str(u).lower() for u in (t.get("affected_users") or []))
         return ips, users
 
+    def _hosts(self) -> set[str]:
+        """Host names the incident's threats actually involve (recorded from the event's asset by the triage stage)."""
+        hosts: set[str] = set()
+        for t in self._last_threats or []:
+            iocs = t.get("iocs") or {}
+            hosts.update(str(h).lower() for h in (iocs.get("hosts") or []) if h)
+        return hosts
+
     def _validate_target(self, action: ActionRecommendation) -> str | None:
         """Return a reason string if the action must not be queued, else None.
 
@@ -284,6 +292,12 @@ class ResponseAgent(BaseAgent):
         elif kind == "disable_user":
             if target.lower() not in users:
                 return "user is not among this incident's affected users"
+        elif kind == "isolate_host":
+            if target.lower() not in self._hosts():
+                return "host is not among the assets involved in this incident's evidence"
+        elif kind in ("quarantine_email", "revoke_token"):
+            if target.lower() not in users and target.lower().split("@")[0] not in users:
+                return "mailbox/account is not among this incident's affected users"
         return None
 
     def _already_queued(self, client: Any, org_id: str, incident_id: str, action: ActionRecommendation) -> bool:
