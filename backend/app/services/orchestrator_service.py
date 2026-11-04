@@ -333,7 +333,7 @@ def run_full_pipeline(
     investigation_lookback_hours: int = 72,
     response_mode: str = "recommend",
     deduplicate: bool = True,
-    correlation_hits: list[RuleHit] | None = None,
+    extra_hits: list[RuleHit] | None = None,   # detections already computed by the ingest processor (correlation, behaviour)
 ) -> dict[str, Any]:
     """Run one event through every stage. Returns ``{stages, summary, trace}``.
 
@@ -376,10 +376,10 @@ def run_full_pipeline(
     # ---- Stage 0: deterministic detection --------------------------------
     t0 = time.perf_counter()
     hits = detection_service.evaluate(org_id, event_dict)
-    if correlation_hits:  # already computed from the event store by the ingest processor
+    if extra_hits:  # already computed from the event store / baselines by the ingest processor
         known = {h.rule_id for h in hits}
         hits = sorted(
-            [*hits, *(h for h in correlation_hits if h.rule_id not in known)],
+            [*hits, *(h for h in extra_hits if h.rule_id not in known)],
             key=lambda h: (-SEVERITY_RANK[h.severity], -h.confidence),
         )
     detection = summarize(hits)

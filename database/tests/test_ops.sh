@@ -67,6 +67,14 @@ check "new organizations still work after rollback (trigger restored)" "[ \"\$(q
 "$HERE/migrate.sh" >/dev/null 2>&1
 check "025 re-applies after rollback" "[ \"\$(q tb_ops_a \"select to_regclass('public.jobs') is not null\")\" = t ]"
 
+# ---- rollback of 027 (drops behavioural baselines; re-applies cleanly)
+q tb_ops_a "insert into public.behavior_settings(organization_id, sensitivity) select id, 'high' from public.organizations limit 1" >/dev/null
+psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "$HERE/rollback/027_down.sql" >/dev/null 2>&1; rc=$?
+check "027_down.sql runs" "[ $rc -eq 0 ]"
+check "027 objects are gone and the ledger forgets it" "[ \"\$(q tb_ops_a \"select coalesce(to_regclass('public.behavior_profiles')::text,'') || coalesce(to_regclass('public.behavior_anomalies')::text,'')\")\" = '' ] && [ \"\$(q tb_ops_a \"select count(*) from public.schema_migrations where filename like '027%'\")\" = 0 ]"
+"$HERE/migrate.sh" >/dev/null 2>&1
+check "027 re-applies after rollback" "[ \"\$(q tb_ops_a \"select to_regclass('public.behavior_profiles') is not null\")\" = t ]"
+
 # ---- backup / strict verify / atomic restore
 q tb_ops_a "truncate public.organizations cascade" >/dev/null 2>&1
 psql "$DATABASE_URL" -X -q -v ON_ERROR_STOP=1 -f "$HERE/seeders/001_demo_data.sql" >/dev/null 2>&1

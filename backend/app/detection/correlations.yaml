@@ -363,3 +363,135 @@ correlations:
         - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 6, detections: []}
         - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 8, detections: []}
         - {source_ip: 198.51.100.7, event_type: authentication.failed, username: a, at: 10, detections: []}
+
+- id: TB-COR-015
+  name: Persistent authentication failures against one account over a day (low-and-slow brute force)
+  severity: medium
+  confidence: 55
+  techniques: [T1110.001]
+  group_by: username
+  window_minutes: 1440
+  kind: rate
+  select: {event_types: [authentication.failed]}
+  min: 15
+  tests:
+    - name: sixteen failures against one account over a day
+      expect_fire: true
+      events:
+        - {username: svc-batch, event_type: authentication.failed, at: 0, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 60, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 120, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 180, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 240, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 300, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 360, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 420, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 480, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 540, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 600, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 660, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 720, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 780, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 840, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 900, detections: []}
+    - name: six failures over a day (a typo or two)
+      expect_fire: false
+      events:
+        - {username: svc-batch, event_type: authentication.failed, at: 0, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 200, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 400, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 600, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 800, detections: []}
+        - {username: svc-batch, event_type: authentication.failed, at: 1000, detections: []}
+
+- id: TB-COR-016
+  name: Distributed brute force (one account attacked from many sources)
+  severity: high
+  confidence: 75
+  techniques: [T1110.001, T1110.004]
+  group_by: username
+  window_minutes: 60
+  kind: rate
+  select: {event_types: [authentication.failed]}
+  distinct: source_ip
+  min: 6
+  tests:
+    - name: seven sources against one account
+      expect_fire: true
+      events:
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 0, detections: []}
+        - {username: ceo, source_ip: 198.51.100.11, event_type: authentication.failed, at: 4, detections: []}
+        - {username: ceo, source_ip: 198.51.100.12, event_type: authentication.failed, at: 8, detections: []}
+        - {username: ceo, source_ip: 198.51.100.13, event_type: authentication.failed, at: 12, detections: []}
+        - {username: ceo, source_ip: 198.51.100.14, event_type: authentication.failed, at: 16, detections: []}
+        - {username: ceo, source_ip: 198.51.100.15, event_type: authentication.failed, at: 20, detections: []}
+        - {username: ceo, source_ip: 198.51.100.16, event_type: authentication.failed, at: 24, detections: []}
+    - name: one source hammering (brute force, not distributed)
+      expect_fire: false
+      events:
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 0, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 4, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 8, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 12, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 16, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 20, detections: []}
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 24, detections: []}
+    - name: same sources spread over two hours
+      expect_fire: false
+      events:
+        - {username: ceo, source_ip: 198.51.100.10, event_type: authentication.failed, at: 0, detections: []}
+        - {username: ceo, source_ip: 198.51.100.11, event_type: authentication.failed, at: 25, detections: []}
+        - {username: ceo, source_ip: 198.51.100.12, event_type: authentication.failed, at: 50, detections: []}
+        - {username: ceo, source_ip: 198.51.100.13, event_type: authentication.failed, at: 75, detections: []}
+        - {username: ceo, source_ip: 198.51.100.14, event_type: authentication.failed, at: 100, detections: []}
+        - {username: ceo, source_ip: 198.51.100.15, event_type: authentication.failed, at: 125, detections: []}
+        - {username: ceo, source_ip: 198.51.100.16, event_type: authentication.failed, at: 150, detections: []}
+
+- id: TB-COR-017
+  name: Slow password spraying (many accounts from one source over a day)
+  severity: medium
+  confidence: 60
+  techniques: [T1110.003]
+  group_by: source_ip
+  window_minutes: 1440
+  kind: rate
+  select: {event_types: [authentication.failed]}
+  distinct: username
+  min: 20
+  tests:
+    - name: twenty-two accounts over twelve hours
+      expect_fire: true
+      events:
+        - {source_ip: 203.0.113.77, username: user0, event_type: authentication.failed, at: 0, detections: []}
+        - {source_ip: 203.0.113.77, username: user1, event_type: authentication.failed, at: 30, detections: []}
+        - {source_ip: 203.0.113.77, username: user2, event_type: authentication.failed, at: 60, detections: []}
+        - {source_ip: 203.0.113.77, username: user3, event_type: authentication.failed, at: 90, detections: []}
+        - {source_ip: 203.0.113.77, username: user4, event_type: authentication.failed, at: 120, detections: []}
+        - {source_ip: 203.0.113.77, username: user5, event_type: authentication.failed, at: 150, detections: []}
+        - {source_ip: 203.0.113.77, username: user6, event_type: authentication.failed, at: 180, detections: []}
+        - {source_ip: 203.0.113.77, username: user7, event_type: authentication.failed, at: 210, detections: []}
+        - {source_ip: 203.0.113.77, username: user8, event_type: authentication.failed, at: 240, detections: []}
+        - {source_ip: 203.0.113.77, username: user9, event_type: authentication.failed, at: 270, detections: []}
+        - {source_ip: 203.0.113.77, username: user10, event_type: authentication.failed, at: 300, detections: []}
+        - {source_ip: 203.0.113.77, username: user11, event_type: authentication.failed, at: 330, detections: []}
+        - {source_ip: 203.0.113.77, username: user12, event_type: authentication.failed, at: 360, detections: []}
+        - {source_ip: 203.0.113.77, username: user13, event_type: authentication.failed, at: 390, detections: []}
+        - {source_ip: 203.0.113.77, username: user14, event_type: authentication.failed, at: 420, detections: []}
+        - {source_ip: 203.0.113.77, username: user15, event_type: authentication.failed, at: 450, detections: []}
+        - {source_ip: 203.0.113.77, username: user16, event_type: authentication.failed, at: 480, detections: []}
+        - {source_ip: 203.0.113.77, username: user17, event_type: authentication.failed, at: 510, detections: []}
+        - {source_ip: 203.0.113.77, username: user18, event_type: authentication.failed, at: 540, detections: []}
+        - {source_ip: 203.0.113.77, username: user19, event_type: authentication.failed, at: 570, detections: []}
+        - {source_ip: 203.0.113.77, username: user20, event_type: authentication.failed, at: 600, detections: []}
+        - {source_ip: 203.0.113.77, username: user21, event_type: authentication.failed, at: 630, detections: []}
+    - name: a handful of users mistyping behind a gateway
+      expect_fire: false
+      events:
+        - {source_ip: 203.0.113.77, username: user0, event_type: authentication.failed, at: 0, detections: []}
+        - {source_ip: 203.0.113.77, username: user1, event_type: authentication.failed, at: 90, detections: []}
+        - {source_ip: 203.0.113.77, username: user2, event_type: authentication.failed, at: 180, detections: []}
+        - {source_ip: 203.0.113.77, username: user3, event_type: authentication.failed, at: 270, detections: []}
+        - {source_ip: 203.0.113.77, username: user4, event_type: authentication.failed, at: 360, detections: []}
+        - {source_ip: 203.0.113.77, username: user5, event_type: authentication.failed, at: 450, detections: []}
+        - {source_ip: 203.0.113.77, username: user6, event_type: authentication.failed, at: 540, detections: []}
+        - {source_ip: 203.0.113.77, username: user7, event_type: authentication.failed, at: 630, detections: []}

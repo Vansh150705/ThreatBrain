@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     api_keys,
     audit,
     auth,
+    behavior,
     copilot,
     incidents,
     ingest,
@@ -44,6 +45,9 @@ api_router.include_router(copilot.router)
 
 # Detection content (rules, Sigma, coverage)
 api_router.include_router(rules.router)
+
+# Behavioural analytics (UEBA)
+api_router.include_router(behavior.router)
 
 # First-run checklist + demo data
 api_router.include_router(onboarding.router)

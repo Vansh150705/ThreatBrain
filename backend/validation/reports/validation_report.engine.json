@@ -2,12 +2,12 @@
   "schema": "threatbrain.validation/1",
   "environment": {
     "mode": "engine",
-    "generated_at": "2026-10-28T19:34:11Z",
-    "git_sha": "e616bc6",
+    "generated_at": "2026-11-04T05:11:19Z",
+    "git_sha": "6c4c646",
     "python": "3.11.17",
-    "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
-    "rule_count": 101,
-    "rules_version": "2026.10.2",
+    "platform": "Linux-6.18.44-fc-v233-x86_64-with-glibc2.39",
+    "rule_count": 104,
+    "rules_version": "2026.11.1",
     "fidelity": "detection engine + correlation only; no database, no LLM"
   },
   "gates": {
@@ -42,9 +42,16 @@
       "chain_recall": 1.0,
       "chain_negative_pass": 1.0,
       "evasion_probes": 12,
-      "evasion_detected": 5,
-      "evasion_known_gaps_open": 7,
-      "evasion_gaps_closed": [],
+      "evasion_detected": 11,
+      "evasion_known_gaps_open": 1,
+      "evasion_gaps_closed": [
+        "EVA-001",
+        "EVA-002",
+        "EVA-003",
+        "EVA-004",
+        "EVA-005",
+        "EVA-011"
+      ],
       "evasion_unexpected_misses": [],
       "recall_by_tactic": {
         "TA0001": {
@@ -1903,6 +1910,7 @@
         "mapping_ok": true,
         "rules": [
           "TB-EXEC-001",
+          "TB-EXEC-002",
           "TB-EXEC-006"
         ]
       },
@@ -3293,9 +3301,11 @@
         "techniques": [
           "T1027"
         ],
-        "detected": false,
+        "detected": true,
         "mapping_ok": false,
-        "rules": [],
+        "rules": [
+          "TB-EXEC-002"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3306,9 +3316,11 @@
         "techniques": [
           "T1059.004"
         ],
-        "detected": false,
-        "mapping_ok": false,
-        "rules": [],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EXEC-003"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3319,9 +3331,11 @@
         "techniques": [
           "T1562.001"
         ],
-        "detected": false,
-        "mapping_ok": false,
-        "rules": [],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-010"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3332,9 +3346,11 @@
         "techniques": [
           "T1070.001"
         ],
-        "detected": false,
-        "mapping_ok": false,
-        "rules": [],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-EVADE-001"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3345,9 +3361,11 @@
         "techniques": [
           "T1003.001"
         ],
-        "detected": false,
-        "mapping_ok": false,
-        "rules": [],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-CRED-005"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3427,9 +3445,11 @@
         "techniques": [
           "T1190"
         ],
-        "detected": false,
-        "mapping_ok": false,
-        "rules": [],
+        "detected": true,
+        "mapping_ok": true,
+        "rules": [
+          "TB-WEB-005"
+        ],
         "known_gap": true,
         "gap_reason": ""
       },
@@ -3450,14 +3470,14 @@
     ],
     "latency_ms": {
       "events": 381,
-      "p50": 0.619,
-      "p95": 1.364,
-      "p99": 1.706,
-      "max": 2.585,
-      "mean": 0.733
+      "p50": 0.569,
+      "p95": 1.306,
+      "p99": 2.282,
+      "max": 4.173,
+      "mean": 0.708
     },
-    "rule_count": 101,
-    "rules_version": "2026.10.2"
+    "rule_count": 104,
+    "rules_version": "2026.11.1"
   },
   "coverage": {
     "tactics": [

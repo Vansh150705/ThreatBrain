@@ -215,7 +215,7 @@ def test_weird_field_values_are_rejected_or_neutralised(client, auth, db):
     ok = {"title": "ok‮\x00", "event_type": "t", "username": "' OR 1=1 --", "command_line": "x" * 8000}
     r = client.post("/api/v1/ingest/event", json={"event": ok}, params={"async": "true"}, headers=auth("analyst_a"))
     assert r.status_code == 202
-    assert "' OR 1=1 --" in [e.get("username") for e in db.rows("events")]       # stored as data, never interpreted
+    assert "' or 1=1 --" in [e.get("username") for e in db.rows("events")]       # stored as data (canonical lower-case form), never interpreted
 
 
 def test_filter_parameters_cannot_inject_postgrest_operators(client, auth, org_a_data):

@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from app.core.logging import get_logger
+from app.detection import deobfuscate
 from app.detection.attack_catalog import tactics_for, validate_ids
 
 log = get_logger(__name__)
@@ -62,6 +63,7 @@ class RuleHit:
     evidence: list[str] = field(default_factory=list)   # ids of the events that completed a correlation
     kind: str = "rule"                                   # rule | correlation
     dedupe_key: str = ""                                 # stable id of a correlation completion (ledger key)
+    explanation: dict[str, Any] | None = None            # behavioural hits: why this is unusual (observed vs baseline, peers)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -75,6 +77,7 @@ class RuleHit:
             "matched_fields": self.matched_fields,
             "kind": self.kind,
             **({"evidence": self.evidence} if self.evidence else {}),
+            **({"explanation": self.explanation} if self.explanation else {}),
         }
 
 
@@ -114,6 +117,7 @@ def build_view(event: dict[str, Any]) -> dict[str, Any]:
         view["process_name"] = re.split(r"[\\/]", pn.rstrip("\\/"))[-1]
     view["raw"] = raw
     view["text"] = " \n ".join(parts)[:_MAX_TEXT]
+    view["_alt"] = {}   # per-field cache of decoded forms (see deobfuscate)
     return view
 
 
@@ -173,21 +177,34 @@ def _leaf(cond: dict[str, Any], view: dict[str, Any]) -> tuple[bool, str | None]
 
     text = value if isinstance(value, str) else json.dumps(value, default=str)
     text = text[:_MAX_TEXT]
-    if path in _COMMAND_FIELDS and op in ("regex", "contains", "startswith", "endswith", "equals"):
-        # Evaluate the command as written, then with the cheap shell-obfuscation layer removed
-        # (quoted executable paths, cmd.exe ^ escapes, runs of whitespace).
-        ok, _ = _text_op(op, arg, text)
-        if not ok:
-            squashed = _SQUASH_WS.sub(" ", text.replace('"', "").replace("^", ""))
-            if squashed != text:
-                ok, _ = _text_op(op, arg, squashed)
-        return ok, path
-    return _text_op(op, arg, text)[0], path
+    ok, _ = _text_op(op, arg, text)
+    if not ok and _uses_alternates(path, op):
+        for alt in _alternates(view, path, text):
+            ok, _ = _text_op(op, arg, alt)
+            if ok:
+                break
+    return ok, path
 
 
-
-_COMMAND_FIELDS = {"command_line", "raw.parent_command_line"}
+_COMMAND_FIELDS = {"command_line", "raw.parent_command_line", "text"}
 _SQUASH_WS = re.compile(r"\s+")
+
+
+def _uses_alternates(path: str, op: str) -> bool:
+    """Decoded forms are an extra view for substring/regex matching. Anchored operators only get them on command
+    fields (as before), where the quote/caret layer legitimately changes where a command 'starts'."""
+    if op in ("regex", "contains"):
+        return True
+    return path in _COMMAND_FIELDS and op in ("startswith", "endswith", "equals")
+
+
+def _alternates(view: dict[str, Any], path: str, text: str) -> tuple[str, ...]:
+    cache = view.setdefault("_alt", {})
+    got = cache.get(path)
+    if got is None or got[0] != len(text):
+        got = (len(text), deobfuscate.alternates(text, command=path in _COMMAND_FIELDS or path.startswith("raw.")))
+        cache[path] = got
+    return got[1]
 
 
 def _text_op(op: str, arg: Any, text: str) -> tuple[bool, None]:
@@ -227,7 +244,7 @@ def _compile_leaf(cond: dict[str, Any]):
     op = next(o for o in cond if o in _OPERATORS)
     arg = cond[op]
     parts = path.split(".")
-    squash = path in _COMMAND_FIELDS and op in ("regex", "contains", "startswith", "endswith", "equals")
+    use_alt = _uses_alternates(path, op)
 
     def get(view: dict[str, Any]) -> Any:
         if len(parts) == 1:
@@ -300,11 +317,11 @@ def _compile_leaf(cond: dict[str, Any]):
         if test(text):
             fields.append(path)
             return True
-        if squash:
-            squashed = _SQUASH_WS.sub(" ", text.replace('"', "").replace("^", ""))
-            if squashed != text and test(squashed):
-                fields.append(path)
-                return True
+        if use_alt:
+            for alt in _alternates(view, path, text):
+                if test(alt):
+                    fields.append(path)
+                    return True
         return False
 
     return text_leaf

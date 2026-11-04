@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     RETENTION_EVIDENCE_DAYS: int = 365
     RETENTION_JOBS_DAYS: int = 14
     RETENTION_RUNS_DAYS: int = 90
+    RETENTION_ANOMALIES_DAYS: int = 90      # behavioural anomaly records (evidence)
+    RETENTION_BASELINE_DAYS: int = 180      # baselines of entities not seen for this long are dropped
 
     # Secrets / identity
     APP_SECRET: str = ""                  # derives per-key webhook signing secrets (>= 32 chars)

@@ -14,7 +14,7 @@ from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.detection.engine import SEVERITY_RANK, RuleHit, summarize
-from app.services import correlation_service, detection_service, pipeline_service
+from app.services import behavior_service, correlation_service, detection_service, pipeline_service
 from app.services.supabase_client import get_supabase_admin
 
 log = get_logger(__name__)
@@ -58,6 +58,13 @@ def process_event(org_id: str, event_id: str) -> dict[str, Any]:
     event_dict = inp.model_dump(mode="json")
 
     hits: list[RuleHit] = detection_service.evaluate(org_id, event_dict)
+    try:   # behavioural analytics is additive: deterministic detections above stand even if baselines are unavailable
+        behavior_hits = behavior_service.evaluate_and_learn(org_id, row, hits)
+    except Exception:
+        metrics.behavior_errors.inc()
+        log.exception("behavior_evaluation_failed", event_id=event_id)
+        behavior_hits = []
+    hits = sorted([*hits, *behavior_hits], key=lambda h: (-SEVERITY_RANK[h.severity], -h.confidence))
     rule_summary = summarize(hits)
     # 1) persist this event's own detections BEFORE looking at its neighbours (see correlation_service.correlate)
     client.table("events").update({
@@ -94,7 +101,7 @@ def process_event(org_id: str, event_id: str) -> dict[str, Any]:
 
     run = pipeline_service.run_sync(
         org_id, inp, source=f"ingest:{row.get('source_system') or 'unknown'}", created_by=None,
-        correlation_hits=correlated,
+        extra_hits=[*correlated, *behavior_hits],
     )
     threat_id = (run.get("summary") or {}).get("promoted_threat_id")
     result.update(run_id=run.get("run_id"), threat_id=threat_id,

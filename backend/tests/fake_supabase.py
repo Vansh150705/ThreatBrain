@@ -217,6 +217,8 @@ _UNIQUE: dict[str, list[tuple[str, ...]]] = {
     "correlation_hits": [("organization_id", "dedupe_key")],
     "detection_rule_versions": [("rule_id", "version")],
     "rule_overrides": [("organization_id", "rule_key")],
+    "behavior_profiles": [("organization_id", "entity_type", "entity_id")],
+    "behavior_settings": [("organization_id",)],
 }
 # partial unique indexes in the schema: (table, columns) -> row predicate
 _PARTIAL_UNIQUE = {("detection_rules", ("organization_id", "rule_key")): lambda r: r.get("deleted_at") is None}
@@ -661,3 +663,6 @@ class FakeRpc:
 
     def _purge_expired(self, **_: Any) -> FakeResult:
         return FakeResult({"events_unlinked": 0})
+
+    def _purge_behavior(self, **_: Any) -> FakeResult:
+        return FakeResult({"behavior_anomalies": 0, "behavior_profiles": 0})

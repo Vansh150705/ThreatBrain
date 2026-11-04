@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `engine` · commit `e616bc6` · rules `2026.10.2` (101 rules) · 2026-10-28T19:34:11Z
+* Result: **PASS**  · mode `engine` · commit `6c4c646` · rules `2026.11.1` (104 rules) · 2026-11-04T05:11:19Z
 * Fidelity: detection engine + correlation only; no database, no LLM
 
 ## Headline metrics
@@ -68,19 +68,21 @@
 
 ## Evasion probes
 
-5/12 detected. Open documented gaps: 7.
-* `EVA-001` PowerShell with string concatenation to hide IEX: MISSED (known gap)
-* `EVA-002` Reverse shell via renamed netcat: MISSED (known gap)
-* `EVA-003` Defender disabled via registry through reg import: MISSED (known gap)
-* `EVA-004` Log clearing with PowerShell .NET API: MISSED (known gap)
-* `EVA-005` Credential dump via direct syscalls tool with innocuous name: MISSED (known gap)
+11/12 detected. Open documented gaps: 1.
+* `EVA-001` PowerShell with string concatenation to hide IEX: detected (known gap)
+* `EVA-002` Reverse shell via renamed netcat: detected (known gap)
+* `EVA-003` Defender disabled via registry through reg import: detected (known gap)
+* `EVA-004` Log clearing with PowerShell .NET API: detected (known gap)
+* `EVA-005` Credential dump via direct syscalls tool with innocuous name: detected (known gap)
 * `EVA-006` Exfil over HTTPS to attacker domain with no tooling signature: MISSED (known gap)
 * `EVA-007` base64 split across arguments: detected
 * `EVA-008` Case and whitespace variation of a known command: detected
 * `EVA-009` Quoted path variation of wevtutil: detected
 * `EVA-010` URL-encoded path traversal: detected
-* `EVA-011` Double URL-encoded traversal: MISSED (known gap)
+* `EVA-011` Double URL-encoded traversal: detected (known gap)
 * `EVA-012` Mixed-case JNDI with nested lookups: detected
+
+**Gaps closed (remove `known_gap`)**: ['EVA-001', 'EVA-002', 'EVA-003', 'EVA-004', 'EVA-005', 'EVA-011']
 
 ## Campaign correlation
 
@@ -108,7 +110,7 @@
 
 ## Latency
 
-`{"events": 381, "p50": 0.619, "p95": 1.364, "p99": 1.706, "max": 2.585, "mean": 0.733}`
+`{"events": 381, "p50": 0.569, "p95": 1.306, "p99": 2.282, "max": 4.173, "mean": 0.708}`
 
 ## ATT&CK coverage (catalog subset)
 

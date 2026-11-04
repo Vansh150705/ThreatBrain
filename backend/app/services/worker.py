@@ -82,7 +82,29 @@ def _handle_purge(job: dict[str, Any]) -> dict[str, Any]:
     }).execute().data
     now = datetime.now(UTC).isoformat()
     get_supabase_admin().table("replay_guard").delete().lt("expires_at", now).execute()
-    return {"purged": res}
+    behavior = get_supabase_admin().rpc("purge_behavior", {
+        "p_anomaly_days": s.RETENTION_ANOMALIES_DAYS, "p_profile_days": s.RETENTION_BASELINE_DAYS}).execute().data
+    return {"purged": res, "behavior": behavior}
+
+
+@register("behavior.backfill")
+def _handle_behavior_backfill(job: dict[str, Any]) -> dict[str, Any]:
+    """Learn baselines from stored (non-alerted) history so a new tenant does not wait weeks to be protected."""
+    from app.services import behavior_service
+
+    if not job.get("organization_id"):
+        raise PermanentJobError("behavior.backfill needs organization_id")
+    p = job.get("payload") or {}
+    return behavior_service.backfill(str(job["organization_id"]), days=int(p.get("days", 14)), max_events=int(p.get("max_events", 20000)))
+
+
+@register("behavior.recluster")
+def _handle_behavior_recluster(job: dict[str, Any]) -> dict[str, Any]:
+    from app.services import behavior_service
+
+    if not job.get("organization_id"):
+        raise PermanentJobError("behavior.recluster needs organization_id")
+    return behavior_service.recluster(str(job["organization_id"]))
 
 
 class Worker:

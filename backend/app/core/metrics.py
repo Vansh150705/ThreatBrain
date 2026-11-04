@@ -86,8 +86,16 @@ llm_latency = Histogram("tb_llm_call_duration_seconds", "LLM call latency by pro
 pipeline_runs = Counter("tb_pipeline_runs_total", "Agent pipeline runs by outcome (completed|failed|degraded)")
 auth_failures = Counter("tb_auth_failures_total", "Rejected authentications by reason")
 
+behavior_anomalies = Counter("tb_behavior_anomalies_total", "Behavioural anomalies recorded, by feature")
+behavior_alerts = Counter("tb_behavior_alerts_total", "Behavioural alerts emitted, by feature family")
+behavior_suppressed = Counter("tb_behavior_suppressed_total", "Behavioural alerts withheld, by reason (suppression|cooldown|budget)")
+behavior_errors = Counter("tb_behavior_errors_total", "Behavioural evaluation failures (deterministic detection continues without it)")
+behavior_conflicts = Counter("tb_behavior_cas_conflicts_total", "Baseline write conflicts that were retried")
+behavior_latency = Histogram("tb_behavior_eval_seconds", "Behavioural evaluation time per event")
+
 REGISTRY = [http_requests, http_duration, events_ingested, detections, jobs_finished, job_duration,
-            llm_calls, llm_tokens, llm_latency, pipeline_runs, auth_failures]
+            llm_calls, llm_tokens, llm_latency, pipeline_runs, auth_failures,
+            behavior_anomalies, behavior_alerts, behavior_suppressed, behavior_errors, behavior_conflicts, behavior_latency]
 
 
 def render(extra_gauges: dict[str, tuple[str, dict[tuple[tuple[str, str], ...], float]]] | None = None) -> str:

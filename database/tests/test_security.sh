@@ -17,7 +17,7 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 no_rls="$(Q "select string_agg(c.relname, ', ') from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity")"
 check "RLS is enabled on every public table (missing: ${no_rls:-none})" "[ -z '$no_rls' ]"
 
-SECRET="api_keys jobs replay_guard worker_heartbeats correlation_hits schema_migrations detection_rule_versions rule_overrides pipeline_runs"
+SECRET="api_keys jobs replay_guard worker_heartbeats correlation_hits schema_migrations detection_rule_versions rule_overrides pipeline_runs behavior_profiles behavior_settings behavior_suppressions"
 for t in $SECRET; do
   exists="$(Q "select to_regclass('public.$t') is not null")"; [ "$exists" = t ] || continue
   pol="$(Q "select count(*) from pg_policies where schemaname='public' and tablename='$t'")"
@@ -49,6 +49,26 @@ Q "delete from public.threats where title in ('mine','theirs')" >/dev/null 2>&1
 Q "insert into public.threats(organization_id, title, severity, status) values ('$A','mine','low','open'),('$B','theirs','low','open')" >/dev/null 2>&1
 seen="$(psql -At -q "$DB" -c "set role authenticated; select set_config('request.jwt.claim.sub','$UA',false); select string_agg(title, ',') from public.threats" 2>&1 | tail -1)"
 check "authenticated org-A user sees only org-A threats (saw: $seen)" "[ '$seen' = mine ]"
+
+# --- behavioural analytics (027): baselines are service-only; anomalies are readable by analysts of the SAME org only
+Q "delete from public.behavior_anomalies where entity_id in ('sec-alice','sec-bob')" >/dev/null 2>&1
+Q "insert into public.behavior_anomalies(organization_id, entity_type, entity_id, feature, score, severity) values ('$A','user','sec-alice','auth.hour',0.5,'low'),('$B','user','sec-bob','auth.hour',0.5,'low')" >/dev/null 2>&1
+Q "insert into public.behavior_profiles(organization_id, entity_type, entity_id, state) values ('$A','user','sec-alice','{}') on conflict do nothing" >/dev/null 2>&1
+seen="$(psql -At -q "$DB" -c "set role authenticated; select set_config('request.jwt.claim.sub','$UA',false); select string_agg(entity_id, ',') from public.behavior_anomalies" 2>&1 | tail -1)"
+check "analyst of org A sees only org A behaviour anomalies (saw: $seen)" "[ '$seen' = sec-alice ]"
+Q "update public.users set role='viewer' where id='$UA'" >/dev/null 2>&1
+seen="$(psql -At -q "$DB" -c "set role authenticated; select set_config('request.jwt.claim.sub','$UA',false); select count(*) from public.behavior_anomalies" 2>&1 | tail -1)"
+check "a viewer sees no behaviour anomalies (saw: $seen)" "[ '$seen' = 0 ]"
+Q "update public.users set role='analyst' where id='$UA'" >/dev/null 2>&1
+out="$(psql -At -q "$DB" -c "set role authenticated; select count(*) from public.behavior_profiles" 2>&1)"
+check "end users cannot read baselines (got: ${out##*: })" "[ \"\$out\" = 0 ] || grep -qi 'permission denied' <<<\"\$out\""
+out="$(psql -At -q "$DB" -c "set role authenticated; insert into public.behavior_anomalies(organization_id, entity_type, entity_id, feature, score, severity) values ('$A','user','x','f',0.1,'low')" 2>&1)"
+check "end users cannot write anomalies" "grep -qiE 'permission denied|row-level security' <<<\"\$out\""
+Q "insert into public.behavior_anomalies(organization_id, entity_type, entity_id, feature, score, severity, created_at) values ('$A','user','sec-old','f',0.1,'low', now() - interval '200 days')" >/dev/null
+Q "insert into public.behavior_profiles(organization_id, entity_type, entity_id, last_seen) values ('$A','user','sec-gone', now() - interval '400 days')" >/dev/null
+purged="$(Q "select public.purge_behavior(90, 180)")"
+check "purge_behavior removes expired anomalies and stale baselines ($purged)" "[ \"\$(Q \"select count(*) from public.behavior_anomalies where entity_id='sec-old'\")\" = 0 ] && [ \"\$(Q \"select count(*) from public.behavior_profiles where entity_id='sec-gone'\")\" = 0 ]"
+check "purge_behavior keeps recent evidence" "[ \"\$(Q \"select count(*) from public.behavior_anomalies where entity_id='sec-alice'\")\" = 1 ]"
 
 # --- audit immutability
 Q "insert into public.audit_logs(organization_id, actor_type, action, target_type) values ('$A','system','sec.test','test')" >/dev/null 2>&1

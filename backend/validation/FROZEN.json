@@ -1,0 +1,31 @@
+{
+  "about": "Hashes of held-out datasets. See validation/freeze.py. A mismatch means a held-out set was edited; re-freezing is a deliberate, recorded act.",
+  "frozen": {
+    "heldout_v3.yaml": {
+      "sha256": "ff0963d5cb7cc1840d2d2d462fed0937ae8635b5de16243044e0460817a38528",
+      "scenarios": 145
+    },
+    "heldout_v3_chains.yaml": {
+      "sha256": "6a56403b2ddc06cf5d95fe6471eb910362ed5b91418a1e0eb199d49ca71c9d4b",
+      "scenarios": 17
+    },
+    "adversarial_unseen.yaml": {
+      "sha256": "8aed91eb26c2657613ee1a40ab33d142c74a3cfee45ab0a7e9b544df0368c84e",
+      "scenarios": 41
+    },
+    "behavior_heldout.yaml": {
+      "sha256": "9ce8197b2210294d79b96cfef3cb9c2ffb561f99561bf88932162de0002bd394",
+      "scenarios": 39
+    },
+    "art_derived.yaml#blind": {
+      "sha256": "2060719bd53cbee90bcb55d2155f37014ed8a49d5239155d931d1a057dad3fe7",
+      "scenarios": 607
+    }
+  },
+  "history": [
+    {
+      "at": "2026-11-04T05:43:34Z",
+      "reason": "Initial freeze of held-out v3, unseen adversarial variants, behavioural held-out and the blind half of Atomic Red Team before any of them was evaluated"
+    }
+  ]
+}

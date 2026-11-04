@@ -33,6 +33,8 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "service_name": ("data.win.eventdata.serviceName",),
     "ticket_encryption_type": ("data.win.eventdata.ticketEncryptionType",),
     "share_name": ("data.win.eventdata.shareName",),
+    "target_object": ("data.win.eventdata.targetObject", "TargetObject", "registry.path"),
+    "details": ("data.win.eventdata.details", "Details", "registry.data.strings"),
 }
 _PATH_KEYS = {"parent_process"}
 

@@ -14,8 +14,8 @@ from app.services.supabase_client import get_supabase_admin
 log = get_logger(__name__)
 
 # The schema level this build of the API needs. Bump when a new migration is required by code.
-REQUIRED_MIGRATION = "026_correlation_ledger.sql"
-REQUIRED_TABLES = ("jobs", "events", "threat_events", "detection_rules", "rule_overrides", "replay_guard", "worker_heartbeats", "correlation_hits")
+REQUIRED_MIGRATION = "027_behavior_analytics.sql"
+REQUIRED_TABLES = ("jobs", "events", "threat_events", "detection_rules", "rule_overrides", "replay_guard", "worker_heartbeats", "correlation_hits", "behavior_profiles")
 WORKER_STALE_SECONDS = 60
 QUEUE_STUCK_SECONDS = 300
 
