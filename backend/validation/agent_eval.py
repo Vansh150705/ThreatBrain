@@ -1,6 +1,6 @@
 """Evaluate what the agent pipeline does with labelled scenarios under different (scripted) model behaviours.
 
-    python -m validation.agent_eval [--gate] [--repeat 5] [--live]
+    python -m validation.agent_eval [--gate] [--repeat 5]
 
 Every scenario goes through the real orchestrator (detection -> triage -> threat intel -> investigation -> response -> forensics ->
 compliance) on the in-memory PostgREST stand-in. Results are read back from the DATABASE (threats, approvals, runs), because that is what an
@@ -10,15 +10,15 @@ What this measures and what it does not
 * measured: whether platform safeguards (rule severity floor, grounding checks, ATT&CK-id validation, target validation, human approval,
   degraded mode) hold when a model invents facts, obeys injected text, claims certainty, flips, returns garbage, errors, times out or asks
   for dangerous actions; and the harness metrics themselves on a well-behaved reference model.
-* NOT measured: the quality of any real LLM. ``--live`` runs the same scenarios against the configured provider when credentials exist;
-  without them it reports ``not_run`` explicitly.
+* NOT measured: the quality of any real LLM. A live-provider mode is NOT implemented (no provider credentials were available to build and
+  verify one); the report says ``not_run`` explicitly. The scenarios, judge and gates are provider-agnostic: a live mode only needs a back-end
+  that calls the configured provider instead of the scripted ones in agent_models.py.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import re
 import statistics
@@ -299,14 +299,10 @@ def run_all(repeat: int) -> dict[str, Any]:
 
 
 def live_status() -> dict[str, Any]:
-    from app.core.config import get_settings
-
-    s = get_settings()
-    has = bool(s.LLM_API_KEY or (s.GROQ_API_KEY and s.GROQ_API_KEY != "test-groq-key")) and s.LLM_PROVIDER != "none"
-    if not has or os.environ.get("AGENT_EVAL_LIVE") != "1":
-        return {"status": "not_run", "reason": "no live provider credentials / AGENT_EVAL_LIVE=1 not set in this environment",
-                "how_to_run": "set LLM_PROVIDER + key (+ LLM_BASE_URL) and AGENT_EVAL_LIVE=1, then `python -m validation.agent_eval --live`"}
-    return {"status": "available", "note": "run with --live"}
+    """Always ``not_run``: this harness has no live-provider mode. Never report 'available' for something that was not built and verified."""
+    return {"status": "not_run", "reason": "live-provider evaluation is not implemented in this harness and no provider credentials were available; "
+                                           "all agent results above come from scripted model back-ends",
+            "how_to_run": "implement a back-end in agent_models.py that calls the configured provider, then evaluate with the same scenarios and gates"}
 
 
 def check_gates(res: dict[str, Any], gates: dict[str, Any]) -> dict[str, Any]:

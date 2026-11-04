@@ -1,22 +1,22 @@
 {
   "schema": "threatbrain.release-gates/1",
-  "generated_at": "2026-10-28T19:35:51Z",
-  "git": "e616bc6",
+  "generated_at": "2026-11-04T07:50:58Z",
+  "git": "1384acd",
   "environment": {
-    "python": "3.13.17",
-    "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39"
+    "python": "3.11.17",
+    "platform": "Linux-6.18.44-fc-v233-x86_64-with-glibc2.39"
   },
   "summary": {
-    "passed": 19,
-    "failed": 0,
-    "skipped": 1
+    "passed": 26,
+    "failed": 2,
+    "skipped": 0
   },
   "gates": [
     {
       "gate": "backend: ruff",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 0.1,
+      "seconds": 0.0,
       "command": "/tmp/claude-0/venv311/bin/ruff check app tests validation bench",
       "evidence": "All checks passed!"
     },
@@ -24,15 +24,15 @@
       "gate": "backend: pytest",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 28.5,
+      "seconds": 43.5,
       "command": "/tmp/claude-0/venv311/bin/python -m pytest -q -p no:logging",
-      "evidence": "656 passed, 137 warnings in 26.16s"
+      "evidence": "815 passed, 146 warnings in 41.87s"
     },
     {
       "gate": "validation: engine gates",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.7,
+      "seconds": 2.2,
       "command": "/tmp/claude-0/venv311/bin/python -m validation.runner --mode engine --gate",
       "evidence": "[engine] attacks 169/169 recall=1.0 precision=1.0 fpr=0.0 mapping=0.9941 chains=1.0/1.0 -> PASS"
     },
@@ -40,15 +40,57 @@
       "gate": "validation: pipeline gates",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 10.5,
+      "seconds": 12.5,
       "command": "/tmp/claude-0/venv311/bin/python -m validation.runner --mode pipeline --gate",
       "evidence": "[pipeline] attacks 169/169 recall=1.0 precision=1.0 fpr=0.0 mapping=0.9941 chains=1.0/1.0 -> PASS"
+    },
+    {
+      "gate": "validation: dataset freeze intact",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 1.5,
+      "command": "/tmp/claude-0/venv311/bin/python -m validation.freeze --check",
+      "evidence": "frozen datasets unchanged: heldout_v3.yaml, heldout_v3_chains.yaml, adversarial_unseen.yaml, behavior_heldout.yaml, heldout_v4.yaml, heldout_v4_chains.yaml, behavior_heldout_v4.yaml, art_derived.yaml#blind"
+    },
+    {
+      "gate": "validation: split evaluation gates (detection, FP, evasion, behaviour)",
+      "status": "failed",
+      "exit_code": 1,
+      "seconds": 64.5,
+      "command": "/tmp/claude-0/venv311/bin/python -m validation.evaluate --gate --pipeline-sample 40",
+      "evidence": "evaluation: 30/32 gates passed; freeze intact; FAILED: heldout.art_high_signal_recall: 0.4641 (need >= 0.6) | tuning.art_high_signal_recall: 0.582 (need >= 0.6)",
+      "tail": "2026-11-04 07:45:58 [info     ] detection_rules_loaded         count=126 version=2026.11.1\nevaluation: 30/32 gates passed; freeze intact\n  FAILED heldout.art_high_signal_recall: 0.4641 (need >= 0.6)\n  FAILED tuning.art_high_signal_recall: 0.582 (need >= 0.6)\n/tmp/claude-0/venv311/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\n/tmp/claude-0/venv311/lib/python3.11/site-packages/fastapi/routing.py:152: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/\n  response = await f(request)\n"
+    },
+    {
+      "gate": "validation: train/held-out leakage review",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 3.2,
+      "command": "/tmp/claude-0/venv311/bin/python -m validation.leakage --gate",
+      "evidence": "leakage gates: PASS"
+    },
+    {
+      "gate": "validation: agent evaluation gates (scripted + adversarial back-ends)",
+      "status": "failed",
+      "exit_code": 1,
+      "seconds": 23.6,
+      "command": "/tmp/claude-0/venv311/bin/python -m validation.agent_eval --gate",
+      "evidence": "agent evaluation: 17/18 gates passed; live provider: not_run; FAILED: reference.expected_calibration_error: 0.1553 (need <= 0.15)",
+      "tail": "agent evaluation: 17/18 gates passed; live provider: not_run\n  FAILED reference.expected_calibration_error: 0.1553 (need <= 0.15)\n/tmp/claude-0/venv311/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\n"
+    },
+    {
+      "gate": "validation: ATT&CK coverage matrix regenerated",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 11.9,
+      "command": "/tmp/claude-0/venv311/bin/python -m validation.coverage",
+      "evidence": "83/228 parent techniques have a rule; 156/715 including sub-techniques"
     },
     {
       "gate": "backend: pip-audit (installed tree)",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.0,
+      "seconds": 0.8,
       "command": "/tmp/claude-0/venv311/bin/pip-audit --skip-editable",
       "evidence": "No known vulnerabilities found"
     },
@@ -56,31 +98,31 @@
       "gate": "backend: bandit (medium+ severity & confidence)",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.7,
+      "seconds": 1.9,
       "command": "/tmp/claude-0/venv311/bin/bandit -q -r app -ll -ii",
       "evidence": "no medium/high findings"
     },
     {
-      "gate": "collector: pytest",
+      "gate": "collector: pytest (incl. executor in a disposable namespace)",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.2,
-      "command": "/tmp/claude-0/venv311/bin/python -m pytest -q -p no:logging",
-      "evidence": "127 passed in 0.82s"
+      "seconds": 1.3,
+      "command": "/tmp/claude-0/venv311/bin/python -m pytest -q -p no:logging -rs",
+      "evidence": "140 passed in 0.93s"
     },
     {
       "gate": "frontend: eslint",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 10.3,
+      "seconds": 8.8,
       "command": "npm run lint",
-      "evidence": "\u2716 42 problems (0 errors, 42 warnings)"
+      "evidence": "\u2716 43 problems (0 errors, 43 warnings)"
     },
     {
       "gate": "frontend: tsc",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 7.6,
+      "seconds": 7.8,
       "command": "npx tsc -b",
       "evidence": "type-check clean"
     },
@@ -88,9 +130,9 @@
       "gate": "frontend: vitest",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 4.4,
+      "seconds": 4.9,
       "command": "npx vitest run",
-      "evidence": "18 passed (18)"
+      "evidence": "26 passed (26)"
     },
     {
       "gate": "frontend: production build",
@@ -98,13 +140,13 @@
       "exit_code": 0,
       "seconds": 9.3,
       "command": "npm run build",
-      "evidence": "built in 1.63s"
+      "evidence": "built in 1.42s"
     },
     {
       "gate": "frontend: npm audit (production deps)",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 0.5,
+      "seconds": 0.6,
       "command": "npm audit --omit=dev --audit-level=low",
       "evidence": "found 0 vulnerabilities"
     },
@@ -112,7 +154,7 @@
       "gate": "compose: dev file valid",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 0.2,
+      "seconds": 0.1,
       "command": "docker compose -f docker-compose.yml config -q",
       "evidence": ""
     },
@@ -125,15 +167,26 @@
       "evidence": ""
     },
     {
-      "gate": "docker: image builds",
-      "status": "skipped",
-      "reason": "no Docker daemon available in this environment"
+      "gate": "docker: backend image builds",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.2,
+      "command": "docker build -q --network host -t threatbrain-backend backend",
+      "evidence": ""
+    },
+    {
+      "gate": "docker: backend image runs hardened (read-only rootfs, no caps, non-root) and answers /api/v1/health",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 3.9,
+      "command": "/tmp/claude-0/venv311/bin/python scripts/docker_smoke.py threatbrain-backend --network host",
+      "evidence": "image runs hardened: HTTP 200 {\"status\": \"ok\", \"service\": \"ThreatBrain\", \"version\": \"0.1.0\", \"environment\": \"development\", \"timestamp_unix\": 179377849; read-only rootfs, caps dropped, no-new-privileges, non-root user"
     },
     {
       "gate": "database: all migrations on PostgreSQL",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 2.7,
+      "seconds": 2.8,
       "command": "./database/verify_migrations.sh tb_gate_check",
       "evidence": "every migration applied"
     },
@@ -141,7 +194,7 @@
       "gate": "database: queue semantics",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.7,
+      "seconds": 1.6,
       "command": "./database/tests/test_queue.sh tb_gate_check",
       "evidence": "ok   400 jobs claimed exactly once across 8 concurrent workers"
     },
@@ -149,32 +202,50 @@
       "gate": "database: security properties",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 1.5,
+      "seconds": 2.3,
       "command": "./database/tests/test_security.sh tb_gate_check",
-      "evidence": "---- 22 passed, 0 failed"
+      "evidence": "---- 31 passed, 0 failed"
     },
     {
       "gate": "database: migrate / rollback / backup / restore",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 19.2,
+      "seconds": 20.5,
       "command": "./database/tests/test_ops.sh",
-      "evidence": "---- 23 passed, 0 failed"
+      "evidence": "---- 26 passed, 0 failed"
+    },
+    {
+      "gate": "database: queue workload, worker-kill recovery, concurrent writers",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 85.1,
+      "command": "./database/tests/test_workload.sh tb_gate_check",
+      "evidence": "---- 9 passed, 0 failed"
     },
     {
       "gate": "e2e: Chromium against the real app + production bundle",
       "status": "passed",
       "exit_code": 0,
-      "seconds": 28.5,
+      "seconds": 29.7,
       "command": "node e2e/run.cjs",
       "evidence": "19 passed, 0 failed"
+    },
+    {
+      "gate": "benchmark",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 16.7,
+      "command": "/tmp/claude-0/venv311/bin/python -m bench.perf",
+      "evidence": "detection          880.2 events/s  p95 2.786 ms  (126 rules)"
     }
   ],
   "not_verified_by_any_gate": [
     "A live Supabase project (PostgREST, GoTrue, Realtime) - tests use an in-memory PostgREST stand-in; SQL is verified on a plain PostgreSQL 16 with stand-in auth objects",
     "A live LLM provider - agents run against a scripted model; detection quality is measured without it, LLM verdict quality is not measured",
-    "Docker image builds and the production compose stack (unless a daemon was available - see the docker gates)",
-    "tb-executor against a real firewall / host",
+    "The frontend image build and the full production compose stack (needs registry access for node/nginx/postgres/postgrest/gotrue base images)",
+    "tb-executor against a real production firewall / fleet, Windows Firewall, nftables-only hosts (the Linux iptables/usermod path IS exercised, but only inside a disposable network+mount namespace)",
+    "Detection quality on real customer traffic - every number is measured on synthetic/derived corpora; the held-out sets are small and were authored by the same team",
+    "LLM latency, token cost and verdict quality under a real provider (the agent evaluation uses scripted back-ends, including adversarial ones)",
     "Hosted-IdP or Supabase asymmetric JWKS endpoints - verified with locally generated keys only",
     "Throughput or latency on production-grade infrastructure, multi-node scaling",
     "Any compliance framework (SOC 2, ISO 27001, ...) - no independent assessment has been performed"

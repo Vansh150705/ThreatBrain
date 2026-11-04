@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased - enterprise SOC platform (branch `claude/funny-wozniak-ifkwdc`, not pushed, not released)
+## Unreleased - final validation phase (same branch; not pushed, not released)
+
+### Added
+- **Deobfuscation layer** (`app/detection/deobfuscate.py`) feeding every rule decoded views of command lines and web fields; identity canonicalisation at ingest; `signal` rule tier; correlation selectors by rule/tactic/tag; 25 new rules (126 total) and 3 correlations (17).
+- **Behavioural analytics** (`app/behavior`, migration 027, `/api/v1/behavior/*`, Behaviour page): tenant-specific baselines, peers, cold-start gating, anti-poisoning, corroboration, alert budgets, analyst feedback. See `docs/BEHAVIORAL_ANALYTICS.md`.
+- **Agent safeguards**: evidence grounding, ATT&CK-id validation, confidence caps, response-target validation, secret/prompt redaction, cooperative stage cancellation; provenance in stored records and in the triage panel.
+- **Validation**: split registry with frozen held-out sets, leakage review, Atomic Red Team and LOLBAS imports (text only), metamorphic and degraded-telemetry experiments, behaviour noise simulation, agent evaluation harness with scripted hostile back-ends, per-split reports.
+- **Reliability tests**: real-HTTP OIDC/JWKS, connector fault injection, response size cap, executor in a disposable namespace, PostgreSQL workload and kill-recovery, backend image hardened-run smoke test.
+- Docs: BEHAVIORAL_ANALYTICS, AGENT_EVALUATION, reports for detection-gap remediation, attack simulation, false-positive analysis, ATT&CK coverage, deployment verification.
+
+### Known failing gates (not waived)
+- Atomic Red Team high-signal recall: tuning 0.582, blind 0.464 (need 0.60).
+- Agent evaluation `reference.expected_calibration_error` 0.1553 (need 0.15).
+
+## Earlier - enterprise SOC platform (branch `claude/funny-wozniak-ifkwdc`, not pushed, not released)
 
 ### Added
 - **Durable pipeline**: idempotent event store, PostgreSQL job queue (leases, retry/backoff, dead-letter, backpressure with 503 + Retry-After), standalone worker (`python -m app.worker`) or embedded worker, retention purge. Migrations 024-026 (rollback scripts for 025/026).

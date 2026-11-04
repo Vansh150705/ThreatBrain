@@ -136,3 +136,53 @@ ingress tool transfer (T1105), credentials in files (T1552.001), decode/deobfusc
 Protocol from here: the held-out detail written in this run is archived in `reports/baselines/` for the record. Anything fixed using that detail turns the
 set into a TUNING set (it is moved in `datasets.yaml` and re-frozen with a reason). A fresh frozen held-out set (v4) plus the never-inspected ART blind half
 are used for the re-measurement.
+
+## Round 3 remediation and re-measurement (rules 2026.11.1, 126 rules)
+
+What was changed (all from the **tuning** halves, the development corpus and the failure classes above; never from a still-frozen set):
+a deobfuscation layer (`app/detection/deobfuscate.py`: quote/caret/`${IFS}`/backtick splicing, PowerShell concatenation / `-f` / `[char]` chains, nested
+URL-encoding and overlong UTF-8, log4j-style lookups, SQL comment splicing, base64 (UTF-8 and UTF-16LE) payloads, escape sequences) applied as extra *views* of
+command and web fields; ~40 new or widened rules for the classes that dominated the ART tuning misses (registry modification, ingress tool transfer,
+credentials in files, decode/deobfuscation, UAC bypass, signed-binary proxy execution, remote-access tools, secure deletion, defense impairment, discovery);
+a `signal` tier (low-confidence behaviours are recorded and usable by correlation but never open a threat on their own); primary-tactic ordering inside rule
+families; correlation selectors by rule, tactic and tag; identity canonicalisation at ingest (case/domain/UPN variants of one account are one entity);
+and the UEBA layer (`app/behavior`).
+
+Consumed sets: `heldout_v3*`, `adversarial_unseen` and the ART tuning half had their per-scenario detail read to fix rules, so they were **moved to the tuning
+split** (thresholds unchanged). `heldout_v4*` and `behavior_heldout_v4` were written and frozen (sha256 in `FROZEN.json`) before their first run.
+
+### First run on the frozen v4 held-out set (rules as of commit 1bfcb65)
+
+| Held-out measure | First run | Gate |
+|---|---|---|
+| Hand-written attacks (39) recall, any hit | 37/39 = 94.9% | >= 80% pass |
+| Difficult negatives (37) false-positive rate | **4/37 = 10.8%** | <= 5% **FAIL** |
+| Campaigns (7) / near-misses quiet | 7/7 / 3/3 | pass |
+| ATT&CK mapping accuracy (detected) | 78.4% | >= 70% pass |
+| ART blind half, high-signal tactics | **155/334 = 46.4%** | >= 60% **FAIL** |
+| ART blind half, all tactics | 40.4% | n/a |
+| LOLBAS-derived (147) | 55.8% | n/a |
+| Behavioural attacks / benign alerted / noise | 15/15 / 2/24 / 0.262 per 100 entity-days | pass |
+| Benign-mutation FP (metamorphic, both sets) | failed | <= 3% **FAIL** |
+
+### After fixing the v4 false positives (4 hand-written benign + the benign-mutation class)
+
+The four v4 false-positive rule ids were read after the first run and fixed (narrowed anchors, benign-twin tests added to the rules). **The post-fix v4
+false-positive rate of 0/37 is therefore not an independent measurement** (the set is now effectively tuned for FP); the first-run row above is the
+independent one. Recall numbers did not change by those fixes (ART high-signal 46.4% before and after).
+
+Current gates (`python -m validation.evaluate --gate`): **30/32 pass, 2 FAIL**, both the same measure on the two ART halves:
+
+| Gate | Value | Threshold | Status |
+|---|---|---|---|
+| `tuning.art_high_signal_recall` | 0.582 | >= 0.60 | **FAILED** (was 0.313 before Round 3 remediation) |
+| `heldout.art_high_signal_recall` | 0.464 | >= 0.60 | **FAILED** (was 0.323) |
+
+The agent-evaluation gate `reference.expected_calibration_error` (0.1553 vs <= 0.15) also fails (17/18 pass). These failures are **not** waived, the
+thresholds were not changed, and the release report lists them as failed.
+
+Reading the gap: the tuning half (0.58) is above the blind half (0.46) by ~12 points; that difference is the overfitting we measured. In the (capped, first 60)
+tuning-half miss list the largest classes are system/network discovery (T1018, T1049, T1016, T1007, T1033, T1012: 19 of 60), network sniffing (T1040), WMI use
+(T1047), obfuscated files (T1027), process injection (T1055) and OS credential dumping variants (T1003.00x). Discovery commands are indistinguishable from
+administration without context (parent process, user baseline, host role), and closing them with command-line rules would raise the false-positive rate; that is
+why they are left as `signal`-tier or uncovered rather than alerting. See `docs/reports/detection-gap-remediation.md`.

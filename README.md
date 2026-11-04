@@ -13,8 +13,9 @@ ThreatBrain ingests security telemetry (host logs, SIEM alerts, cloud audit even
 | Capability | How it works |
 |---|---|
 | **Durable ingestion** | Collectors, SIEM webhooks and the API write events to an idempotent event store and a PostgreSQL job queue, then answer `202`. Workers (scale-out safe: `SKIP LOCKED`, leases, retries, dead-letter) detect, correlate and run the agents. Above a queue ceiling the API answers `503 + Retry-After` instead of accepting unbounded work. |
-| **Detection engine** | 101 ATT&CK-mapped rules ([`rules.yaml`](backend/app/detection/rules.yaml)) with inline positive/negative tests, compiled once for speed, ReDoS-guarded. Runs without an LLM, so a model outage degrades the pipeline instead of stopping it. |
-| **Correlation** | 14 order-independent, exactly-once correlations: kill-chain sequences (spray -> login, exploit -> shell, dump -> lateral movement, ...), multi-phase thresholds and failure-burst/spraying rates over raw events. |
+| **Detection engine** | 126 ATT&CK-mapped rules ([`rules.yaml`](backend/app/detection/rules.yaml)) with inline positive/negative tests, compiled once for speed, ReDoS-guarded. Runs without an LLM, so a model outage degrades the pipeline instead of stopping it. |
+| **Correlation** | 17 order-independent, exactly-once correlations: kill-chain sequences (spray -> login, exploit -> shell, dump -> lateral movement, ...), multi-phase thresholds and failure-burst/spraying rates over raw events. |
+| **Behavioural analytics (UEBA)** | Per-tenant baselines for accounts and hosts (networks, hours, hosts, privileged actions, processes, destinations, data volume) with peer comparison, cold-start gating, anti-poisoning learning, corroboration across feature families, alert budgets and analyst feedback. Explainable, tunable, off the critical path of deterministic rules. See [BEHAVIORAL_ANALYTICS.md](docs/BEHAVIORAL_ANALYTICS.md). |
 | **Detection management** | Per-tenant overrides of built-in rules (reason required, audited), custom rules that cannot be enabled until their tests pass, versions with rollback, Sigma import (unsupported constructs refused, not guessed), ATT&CK coverage view. |
 | **Agents** | Triage · Threat Intel · Investigation · Response · Forensics · Compliance · Hunt · Log Analysis · **Detection Engineering** (proposes rule tunings from analyst false-positive feedback; the server verifies every proposal against real samples and stores only a draft). Strict schemas, bounded retries, recorded runs with version metadata. Groq or any OpenAI-compatible endpoint, or none. |
 | **Evidence-based verdicts** | Rule hits put a *floor* under severity; threat-intel reputation comes from the feeds; log-analysis findings are *verified* only if the cited lines exist. |
@@ -49,7 +50,7 @@ flowchart LR
 ```
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · security model: [docs/SECURITY.md](docs/SECURITY.md) · detection content: [docs/DETECTION.md](docs/DETECTION.md) · running it: [docs/OPERATIONS.md](docs/OPERATIONS.md) ·
-measured detection quality: [docs/VALIDATION.md](docs/VALIDATION.md) · release gates: [docs/RELEASE.md](docs/RELEASE.md) · what was found and fixed: [docs/AUDIT.md](docs/AUDIT.md).
+measured detection quality: [docs/VALIDATION.md](docs/VALIDATION.md) · release gates: [docs/RELEASE.md](docs/RELEASE.md) · what was found and fixed: [docs/AUDIT.md](docs/AUDIT.md) · behavioural analytics: [docs/BEHAVIORAL_ANALYTICS.md](docs/BEHAVIORAL_ANALYTICS.md) · LLM/agent evaluation: [docs/AGENT_EVALUATION.md](docs/AGENT_EVALUATION.md) · reports: [evaluation by split](docs/reports/evaluation-by-split.md), [detection-gap remediation](docs/reports/detection-gap-remediation.md), [attack simulation](docs/reports/attack-simulation.md), [false positives](docs/reports/false-positive-analysis.md), [ATT&CK coverage](docs/reports/attack-coverage.md), [deployment verification](docs/reports/deployment-verification.md).
 
 ## Quick start
 
@@ -118,7 +119,7 @@ Errors are JSON (`{"detail": {"error": "...", "message": "..."}}`); 401 unauthen
 ## Testing
 
 ```bash
-cd backend   && pip install -r requirements-dev.txt && ruff check app tests validation bench && pytest -q      # 656 tests
+cd backend   && pip install -r requirements-dev.txt && ruff check app tests validation bench && pytest -q      # 815 tests
 cd backend   && python -m validation.runner --mode engine --gate && python -m validation.runner --mode pipeline --gate   # detection quality gates
 cd collector && pip install -r requirements-dev.txt && pytest -q                                                # 127 tests
 cd frontend  && npm ci && npm run lint && npx tsc -b && npm test && npm run build                               # 18 component tests
@@ -140,20 +141,20 @@ backend/    FastAPI app: agents/, detection/ (rules, correlations, engine, Sigma
             api/v1/endpoints/, tests/, validation/ (benchmark lab), bench/ (performance)
 collector/  tb_collector (log tailing + detections), tb_executor (approved actions), tb_common (API session)
 frontend/   React 19 + Vite + Tailwind v4 console
-database/   migrations/ (001-026), rollback/, seeders/, migrate.sh, backup.sh, restore.sh, tests/ (real-PostgreSQL), verify_migrations.sh
+database/   migrations/ (001-027), rollback/, seeders/, migrate.sh, backup.sh, restore.sh, tests/ (real-PostgreSQL), verify_migrations.sh
 scripts/    release_gates.py (runs every gate, writes the machine-readable report)
-docs/       ARCHITECTURE, SECURITY, DETECTION, VALIDATION, OPERATIONS, RELEASE, AUDIT, reports/
+docs/       ARCHITECTURE, SECURITY, DETECTION, VALIDATION, OPERATIONS, RELEASE, AUDIT, BEHAVIORAL_ANALYTICS, AGENT_EVALUATION, reports/
 ```
 
 ## Verification status (be aware)
 
 **Run and passed in the build environment** (details and exact numbers: [docs/reports/release-report.md](docs/reports/release-report.md), regenerate with `scripts/release_gates.py`):
-backend 656 tests on Python 3.11 and 3.13 · detection benchmark gates in engine and pipeline mode (169/169 attacks, 0/125 benign false positives on the tuned corpus - **first-run held-out results were 66-73% recall and 4-7% false positives**, see [VALIDATION.md](docs/VALIDATION.md)) ·
-collector 127 tests · frontend lint (0 errors), type-check, 18 component tests, production build · 19 Chromium checks against the real app and bundle · on **PostgreSQL 16**: all 26 migrations, the queue under concurrency, RLS/tenant isolation/append-only audit,
-migration runner (drift refusal, concurrent runners, baseline), rollback, backup/verify/atomic restore · `pip-audit` (installed tree) and `npm audit --omit=dev` at 0 known vulnerabilities · `bandit` medium+ clean · `docker compose config` for both compose files.
+backend 815 tests on Python 3.11 · detection benchmark gates in engine and pipeline mode (169/169 attacks, 0/125 benign false positives on the tuned corpus - **first-run held-out results were 66-95% recall and 4-18% false positives, and 32-46% on the blind Atomic Red Team half; two release gates (ART high-signal recall) currently FAIL**, see [VALIDATION.md](docs/VALIDATION.md)) ·
+collector 140 tests (13 run the real executor in a disposable namespace) · frontend lint (0 errors), type-check, 26 component tests, production build · 19 Chromium checks against the real app and bundle · on **PostgreSQL 16**: all 27 migrations, the queue under concurrency and worker-kill recovery, RLS/tenant isolation/append-only audit,
+migration runner (drift refusal, concurrent runners, baseline), rollback, backup/verify/atomic restore · `pip-audit` (installed tree) and `npm audit --omit=dev` at 0 known vulnerabilities · `bandit` medium+ clean · `docker compose config` for both compose files · the backend image builds and runs under the hardened profile.
 
 **Not exercised** (no credentials/daemon in the build environment, so treat as unverified): a live Supabase project (PostgREST, GoTrue, Realtime), live Groq/AbuseIPDB/VirusTotal/OTX/Discord calls (HTTP layers and the OpenAI-compatible client are tested against local stubs), a live OIDC/JWKS endpoint (locally generated keys only),
-**Docker image builds and running the compose stacks**, `tb-executor` against a real firewall, any SIEM product (adapters are tested with synthetic payloads), and performance on production infrastructure. Apply migrations through 026 and do a staging deployment before relying on it ([docs/OPERATIONS.md](docs/OPERATIONS.md)).
+**the frontend image and the full compose stacks**, a live LLM provider, `tb-executor` against a real firewall or on Windows, any SIEM product (adapters are tested with synthetic payloads), and performance on production infrastructure. Apply migrations through 027 and do a staging deployment before relying on it ([docs/OPERATIONS.md](docs/OPERATIONS.md)).
 
 ## Known limitations
 

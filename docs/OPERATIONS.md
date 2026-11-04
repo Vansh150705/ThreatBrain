@@ -54,8 +54,8 @@ that overwrites `X-Forwarded-For`, `APP_SECRET` (enables signed ingest keys), `M
 * **Upgrade order:** migrate first, then roll out API/worker images (the API's `/ready` stays `503` until the schema it needs is present, so a deploy in the
   wrong order fails safe).
 * **Rollback:** the supported path is *application rollback + restore from backup*. For a quick schema rollback of the newest migrations there are manual,
-  destructive scripts: `database/rollback/026_down.sql`, `025_down.sql` (they drop the objects those migrations created; they cannot remove enum
-  values added by 022/024). Tested: 025 down restores the previous organisation trigger, new organisations still work, and re-applying works.
+  destructive scripts: `database/rollback/027_down.sql` (behavioural baselines), `026_down.sql`, `025_down.sql` (they drop the objects those migrations created; they cannot remove enum
+  values added by 022/024). Tested: 025 down restores the previous organisation trigger, new organisations still work, and re-applying works; 027 down drops the behavioural tables and re-applies cleanly.
 * Verified on PostgreSQL 16: fresh install of all migrations, idempotent re-run, drift refusal, two concurrent runners (each file applied once), baseline,
   rollback + re-apply. Run `./database/tests/test_ops.sh` (needs a server and createdb rights). Not verified: a hosted Supabase project (its `postgres` role and extensions differ from the stand-ins used in tests).
 
@@ -147,9 +147,17 @@ Disable with `ALLOW_DEMO_LOAD=false` in production. The legacy `SEED_DEMO_DATA` 
 
 ## 10. What has and has not been verified
 
-Verified in the build environment: the backend test suite (656 tests on Python 3.11 and 3.13), the validation benchmark gates, PostgreSQL 16 for the queue
+Verified in the build environment: the backend test suite (815 tests on Python 3.11), the validation benchmark gates, PostgreSQL 16 for the queue
 (SKIP LOCKED, leases, dead-letter, retention), RLS/tenant isolation/append-only audit, the migration runner, rollback, backup, verify and restore, the
 Chromium browser tests against the real app on an in-memory database, and `docker compose config` for both compose files.
 **Not verified:** a live Supabase project, a live LLM, Docker image builds and running the compose stack (no daemon was available), `tb-executor`
 against a real firewall, performance on production infrastructure. Do a staging deployment and run `python -m app.doctor`, the Operations page and a
 backup `--verify` before trusting a production rollout.
+
+## Behavioural analytics operations
+
+* Retention: `RETENTION_ANOMALIES_DAYS` (90), `RETENTION_BASELINE_DAYS` (180); purged by the worker's maintenance job (`purge_behavior`).
+* Backfill: `POST /api/v1/behavior/learn` builds baselines from stored events (job `behavior.backfill`); `POST /behavior/recluster` recomputes peer groups. Both are admin-only, audited and run on the durable queue.
+* Metrics: `tb_behavior_anomalies_total`, `tb_behavior_alerts_total`, `tb_behavior_suppressed_total{reason}`, `tb_behavior_errors_total`, `tb_behavior_cas_conflicts_total`, `tb_behavior_eval_seconds` on `/metrics`.
+* Roll-out: start with sensitivity `low`, review `/behavior/anomalies` for two weeks, mark `benign` or `expected`, then relax. Disabling behaviour in `PUT /behavior/settings` stops scoring and learning for that tenant; baselines are kept until retention removes them.
+* Database workload facts (what was measured, what was not): [reports/deployment-verification.md](reports/deployment-verification.md). Set `client_connection_check_interval` on PostgreSQL 14+ so rows locked by a killed worker's running statement are released promptly.

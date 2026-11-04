@@ -65,6 +65,14 @@ organisation are not self-service; API keys cannot mint or rotate keys and canno
 
 Prompt injection is mitigated, not solved: (1)-(2) are what make a successful injection unprofitable. Treat agent text as untrusted output.
 
+### Additional controls verified by the agent evaluation (see [AGENT_EVALUATION.md](AGENT_EVALUATION.md))
+
+* Concrete tokens in model output (IPs, hashes, CVEs, domains, e-mails, paths) are checked against the incident's evidence; ungrounded ones are marked unverified and cap confidence at 70; unknown ATT&CK ids are dropped.
+* A model cannot lower severity below the strongest matching deterministic rule, cannot remove a detection, and its confidence is capped at 75 when nothing deterministic corroborates it.
+* Proposed response targets (IPs, users, hosts) must exist in the incident's own evidence; every action still waits for human approval and the server never executes anything.
+* System-prompt or secret text echoed by a model is redacted before persistence; a stage that exceeded its timeout is cancelled cooperatively so it cannot write late.
+* Deterministic and AI-generated content are stored and displayed separately (provenance in `threats.ai_analysis.reconciliation`, badges in the triage panel).
+
 ## 6. Data protection
 
 Secrets live in environment variables (never returned by any endpoint; `system/status` is tested to contain none). API keys are hashed. `audit_logs` is append-only by trigger (UPDATE/DELETE raise; TRUNCATE denied to end-user roles).

@@ -19,9 +19,9 @@ from __future__ import annotations
 
 import threading
 import time
-from contextvars import ContextVar
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
+from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 from uuid import UUID
@@ -31,6 +31,7 @@ from pydantic import ValidationError
 from app.agents.base import AgentConfigError, AgentInput
 from app.agents.compliance import ComplianceAgent, ComplianceInput
 from app.agents.forensics import ForensicsAgent, ForensicsInput
+from app.agents.grounding import ground_triage
 from app.agents.investigation import InvestigationAgent, InvestigationInput, InvestigationOutput
 from app.agents.response import ResponseAgent, ResponseInput, ResponseOutput
 from app.agents.threat_intel import ThreatIntelAgent, ThreatIntelInput
@@ -42,7 +43,6 @@ from app.detection.engine import SEVERITY_RANK, RuleHit, summarize
 from app.detection.fingerprint import event_fingerprint
 from app.detection.risk import compute_risk_score
 from app.schemas.common import SeverityLevel
-from app.agents.grounding import ground_triage
 from app.services import detection_service, incident_service, notifier
 from app.services.llm_service import LLMError
 from app.services.supabase_client import get_supabase_admin

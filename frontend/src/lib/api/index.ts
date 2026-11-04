@@ -9,6 +9,7 @@ import * as soc from "./soc";
 import * as admin from "./admin";
 import * as pipelines from "./pipelines";
 import * as logAnalysis from "./logAnalysis";
+import * as behavior from "./behavior";
 import * as detection from "./detection";
 import * as ops from "./ops";
 
@@ -48,6 +49,7 @@ export const api = {
   admin,
   pipelines,
   logAnalysis,
+  behavior,
   detection,
   ops,
 };

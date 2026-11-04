@@ -40,7 +40,7 @@ The CloudTrail adapter drops routine read-only calls but keeps Root-user calls, 
   `raw.<dotted.path>` into the vendor payload (keys match case-insensitively), or `text` (every string in the event joined, bounded).
 * `command_line` is evaluated as written **and** with quotes, `cmd.exe ^` escapes and repeated whitespace removed, which defeats the cheapest shell-level obfuscation.
 * Regexes must use bounded gaps (`.{0,200}`); unbounded wildcards and nested quantifiers are rejected when the rule loads.
-* The built-in set is `backend/app/detection/rules.yaml` (101 rules at the time of writing, version in the file header); it is CI-checked for unique ids, valid ATT&CK ids, tests, and a differential test proves the compiled fast path equals the reference interpreter on the whole validation corpus.
+* The built-in set is `backend/app/detection/rules.yaml` (126 rules at the time of writing, version in the file header); it is CI-checked for unique ids, valid ATT&CK ids, tests, and a differential test proves the compiled fast path equals the reference interpreter on the whole validation corpus.
 
 ## 3. Correlations (`correlations.yaml`)
 
@@ -71,3 +71,18 @@ A `disable` recommendation changes nothing. The agent never edits live content.
 
 `tb_detection_hits_total{rule,kind}` shows which rules are noisy and which never fire; the validation corpus shows which techniques are not caught; known evasion gaps are listed openly in the validation report.
 Add a scenario with every rule you add or change (see [VALIDATION.md](VALIDATION.md)).
+
+## 7. Normalisation before matching (`app/detection/deobfuscate.py`)
+
+Rules describe the *meaning* of a command or request; attackers control its *spelling*. Text fields are therefore also evaluated in decoded "alternate" forms, computed once per event and cached on the event view:
+shell quoting/caret/`${IFS}`/ANSI-C/backslash splicing, PowerShell concatenation, `-f` formats, `[char]` chains and backticks, `.exe` suffixes, nested URL encoding (3 layers) with overlong UTF-8 / Unicode look-alikes,
+log4j-style `${lower:j}` lookups, SQL inline comments, `\x`/`\u`/octal escapes and printable base64 payloads (UTF-8 and UTF-16LE). The original text is always evaluated first; a decoded form is only an additional view.
+Each decoder runs only when a cheap marker is present and is length-bounded; nothing is executed. Rules need no change to benefit, and a rule that must see the exact spelling can still opt out of alternates.
+Identity values (user, host) are canonicalised at ingest (case, domain/UPN forms); the original is kept in `raw_data._username_as_sent` / `_asset_name_as_sent`.
+
+## 8. Alerts, signals and behaviour
+
+* A rule marked `signal: true` records a low-confidence behaviour (e.g. a single discovery command). Signals are stored and usable by correlations (selectors accept `rules`, `tactics` or `tags`) but **never open a threat on their own**. Evaluation reports "detected" (any hit) and "alerted" (non-signal hit) separately.
+* Inside a rule family the primary tactic is chosen deterministically so ATT&CK mapping does not depend on rule order.
+* Behavioural anomalies (`TB-UEBA-001..008`) are produced by `app/behavior` and merged with rule hits before the pipeline; see [BEHAVIORAL_ANALYTICS.md](BEHAVIORAL_ANALYTICS.md).
+* What is measured and what is not: [VALIDATION.md](VALIDATION.md) section 0 and [reports/detection-gap-remediation.md](reports/detection-gap-remediation.md). ATT&CK coverage matrix: [reports/attack-coverage.md](reports/attack-coverage.md) (83 of 228 parent techniques have a rule; the catalogue is the full Enterprise matrix).

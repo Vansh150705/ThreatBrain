@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `engine` · commit `6c4c646` · rules `2026.11.1` (104 rules) · 2026-11-04T05:11:19Z
+* Result: **PASS**  · mode `engine` · commit `1384acd` · rules `2026.11.1` (126 rules) · 2026-11-04T07:45:42Z
 * Fidelity: detection engine + correlation only; no database, no LLM
 
 ## Headline metrics
@@ -69,20 +69,18 @@
 ## Evasion probes
 
 11/12 detected. Open documented gaps: 1.
-* `EVA-001` PowerShell with string concatenation to hide IEX: detected (known gap)
-* `EVA-002` Reverse shell via renamed netcat: detected (known gap)
-* `EVA-003` Defender disabled via registry through reg import: detected (known gap)
-* `EVA-004` Log clearing with PowerShell .NET API: detected (known gap)
-* `EVA-005` Credential dump via direct syscalls tool with innocuous name: detected (known gap)
+* `EVA-001` PowerShell with string concatenation to hide IEX: detected
+* `EVA-002` Reverse shell via renamed netcat: detected
+* `EVA-003` Defender disabled via registry through reg import: detected
+* `EVA-004` Log clearing with PowerShell .NET API: detected
+* `EVA-005` Credential dump via direct syscalls tool with innocuous name: detected
 * `EVA-006` Exfil over HTTPS to attacker domain with no tooling signature: MISSED (known gap)
 * `EVA-007` base64 split across arguments: detected
 * `EVA-008` Case and whitespace variation of a known command: detected
 * `EVA-009` Quoted path variation of wevtutil: detected
 * `EVA-010` URL-encoded path traversal: detected
-* `EVA-011` Double URL-encoded traversal: detected (known gap)
+* `EVA-011` Double URL-encoded traversal: detected
 * `EVA-012` Mixed-case JNDI with nested lookups: detected
-
-**Gaps closed (remove `known_gap`)**: ['EVA-001', 'EVA-002', 'EVA-003', 'EVA-004', 'EVA-005', 'EVA-011']
 
 ## Campaign correlation
 
@@ -110,26 +108,26 @@
 
 ## Latency
 
-`{"events": 381, "p50": 0.569, "p95": 1.306, "p99": 2.282, "max": 4.173, "mean": 0.708}`
+`{"events": 381, "p50": 0.81, "p95": 2.909, "p99": 4.786, "max": 6.576, "mean": 1.143}`
 
 ## ATT&CK coverage (catalog subset)
 
 | Tactic | Catalog | With rule | Tested | Detected |
 |---|---|---|---|---|
-| Reconnaissance | 4 | 3 | 0 | 0 |
-| Resource Development | 0 | 0 | 0 | 0 |
-| Initial Access | 9 | 6 | 5 | 5 |
-| Execution | 16 | 11 | 8 | 8 |
-| Persistence | 23 | 18 | 17 | 17 |
-| Privilege Escalation | 23 | 20 | 18 | 18 |
-| Defense Evasion | 39 | 28 | 21 | 21 |
-| Credential Access | 22 | 17 | 15 | 14 |
-| Discovery | 18 | 7 | 6 | 6 |
-| Lateral Movement | 8 | 6 | 3 | 3 |
-| Collection | 12 | 7 | 6 | 6 |
-| Command and Control | 12 | 12 | 8 | 8 |
-| Exfiltration | 8 | 5 | 4 | 4 |
-| Impact | 11 | 10 | 7 | 7 |
+| Reconnaissance | 46 | 3 | 0 | 0 |
+| Resource Development | 51 | 0 | 0 | 0 |
+| Initial Access | 22 | 6 | 5 | 5 |
+| Execution | 63 | 14 | 8 | 8 |
+| Persistence | 113 | 21 | 17 | 17 |
+| Privilege Escalation | 96 | 25 | 18 | 18 |
+| Defense Evasion | 224 | 38 | 22 | 22 |
+| Credential Access | 68 | 19 | 16 | 15 |
+| Discovery | 49 | 8 | 6 | 6 |
+| Lateral Movement | 23 | 6 | 3 | 3 |
+| Collection | 41 | 7 | 6 | 6 |
+| Command and Control | 45 | 13 | 8 | 8 |
+| Exfiltration | 20 | 5 | 4 | 4 |
+| Impact | 33 | 10 | 7 | 7 |
 
 ## Limitations of this benchmark
 

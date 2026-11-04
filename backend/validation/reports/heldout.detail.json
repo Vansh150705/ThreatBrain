@@ -17,7 +17,7 @@
     "TB-CRED-002",
     "TB-IMPACT-001"
    ],
-   "ms": 3.1215740000334335,
+   "ms": 3.013273000760819,
    "severity_label": "critical",
    "severity_got": "critical",
    "sev_delta": 0,
@@ -39,7 +39,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 1.8804400006047217,
+   "ms": 1.8569389994809171,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -63,7 +63,7 @@
     "TB-EXEC-016",
     "TB-EXEC-018"
    ],
-   "ms": 3.807081000559265,
+   "ms": 3.5142269989592023,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -85,7 +85,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.6781019994596136,
+   "ms": 1.4799809996475233,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -108,7 +108,7 @@
     "TB-EXEC-001",
     "TB-EXEC-006"
    ],
-   "ms": 3.256410000176402,
+   "ms": 3.0725629985681735,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -130,7 +130,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.6442629994344315,
+   "ms": 1.6119889987749048,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -152,7 +152,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 1.367603999824496,
+   "ms": 1.230109999596607,
    "severity_label": "medium",
    "severity_got": "medium",
    "sev_delta": 0,
@@ -177,7 +177,7 @@
     "TB-EXEC-017",
     "TB-PERSIST-002"
    ],
-   "ms": 3.88373900022998,
+   "ms": 3.30522900003416,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -199,7 +199,7 @@
    "rules": [
     "TB-EVADE-008"
    ],
-   "ms": 2.957906000119692,
+   "ms": 2.791068000078667,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -221,7 +221,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.4366859995789127,
+   "ms": 1.4292320011008997,
    "severity_label": "critical",
    "severity_got": "low",
    "sev_delta": -3,
@@ -244,7 +244,7 @@
     "TB-EXEC-017",
     "TB-EXFIL-003"
    ],
-   "ms": 0.8807929998511099,
+   "ms": 0.9773719993972918,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -267,7 +267,7 @@
     "TB-EXEC-017",
     "TB-EXFIL-003"
    ],
-   "ms": 0.8010540004761424,
+   "ms": 0.9329589993285481,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -287,7 +287,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0595459998512524,
+   "ms": 0.9495779995631892,
    "severity_label": "high",
    "severity_got": null,
    "sev_delta": null,
@@ -310,7 +310,7 @@
     "TB-EVADE-001",
     "TB-EVADE-015"
    ],
-   "ms": 0.9605029999875114,
+   "ms": 0.9176550011034124,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -334,7 +334,7 @@
     "TB-EXEC-010",
     "TB-EXEC-017"
    ],
-   "ms": 1.9155680001858855,
+   "ms": 2.046641000561067,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -357,7 +357,7 @@
     "TB-EXEC-009",
     "TB-PRIV-004"
    ],
-   "ms": 1.1074800004280405,
+   "ms": 1.1450820002210094,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -379,7 +379,7 @@
    "rules": [
     "TB-PRIV-005"
    ],
-   "ms": 1.2009189995296765,
+   "ms": 1.2506690000009257,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -401,7 +401,7 @@
    "rules": [
     "TB-EXFIL-003"
    ],
-   "ms": 1.1692859998220229,
+   "ms": 1.4642890000686748,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -424,7 +424,7 @@
     "TB-CLOUD-003",
     "TB-PRIV-005"
    ],
-   "ms": 1.5625910000380827,
+   "ms": 1.723942999888095,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -447,7 +447,7 @@
     "TB-EXEC-010",
     "TB-EXEC-017"
    ],
-   "ms": 3.650593000202207,
+   "ms": 3.9277670002775267,
    "severity_label": "high",
    "severity_got": "medium",
    "sev_delta": -1,
@@ -471,7 +471,7 @@
     "TB-EXEC-010",
     "TB-EXEC-017"
    ],
-   "ms": 2.5872610003716545,
+   "ms": 2.589792000435409,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -493,7 +493,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 1.4726170002177241,
+   "ms": 1.4336320000438718,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -517,7 +517,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 0.7757820003462257,
+   "ms": 0.8088169997790828,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -540,7 +540,7 @@
     "TB-CRED-003",
     "TB-CRED-006"
    ],
-   "ms": 1.5379710002889624,
+   "ms": 1.468762999138562,
    "severity_label": "medium",
    "severity_got": "medium",
    "sev_delta": 0,
@@ -563,7 +563,7 @@
     "TB-EXEC-016",
     "TB-PERSIST-004"
    ],
-   "ms": 3.4454669994374854,
+   "ms": 3.418981999857351,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -585,7 +585,7 @@
    "rules": [
     "TB-EVADE-001"
    ],
-   "ms": 1.4709180004501832,
+   "ms": 1.5072210007929243,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -607,7 +607,7 @@
    "rules": [
     "TB-IMPACT-007"
    ],
-   "ms": 1.1371509999662521,
+   "ms": 1.1773810001614038,
    "severity_label": "critical",
    "severity_got": "low",
    "sev_delta": -3,
@@ -627,7 +627,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0370279997005127,
+   "ms": 1.0429510002722964,
    "severity_label": "high",
    "severity_got": null,
    "sev_delta": null,
@@ -649,7 +649,7 @@
    "rules": [
     "TB-IMPACT-005"
    ],
-   "ms": 1.7529890001242165,
+   "ms": 2.1788860012748046,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -671,7 +671,7 @@
    "rules": [
     "TB-WEB-006"
    ],
-   "ms": 1.137855999331805,
+   "ms": 1.2288039997656597,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -693,7 +693,7 @@
    "rules": [
     "TB-WEB-006"
    ],
-   "ms": 1.0016930000347202,
+   "ms": 1.0469999997440027,
    "severity_label": "critical",
    "severity_got": "high",
    "sev_delta": -1,
@@ -715,7 +715,7 @@
    "rules": [
     "TB-WEB-004"
    ],
-   "ms": 1.2253330005478347,
+   "ms": 1.208548999784398,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -737,7 +737,7 @@
    "rules": [
     "TB-WEB-010"
    ],
-   "ms": 0.9909079999488313,
+   "ms": 1.0536749996390427,
    "severity_label": "critical",
    "severity_got": "critical",
    "sev_delta": 0,
@@ -759,7 +759,7 @@
    "rules": [
     "TB-WEB-005"
    ],
-   "ms": 0.764540000091074,
+   "ms": 0.7804299984854879,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -781,7 +781,7 @@
    "rules": [
     "TB-WEB-005"
    ],
-   "ms": 0.6833719999121968,
+   "ms": 0.6480319989350392,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -803,7 +803,7 @@
    "rules": [
     "TB-CLOUD-002"
    ],
-   "ms": 1.0668280001482344,
+   "ms": 1.0942959997919388,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -825,7 +825,7 @@
    "rules": [
     "TB-CLOUD-002"
    ],
-   "ms": 1.0679340002752724,
+   "ms": 1.1196489995199954,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -847,7 +847,7 @@
    "rules": [
     "TB-CLOUD-001"
    ],
-   "ms": 1.162904000011622,
+   "ms": 1.1988429996563355,
    "severity_label": "high",
    "severity_got": "high",
    "sev_delta": 0,
@@ -869,7 +869,7 @@
    "rules": [
     "TB-NET-002"
    ],
-   "ms": 1.4989620003689197,
+   "ms": 1.5693229997850722,
    "severity_label": "medium",
    "severity_got": "medium",
    "sev_delta": 0,
@@ -891,7 +891,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 2.4699420000615646,
+   "ms": 2.475119999871822,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -913,7 +913,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 2.4443310003334773,
+   "ms": 2.4960099999589147,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -935,7 +935,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 1.8099520002579084,
+   "ms": 1.6199919991777278,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -959,7 +959,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 10.080611000375939,
+   "ms": 10.203846999502275,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -981,7 +981,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 3.7433400002555572,
+   "ms": 3.688820999741438,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1004,7 +1004,7 @@
     "TB-CRED-001",
     "TB-EXEC-002"
    ],
-   "ms": 4.110595999918587,
+   "ms": 4.130799999984447,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1026,7 +1026,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 3.4574219998830813,
+   "ms": 3.479401000731741,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1048,7 +1048,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 3.006238999660127,
+   "ms": 3.0229490002966486,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1068,7 +1068,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.479131000152847,
+   "ms": 4.477243001019815,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1088,7 +1088,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.038656001081108,
+   "ms": 3.1896739983494626,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1112,7 +1112,7 @@
     "TB-EXEC-008",
     "TB-EXEC-018"
    ],
-   "ms": 3.8527900005647098,
+   "ms": 3.6133650010015117,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1134,7 +1134,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 2.0208300002195756,
+   "ms": 1.900236999063054,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1157,7 +1157,7 @@
     "TB-EXEC-011",
     "TB-IMPACT-001"
    ],
-   "ms": 2.1402229995146627,
+   "ms": 1.9012190005014418,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1180,7 +1180,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 4.290249999939988,
+   "ms": 3.909281998858205,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1203,7 +1203,7 @@
     "TB-CRED-002",
     "TB-EXEC-008"
    ],
-   "ms": 4.562168000120437,
+   "ms": 4.311640001105843,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1225,7 +1225,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 0.5191000000195345,
+   "ms": 0.4844489994866308,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -1247,7 +1247,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 4.8303280000254745,
+   "ms": 4.6046340012253495,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1267,7 +1267,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6184360001716414,
+   "ms": 1.4998220012785168,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1287,7 +1287,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.34398200004216,
+   "ms": 7.846098000300117,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1309,7 +1309,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 1.502862999586796,
+   "ms": 1.2937659994349815,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1329,7 +1329,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.365746999908879,
+   "ms": 1.2328349985182285,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1351,7 +1351,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 3.67857799938065,
+   "ms": 3.417659001570428,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1371,7 +1371,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 18.441573000018252,
+   "ms": 18.640120999407372,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1393,7 +1393,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 4.898375999800919,
+   "ms": 4.64433599881886,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -1413,7 +1413,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2151250002716552,
+   "ms": 0.9155970001302194,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1433,7 +1433,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 15.232077999826288,
+   "ms": 12.481779000154347,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1453,7 +1453,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.4477560000377707,
+   "ms": 1.6753940017224522,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1473,7 +1473,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.873954999813577,
+   "ms": 2.1101970014569815,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1493,7 +1493,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2682399992627325,
+   "ms": 0.7838459987397073,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1513,7 +1513,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.884355999725813,
+   "ms": 6.309510999926715,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1533,7 +1533,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 39.28772400104208,
+   "ms": 30.649207003079937,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1553,7 +1553,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.991803999975673,
+   "ms": 2.7669470000546426,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1573,7 +1573,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.3270370002137497,
+   "ms": 2.2105509997345507,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1593,7 +1593,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9124970001721522,
+   "ms": 0.7183149991760729,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1613,7 +1613,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 15.079796999998507,
+   "ms": 14.809492999120266,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1635,7 +1635,7 @@
    "rules": [
     "TB-DISC-005"
    ],
-   "ms": 3.345357999933185,
+   "ms": 3.2811979999678442,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1657,7 +1657,7 @@
    "rules": [
     "TB-MAL-001"
    ],
-   "ms": 1.2635879993467825,
+   "ms": 1.148487999671488,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1677,7 +1677,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 27.19526799955929,
+   "ms": 29.606958998556365,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1699,7 +1699,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.1619520000749617,
+   "ms": 1.2326369997026632,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -1721,7 +1721,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.052677999723528,
+   "ms": 1.0756479987321654,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -1741,7 +1741,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.4445470003702212,
+   "ms": 0.48652499935997184,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1761,7 +1761,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.058159000625892,
+   "ms": 2.9538830003730254,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1781,7 +1781,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.364649999435642,
+   "ms": 3.699887998664053,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1801,7 +1801,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7191449994934374,
+   "ms": 0.6139450015325565,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1821,7 +1821,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6550770003741491,
+   "ms": 0.6264349995035445,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1841,7 +1841,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.522028000086721,
+   "ms": 8.76555200011353,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1863,7 +1863,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 0.7365100000242819,
+   "ms": 1.2977089991181856,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -1887,7 +1887,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 4.6106149993647705,
+   "ms": 6.582121999599622,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1909,7 +1909,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.2617239999599406,
+   "ms": 1.834732000133954,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -1929,7 +1929,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.577903000106744,
+   "ms": 8.983862000604859,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1949,7 +1949,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.840084999661485,
+   "ms": 3.8806739994470263,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -1971,7 +1971,7 @@
    "rules": [
     "TB-EXFIL-003"
    ],
-   "ms": 5.919705999986036,
+   "ms": 7.2919149988592835,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -1993,7 +1993,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 3.4851410000555916,
+   "ms": 3.5342649989615893,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2013,7 +2013,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.547107000282267,
+   "ms": 2.715938999244827,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2035,7 +2035,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 3.6360370004331344,
+   "ms": 3.9856769999460084,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2055,7 +2055,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.564278999983799,
+   "ms": 9.36193500092486,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2077,7 +2077,7 @@
    "rules": [
     "TB-CRED-004"
    ],
-   "ms": 1.8460280007275287,
+   "ms": 1.755819999743835,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2099,7 +2099,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 1.5332419998230762,
+   "ms": 2.1799559999635676,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2121,7 +2121,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 1.437903000805818,
+   "ms": 2.138832000127877,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2143,7 +2143,7 @@
    "rules": [
     "TB-EXEC-001"
    ],
-   "ms": 15.32378299998527,
+   "ms": 19.161815998813836,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2163,7 +2163,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.586468999652425,
+   "ms": 4.876068998783012,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2183,7 +2183,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.638065999846731,
+   "ms": 6.142070000350941,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2203,7 +2203,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.6757249999936903,
+   "ms": 3.7756080000690417,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2223,7 +2223,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 12.183652000203438,
+   "ms": 11.965137999141007,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2243,7 +2243,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2707929990938283,
+   "ms": 1.35763400066935,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2263,7 +2263,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 12.58490000054735,
+   "ms": 12.23213200137252,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2283,7 +2283,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.606981999837444,
+   "ms": 3.733576997547061,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2303,7 +2303,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.545943999895826,
+   "ms": 0.4355319997557672,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2325,7 +2325,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 1.6914209991227835,
+   "ms": 1.476655001170002,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2347,7 +2347,7 @@
    "rules": [
     "TB-EVADE-014"
    ],
-   "ms": 6.276882999372901,
+   "ms": 6.233557998712058,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2367,7 +2367,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.543347999970138,
+   "ms": 4.054441002153908,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2387,7 +2387,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.46361099936621,
+   "ms": 7.498592998672393,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2409,7 +2409,7 @@
    "rules": [
     "TB-EXEC-001"
    ],
-   "ms": 6.503266999970947,
+   "ms": 7.1255330003623385,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2431,7 +2431,7 @@
    "rules": [
     "TB-EVADE-014"
    ],
-   "ms": 2.4157159996320843,
+   "ms": 2.5377860001754016,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2453,7 +2453,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 2.079007000247657,
+   "ms": 2.188715998272528,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2473,7 +2473,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.6091699992321082,
+   "ms": 2.66759800069849,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2495,7 +2495,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 9.232673000042269,
+   "ms": 11.67717299904325,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2515,7 +2515,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 10.966389000714116,
+   "ms": 13.15923299989663,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2538,7 +2538,7 @@
     "TB-EXEC-016",
     "TB-PERSIST-008"
    ],
-   "ms": 6.695230998957413,
+   "ms": 6.846487000075285,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2558,7 +2558,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1478820006232127,
+   "ms": 1.4877859994157916,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2578,7 +2578,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.547908000247844,
+   "ms": 1.5731590010545915,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2598,7 +2598,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7372319996648002,
+   "ms": 0.7187720002548303,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2618,7 +2618,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8706010003152187,
+   "ms": 0.6483300003310433,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2638,7 +2638,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7174350002969732,
+   "ms": 0.8424389998253901,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2658,7 +2658,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.732274999791116,
+   "ms": 0.8148069991875673,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2678,7 +2678,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6533300002047326,
+   "ms": 0.6828069999755826,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2698,7 +2698,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2719060005110805,
+   "ms": 1.2039220000588102,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2720,7 +2720,7 @@
    "rules": [
     "TB-RECON-002"
    ],
-   "ms": 0.7461929999408312,
+   "ms": 0.6320500015135622,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -2742,7 +2742,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 5.749245000515657,
+   "ms": 4.151881999860052,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2764,7 +2764,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 5.073966000054497,
+   "ms": 4.028719999041641,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2786,7 +2786,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.529050999735773,
+   "ms": 4.179530000328668,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2806,7 +2806,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 36.53693900014332,
+   "ms": 34.4207029993413,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2826,7 +2826,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.0520699999906356,
+   "ms": 2.008479001233354,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2846,7 +2846,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4858349995847675,
+   "ms": 1.3907379998272518,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2866,7 +2866,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.059982999933709,
+   "ms": 4.072040001119603,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2888,7 +2888,7 @@
    "rules": [
     "TB-EXEC-001"
    ],
-   "ms": 4.211344000395911,
+   "ms": 4.336013000283856,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2908,7 +2908,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.971500999497948,
+   "ms": 6.742261000908911,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2931,7 +2931,7 @@
     "TB-EXEC-008",
     "TB-EXEC-018"
    ],
-   "ms": 4.103346999727364,
+   "ms": 4.102971000975231,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -2951,7 +2951,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 17.301844000030542,
+   "ms": 17.169947999718715,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2971,7 +2971,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.5985140000557294,
+   "ms": 2.6151299989578547,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -2991,7 +2991,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.908251999950153,
+   "ms": 4.912772999887238,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3011,7 +3011,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 12.3155270002826,
+   "ms": 12.378735998936463,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3031,7 +3031,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 14.528278999932809,
+   "ms": 15.31730900023831,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3051,7 +3051,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.761079000265454,
+   "ms": 2.9594850002467865,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3071,7 +3071,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7667210002182401,
+   "ms": 0.6873849997646175,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3091,7 +3091,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.5472150007553864,
+   "ms": 1.5063669998198748,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3111,7 +3111,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.677582000316761,
+   "ms": 5.405548999988241,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3133,7 +3133,7 @@
    "rules": [
     "TB-PERSIST-002"
    ],
-   "ms": 4.951421999976446,
+   "ms": 2.8222249984537484,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -3153,7 +3153,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.578802999778418,
+   "ms": 1.6558569986955263,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3175,7 +3175,7 @@
    "rules": [
     "TB-PERSIST-002"
    ],
-   "ms": 18.3582320005371,
+   "ms": 13.434706999760238,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -3198,7 +3198,7 @@
     "TB-EXEC-001",
     "TB-PERSIST-002"
    ],
-   "ms": 14.074711999455758,
+   "ms": 10.560908000115887,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3218,7 +3218,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.420534999961092,
+   "ms": 5.242535000434145,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3242,7 +3242,7 @@
     "TB-PERSIST-008",
     "TB-PRIV-003"
    ],
-   "ms": 6.594016001145064,
+   "ms": 10.906860001341556,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3264,7 +3264,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 21.40076300020155,
+   "ms": 34.32029500072531,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3286,7 +3286,7 @@
    "rules": [
     "TB-EXEC-014"
    ],
-   "ms": 4.023981999125681,
+   "ms": 5.574700000579469,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3308,7 +3308,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 2.8301880001890822,
+   "ms": 4.373613999632653,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3331,7 +3331,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 6.638648999796715,
+   "ms": 10.068700999909197,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3351,7 +3351,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.537309999956051,
+   "ms": 5.677385999661055,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3371,7 +3371,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.007974999694852,
+   "ms": 5.511388000741135,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3391,7 +3391,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9999430005555041,
+   "ms": 2.5586060000932775,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3411,7 +3411,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.7563690000533825,
+   "ms": 2.6453629998286488,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3431,7 +3431,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.0665590002172394,
+   "ms": 4.6621760011476,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3453,7 +3453,7 @@
    "rules": [
     "TB-EVADE-004"
    ],
-   "ms": 3.248629999689001,
+   "ms": 4.5993730000191135,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3473,7 +3473,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.7497299995739013,
+   "ms": 2.461276999383699,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3493,7 +3493,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.407986000136589,
+   "ms": 8.159190998412669,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3513,7 +3513,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.906579999740643,
+   "ms": 2.6967009998770664,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3533,7 +3533,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.251044999160513,
+   "ms": 4.750703001263901,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3553,7 +3553,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.4987459997209953,
+   "ms": 0.6604549998883158,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3573,7 +3573,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.622040000052948,
+   "ms": 0.8512390013493132,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3593,7 +3593,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.5517949998175027,
+   "ms": 3.776400999413454,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3613,7 +3613,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 27.31779599980655,
+   "ms": 31.617812999684247,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3636,7 +3636,7 @@
     "TB-DISC-005",
     "TB-EXEC-002"
    ],
-   "ms": 8.682701999532583,
+   "ms": 8.581955999034108,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3658,7 +3658,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 32.847396000761364,
+   "ms": 34.991260999959195,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -3680,7 +3680,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 9.368844000164245,
+   "ms": 10.27247999991232,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3700,7 +3700,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 10.2515360003963,
+   "ms": 9.926560000167228,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3722,7 +3722,7 @@
    "rules": [
     "TB-EXEC-001"
    ],
-   "ms": 14.933032999579154,
+   "ms": 14.46424400091928,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3742,7 +3742,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.569175999975414,
+   "ms": 1.4959789987187833,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3762,7 +3762,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9423330004428863,
+   "ms": 1.9669619996420806,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3785,7 +3785,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 2.411178000329528,
+   "ms": 2.6218760012852727,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3805,7 +3805,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4630009995453293,
+   "ms": 3.369576999830315,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3825,7 +3825,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.0244899999161134,
+   "ms": 2.8946819984412286,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3845,7 +3845,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.1240670002953266,
+   "ms": 2.055599999948754,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3865,7 +3865,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.6974749998771586,
+   "ms": 2.2733050009264844,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3885,7 +3885,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.4432909999159165,
+   "ms": 4.273298000043724,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3905,7 +3905,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.615010000132315,
+   "ms": 9.818491998885293,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3927,7 +3927,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 4.741424001622363,
+   "ms": 5.397192000600626,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -3950,7 +3950,7 @@
     "TB-EXEC-004",
     "TB-EXEC-010"
    ],
-   "ms": 3.1093630004761508,
+   "ms": 3.3674510013952386,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -3970,7 +3970,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.833331999478105,
+   "ms": 1.7984180012717843,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -3990,7 +3990,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6039250003814232,
+   "ms": 1.5799309985595755,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4010,7 +4010,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.644600998792157,
+   "ms": 2.583327001048019,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4032,7 +4032,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 4.645852000976447,
+   "ms": 4.920899998978712,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4052,7 +4052,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2630630001003738,
+   "ms": 2.3328620027314173,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4075,7 +4075,7 @@
     "TB-EXEC-004",
     "TB-EXEC-010"
    ],
-   "ms": 2.474113000971556,
+   "ms": 3.076465000049211,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4095,7 +4095,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.426166000579542,
+   "ms": 0.5837759999849368,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4117,7 +4117,7 @@
    "rules": [
     "TB-EXEC-012"
    ],
-   "ms": 1.1291060000075959,
+   "ms": 1.393378999637207,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4137,7 +4137,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.738464000482054,
+   "ms": 1.64991400015424,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4157,7 +4157,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.28607299959549,
+   "ms": 2.3952079991431674,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4180,7 +4180,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 6.080940999709128,
+   "ms": 6.239292000827845,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4202,7 +4202,7 @@
    "rules": [
     "TB-PRIV-002"
    ],
-   "ms": 15.400072999909753,
+   "ms": 14.227617000869941,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4224,7 +4224,7 @@
    "rules": [
     "TB-PRIV-002"
    ],
-   "ms": 21.750981999502983,
+   "ms": 16.35047499985376,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4244,7 +4244,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.616489999942132,
+   "ms": 7.522647998484899,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4264,7 +4264,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 13.302778999786824,
+   "ms": 14.810316997682094,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4284,7 +4284,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7722829996055225,
+   "ms": 1.0003280003729742,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4308,7 +4308,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 5.95641599920782,
+   "ms": 6.137710000984953,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4333,7 +4333,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 6.452651000472542,
+   "ms": 6.575375999091193,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4355,7 +4355,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.822942999751831,
+   "ms": 1.7271019987674663,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -4377,7 +4377,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.026205000016489,
+   "ms": 0.9245099990948802,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -4397,7 +4397,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.7988649999315385,
+   "ms": 2.8135770007793326,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4421,7 +4421,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 7.334149999223882,
+   "ms": 7.249889000377152,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4445,7 +4445,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 5.7434400005149655,
+   "ms": 5.0319589990976965,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4465,7 +4465,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.2157839996216353,
+   "ms": 3.5018409998883726,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4487,7 +4487,7 @@
    "rules": [
     "TB-EVADE-001"
    ],
-   "ms": 0.7691110004088841,
+   "ms": 0.7466150000254856,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4509,7 +4509,7 @@
    "rules": [
     "TB-EVADE-001"
    ],
-   "ms": 0.7724919996690005,
+   "ms": 0.6421770012821071,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4532,7 +4532,7 @@
     "TB-EVADE-001",
     "TB-PERSIST-003"
    ],
-   "ms": 3.272760000982089,
+   "ms": 2.9506860009860247,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4552,7 +4552,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8163989996319287,
+   "ms": 0.9217380011250498,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4572,7 +4572,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9469939996051835,
+   "ms": 0.866537000547396,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4592,7 +4592,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1163740000483813,
+   "ms": 1.1684269993565977,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4612,7 +4612,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6758240006092819,
+   "ms": 0.6820060007157736,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4635,7 +4635,7 @@
     "TB-EVADE-005",
     "TB-EVADE-015"
    ],
-   "ms": 0.8071590000326978,
+   "ms": 0.6483269989985274,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4655,7 +4655,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6997749999063672,
+   "ms": 1.4443649997701868,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4675,7 +4675,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8574189996579662,
+   "ms": 0.9630569984437898,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4695,7 +4695,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7933099996080273,
+   "ms": 0.8631500004412374,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4717,7 +4717,7 @@
    "rules": [
     "TB-EVADE-005"
    ],
-   "ms": 2.8873619994556066,
+   "ms": 2.7983990003122017,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4739,7 +4739,7 @@
    "rules": [
     "TB-EVADE-005"
    ],
-   "ms": 3.3998019998762175,
+   "ms": 2.8178619995742338,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4761,7 +4761,7 @@
    "rules": [
     "TB-EVADE-005"
    ],
-   "ms": 3.8017329998183413,
+   "ms": 2.8060060012649046,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4781,7 +4781,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.1827209995753947,
+   "ms": 2.99458900008176,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4801,7 +4801,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 13.754389000496303,
+   "ms": 12.274016000446863,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4821,7 +4821,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.5342320006748196,
+   "ms": 3.0109529998298967,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4841,7 +4841,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.005398000117566,
+   "ms": 4.840876999878674,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -4863,7 +4863,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 2.198486999986926,
+   "ms": 1.8525539999245666,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4886,7 +4886,7 @@
     "TB-EXEC-004",
     "TB-EXEC-010"
    ],
-   "ms": 1.7597340001884731,
+   "ms": 2.3496039993915474,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4908,7 +4908,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 2.4346310001419624,
+   "ms": 2.2617399990849663,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4930,7 +4930,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.419132000293757,
+   "ms": 4.215028000544407,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -4952,7 +4952,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 6.327256000076886,
+   "ms": 6.324340998617117,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4974,7 +4974,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 5.27358200179151,
+   "ms": 4.179016001216951,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -4996,7 +4996,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 1.9884220000676578,
+   "ms": 1.8735100002231775,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -5016,7 +5016,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.532500999426702,
+   "ms": 3.2483880004292587,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5038,7 +5038,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 3.2396449996667798,
+   "ms": 3.1234540001605637,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5058,7 +5058,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.36125000003085,
+   "ms": 6.4211799999611685,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5078,7 +5078,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.712548998824786,
+   "ms": 5.760605999967083,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5098,7 +5098,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.645594000161509,
+   "ms": 0.4400910002004821,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5118,7 +5118,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6040510006641853,
+   "ms": 0.41282100028183777,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5138,7 +5138,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.76569900031609,
+   "ms": 1.5327039982366841,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5158,7 +5158,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6087350002417224,
+   "ms": 0.40399299905402586,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5180,7 +5180,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 6.082869999772811,
+   "ms": 5.500655999640003,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5202,7 +5202,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 5.834386000060476,
+   "ms": 5.198427999857813,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5224,7 +5224,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 5.0138440001319395,
+   "ms": 5.65504899896041,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5246,7 +5246,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 6.475408999904175,
+   "ms": 8.157416001267848,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5266,7 +5266,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6972800003713928,
+   "ms": 2.4222109987022122,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5286,7 +5286,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.9648539996051113,
+   "ms": 4.5674030006921384,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5306,7 +5306,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.79416700029833,
+   "ms": 2.179372999307816,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5326,7 +5326,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.492709000056493,
+   "ms": 4.026029000669951,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5346,7 +5346,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.114314999744238,
+   "ms": 3.0643480004073353,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5366,7 +5366,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.29572299940628,
+   "ms": 3.021709999302402,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5386,7 +5386,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8766179998929147,
+   "ms": 1.0735880005086074,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5406,7 +5406,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.15772800049308,
+   "ms": 7.167425999796251,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5426,7 +5426,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 34.22573299940268,
+   "ms": 31.565823999699205,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5446,7 +5446,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2308459999985644,
+   "ms": 1.1171229998581111,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5466,7 +5466,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4303319989703596,
+   "ms": 3.3902699997270247,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5488,7 +5488,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 2.8733890003422857,
+   "ms": 2.8300589983700775,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -5510,7 +5510,7 @@
    "rules": [
     "TB-DISC-005"
    ],
-   "ms": 7.020128000476689,
+   "ms": 6.245363998459652,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5532,7 +5532,7 @@
    "rules": [
     "TB-DISC-005"
    ],
-   "ms": 3.882579999299196,
+   "ms": 3.495862998533994,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5554,7 +5554,7 @@
    "rules": [
     "TB-DISC-005"
    ],
-   "ms": 3.2762020000518532,
+   "ms": 3.1281009996746434,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5574,7 +5574,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.161957999509468,
+   "ms": 2.413457001239294,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5596,7 +5596,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.914423000627721,
+   "ms": 4.1798319998633815,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5618,7 +5618,7 @@
    "rules": [
     "TB-CRED-004"
    ],
-   "ms": 5.5502949999208795,
+   "ms": 5.6674400002521,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5640,7 +5640,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.167725000414066,
+   "ms": 0.9188889998767991,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -5662,7 +5662,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 1.3344769995455863,
+   "ms": 1.2437259993021144,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -5682,7 +5682,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 17.43787700070243,
+   "ms": 13.984044999233447,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5702,7 +5702,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.901415999891469,
+   "ms": 6.61271500030125,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5722,7 +5722,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 35.592887999882805,
+   "ms": 31.947393999871565,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5742,7 +5742,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 38.903673000277195,
+   "ms": 32.541792999836616,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5762,7 +5762,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 37.49017100017227,
+   "ms": 34.69180300089647,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5782,7 +5782,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 36.937670999577676,
+   "ms": 36.854158001006,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5802,7 +5802,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.658885000324517,
+   "ms": 1.1865169999509817,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5822,7 +5822,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.514567999947758,
+   "ms": 0.9498950003035134,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5842,7 +5842,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2564290002264897,
+   "ms": 0.9008630004245788,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5864,7 +5864,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 1.7000529996948899,
+   "ms": 1.4506810002785642,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -5886,7 +5886,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 10.626901999785332,
+   "ms": 8.693694000612595,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -5908,7 +5908,7 @@
    "rules": [
     "TB-EVADE-014"
    ],
-   "ms": 2.4371469999096007,
+   "ms": 2.452450999044231,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -5928,7 +5928,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.896073999792861,
+   "ms": 6.367374999172171,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5948,7 +5948,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.3146370007889345,
+   "ms": 4.360303000794374,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5968,7 +5968,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6366650004565599,
+   "ms": 0.7204230005299905,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -5988,7 +5988,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.093017999271979,
+   "ms": 7.449620999977924,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6008,7 +6008,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4449319996856502,
+   "ms": 1.3439100002869964,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6034,7 +6034,7 @@
     "TB-EXEC-018",
     "TB-LAT-002"
    ],
-   "ms": 18.336043000090285,
+   "ms": 16.9853539991891,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6054,7 +6054,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.351739999445272,
+   "ms": 6.134131001090282,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6076,7 +6076,7 @@
    "rules": [
     "TB-EXEC-010"
    ],
-   "ms": 2.099371000440442,
+   "ms": 1.7555619997438043,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -6096,7 +6096,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.451816000459075,
+   "ms": 4.562201000226196,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6116,7 +6116,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9579390000217245,
+   "ms": 1.9324690001667477,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6136,7 +6136,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.5732359997855383,
+   "ms": 1.4007299996592337,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6156,7 +6156,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 9.438292001505033,
+   "ms": 7.745322000118904,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6176,7 +6176,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 21.61319100014225,
+   "ms": 21.19563999985985,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6200,7 +6200,7 @@
     "TB-EXEC-010",
     "TB-PERSIST-001"
    ],
-   "ms": 6.123054999989108,
+   "ms": 4.312796003432595,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6222,7 +6222,7 @@
    "rules": [
     "TB-CRED-004"
    ],
-   "ms": 9.542363000036858,
+   "ms": 5.633980001221062,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6242,7 +6242,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.984392000049411,
+   "ms": 5.072952000773512,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6265,7 +6265,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 8.613628000603057,
+   "ms": 6.256194001252879,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6287,7 +6287,7 @@
    "rules": [
     "TB-CRED-004"
    ],
-   "ms": 8.681051000166917,
+   "ms": 6.234317999769701,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6310,7 +6310,7 @@
     "TB-PERSIST-004",
     "TB-PERSIST-008"
    ],
-   "ms": 4.934173000037845,
+   "ms": 3.6276400005590403,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6330,7 +6330,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.954115999586065,
+   "ms": 9.388161000970285,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6352,7 +6352,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 10.85358999989694,
+   "ms": 7.706962000156636,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6374,7 +6374,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 3.6713009994855383,
+   "ms": 2.7307159998599673,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6394,7 +6394,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.797087000042666,
+   "ms": 3.7025040001026355,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6414,7 +6414,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 9.236449999662,
+   "ms": 6.877886000438593,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6434,7 +6434,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.854374000387907,
+   "ms": 3.4257160004926845,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6456,7 +6456,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 4.652227999940806,
+   "ms": 3.331543999593123,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6476,7 +6476,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.588224000144692,
+   "ms": 3.4254049987794133,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6496,7 +6496,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.524794000644761,
+   "ms": 3.1684479999967152,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6516,7 +6516,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.751082000439055,
+   "ms": 3.386689000762999,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6536,7 +6536,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.3048489995053387,
+   "ms": 3.1815259990253253,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6556,7 +6556,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.1505120005022036,
+   "ms": 3.1843289998505497,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6576,7 +6576,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.1840130004638922,
+   "ms": 3.2680559997970704,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6596,7 +6596,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.636924000100407,
+   "ms": 5.880541000806261,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6616,7 +6616,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.872087000469037,
+   "ms": 2.9740049994870787,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6636,7 +6636,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.8728229999614996,
+   "ms": 3.1493730002694065,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6656,7 +6656,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.3254910001924145,
+   "ms": 2.412116000414244,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6676,7 +6676,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.656598999237758,
+   "ms": 2.798928999254713,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6700,7 +6700,7 @@
     "TB-PERSIST-004",
     "TB-PERSIST-008"
    ],
-   "ms": 9.16135699935694,
+   "ms": 9.062794999408652,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6720,7 +6720,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.327751000142598,
+   "ms": 3.3582210016902536,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6740,7 +6740,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.646080000384245,
+   "ms": 4.724553000414744,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6762,7 +6762,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 4.807843999515171,
+   "ms": 5.053975999544491,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6784,7 +6784,7 @@
    "rules": [
     "TB-EVADE-008"
    ],
-   "ms": 2.6880440000240924,
+   "ms": 2.732016999289044,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -6804,7 +6804,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.130211000505369,
+   "ms": 5.193057000724366,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6824,7 +6824,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.720883000321919,
+   "ms": 5.197672000576858,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6844,7 +6844,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.2743579995440086,
+   "ms": 3.269812999860733,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6864,7 +6864,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.872637999644212,
+   "ms": 2.7612969988695113,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6884,7 +6884,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.1482180002058158,
+   "ms": 3.197626998371561,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6904,7 +6904,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.612903000226652,
+   "ms": 2.815419999024016,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6924,7 +6924,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.2305620006809477,
+   "ms": 3.3667449988570297,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6944,7 +6944,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.297133000567555,
+   "ms": 7.163711999965017,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6964,7 +6964,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.3853679997264408,
+   "ms": 4.615327999999863,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -6984,7 +6984,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.633602000059909,
+   "ms": 2.80658100018627,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7004,7 +7004,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.243223999561451,
+   "ms": 3.253052000218304,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7024,7 +7024,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.589443000033498,
+   "ms": 2.5843799994618166,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7044,7 +7044,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.825002000463428,
+   "ms": 2.761536999969394,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7064,7 +7064,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.268123999987438,
+   "ms": 3.3329830002912786,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7084,7 +7084,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.739584000664763,
+   "ms": 2.735751999352942,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7106,7 +7106,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 2.6512229997024406,
+   "ms": 2.6284100003977073,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7126,7 +7126,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 11.53549899936479,
+   "ms": 11.611140000240994,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7146,7 +7146,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.571097999862104,
+   "ms": 2.9322179998416686,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7166,7 +7166,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.400192000095558,
+   "ms": 2.685029001440853,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7186,7 +7186,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.1692110003641574,
+   "ms": 2.2883980000187876,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7206,7 +7206,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.3174159996415256,
+   "ms": 2.4300330005644355,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7226,7 +7226,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2325999998429324,
+   "ms": 2.2732949983037543,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7246,7 +7246,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.483404000486189,
+   "ms": 2.5148759996227454,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7266,7 +7266,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.219258999815793,
+   "ms": 8.413891000600415,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7286,7 +7286,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.6142280000130995,
+   "ms": 5.747486000473145,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7306,7 +7306,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.613673000880226,
+   "ms": 5.7578140003897715,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7326,7 +7326,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.6256689995279885,
+   "ms": 5.635965000692522,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7348,7 +7348,7 @@
    "rules": [
     "TB-EVADE-013"
    ],
-   "ms": 3.298980000181473,
+   "ms": 3.3150899998872774,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7368,7 +7368,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8249640004578396,
+   "ms": 0.7971619997988455,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7388,7 +7388,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.212519000153407,
+   "ms": 7.980628999575856,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7408,7 +7408,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.076673000279698,
+   "ms": 5.747057999542449,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7428,7 +7428,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 13.593345000117552,
+   "ms": 14.626292999309953,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7451,7 +7451,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 9.259037999981956,
+   "ms": 8.309226999699604,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7471,7 +7471,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.735250999648997,
+   "ms": 3.277617999629001,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7491,7 +7491,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.24653599991143,
+   "ms": 7.47777000105998,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7513,7 +7513,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.248493999511993,
+   "ms": 4.315026999393012,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7533,7 +7533,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5909860001338529,
+   "ms": 0.6860930006951094,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7553,7 +7553,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6687490003969287,
+   "ms": 0.6718800013914006,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7573,7 +7573,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.219251999827975,
+   "ms": 1.344131002042559,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7593,7 +7593,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.49130299976241076,
+   "ms": 0.5037489991082111,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7613,7 +7613,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.41243600026064087,
+   "ms": 0.3769430004467722,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7633,7 +7633,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.3303309999391786,
+   "ms": 2.3193929991975892,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7653,7 +7653,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.487910000440024,
+   "ms": 8.390975001020706,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7673,7 +7673,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6077010002627503,
+   "ms": 0.7479600008082343,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7695,7 +7695,7 @@
    "rules": [
     "TB-DISC-004"
    ],
-   "ms": 0.8496830005242373,
+   "ms": 1.1110049999842886,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -7715,7 +7715,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.41918300030374667,
+   "ms": 0.5316039987519616,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7737,7 +7737,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.123785999581742,
+   "ms": 4.577822001010645,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7757,7 +7757,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.945259999862174,
+   "ms": 6.202266999025596,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7779,7 +7779,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 8.126654000079725,
+   "ms": 8.879870998498518,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -7801,7 +7801,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 1.0433600000396837,
+   "ms": 1.3467419994412921,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -7823,7 +7823,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 4.746384000100079,
+   "ms": 6.569535999005893,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -7845,7 +7845,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 1.8907140001829248,
+   "ms": 2.002268000069307,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -7867,7 +7867,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.7908759995843866,
+   "ms": 4.082393999851774,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7890,7 +7890,7 @@
     "TB-DISC-001",
     "TB-PERSIST-001"
    ],
-   "ms": 2.5104329997702735,
+   "ms": 2.9035179995844373,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -7910,7 +7910,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 11.349476999384933,
+   "ms": 12.001838002106524,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7932,7 +7932,7 @@
    "rules": [
     "TB-EXEC-004"
    ],
-   "ms": 12.264792000678426,
+   "ms": 13.403471999481553,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7955,7 +7955,7 @@
     "TB-EXEC-005",
     "TB-EXEC-010"
    ],
-   "ms": 9.936458000083803,
+   "ms": 10.288967003361904,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -7975,7 +7975,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2735039999824949,
+   "ms": 1.571449000039138,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -7995,7 +7995,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.205776999995578,
+   "ms": 1.3420659997791518,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8015,7 +8015,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.177263000703533,
+   "ms": 2.3066699995979434,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8035,7 +8035,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 12.656307999350247,
+   "ms": 13.301443999807816,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8057,7 +8057,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 13.26766699912696,
+   "ms": 14.507186999253463,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -8080,7 +8080,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 6.4340650005760835,
+   "ms": 7.28190799964068,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8100,7 +8100,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.915075000004435,
+   "ms": 11.61311800024123,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8120,7 +8120,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.377734000016062,
+   "ms": 1.9719590000022436,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8140,7 +8140,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6455769998865435,
+   "ms": 1.0671070012904238,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8160,7 +8160,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6252200000744779,
+   "ms": 1.119398000810179,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8180,7 +8180,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0446500000398373,
+   "ms": 1.7503260005469201,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8200,7 +8200,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.4347040007342002,
+   "ms": 3.8046040008339332,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8220,7 +8220,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.475812000739097,
+   "ms": 3.8742730012018,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8240,7 +8240,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2537519996840274,
+   "ms": 1.3228650004748488,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8260,7 +8260,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.004704000180936,
+   "ms": 4.2428190008649835,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8280,7 +8280,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.93711299966526,
+   "ms": 4.493103000640986,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8302,7 +8302,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 2.567322000686545,
+   "ms": 3.0166899996402208,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8324,7 +8324,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 3.0315929998323554,
+   "ms": 3.4844830006477423,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8344,7 +8344,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 16.782874000455195,
+   "ms": 17.69231700018281,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8364,7 +8364,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 24.748453999563935,
+   "ms": 24.77470799931325,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8384,7 +8384,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 24.90580699941347,
+   "ms": 25.672739000583533,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8404,7 +8404,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 25.89771800012386,
+   "ms": 25.888521000524634,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8427,7 +8427,7 @@
     "TB-EXEC-005",
     "TB-EXEC-011"
    ],
-   "ms": 4.7781440007383935,
+   "ms": 3.9197520000016084,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8450,7 +8450,7 @@
     "TB-EXEC-005",
     "TB-EXEC-011"
    ],
-   "ms": 2.638680000018212,
+   "ms": 2.1097640001244145,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8472,7 +8472,7 @@
    "rules": [
     "TB-EXEC-010"
    ],
-   "ms": 10.932770999716013,
+   "ms": 8.77126800151018,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -8492,7 +8492,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6747520003264071,
+   "ms": 1.106698999137734,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8512,7 +8512,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.6816150001614005,
+   "ms": 4.43658899894217,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8532,7 +8532,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.8715730006515514,
+   "ms": 2.635949000250548,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8552,7 +8552,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.1492119996983092,
+   "ms": 2.241213000161224,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8572,7 +8572,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.8173989996721502,
+   "ms": 2.918268000939861,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8592,7 +8592,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.6318129996288917,
+   "ms": 2.9451759983203374,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8612,7 +8612,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.409282000575331,
+   "ms": 2.80139000096824,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8632,7 +8632,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.419676999328658,
+   "ms": 2.6997400000254856,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8652,7 +8652,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4066980006173253,
+   "ms": 2.6132519997190684,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8672,7 +8672,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.2987490003506537,
+   "ms": 2.5926279995474033,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8692,7 +8692,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4107659994333517,
+   "ms": 2.586698999948567,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8714,7 +8714,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 3.3023559999492136,
+   "ms": 2.5533730004099198,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8736,7 +8736,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 5.388992999542097,
+   "ms": 4.068758000357775,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8756,7 +8756,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 38.52185199957603,
+   "ms": 31.548266999379848,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8776,7 +8776,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.51176999983727,
+   "ms": 6.033964000380365,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8796,7 +8796,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6025730001274496,
+   "ms": 1.2595839998539304,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8818,7 +8818,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 4.173519999312703,
+   "ms": 6.396253000275465,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8840,7 +8840,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 7.393464999950083,
+   "ms": 4.304025998862926,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8862,7 +8862,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 6.0379730002750875,
+   "ms": 3.8453100005426677,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8882,7 +8882,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.298703999258578,
+   "ms": 1.3496690007741563,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8902,7 +8902,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.0382189999945695,
+   "ms": 3.142428999126423,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8922,7 +8922,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2878129993841867,
+   "ms": 1.7576800000824733,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -8944,7 +8944,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 4.153709000092931,
+   "ms": 2.712823999900138,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8967,7 +8967,7 @@
     "TB-EXEC-011",
     "TB-EXEC-014"
    ],
-   "ms": 5.234112000835012,
+   "ms": 3.3129639996332116,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -8987,7 +8987,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.343650000213529,
+   "ms": 3.0066870003793156,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9009,7 +9009,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 4.210252999655495,
+   "ms": 2.3649089998798445,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -9029,7 +9029,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 17.378687000018544,
+   "ms": 10.108630000104313,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9051,7 +9051,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 6.479014000433381,
+   "ms": 3.9161689983302495,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -9071,7 +9071,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.153273999894736,
+   "ms": 3.2178599994949764,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9093,7 +9093,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 0.9801749993130215,
+   "ms": 0.48497699935978744,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -9113,7 +9113,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 14.490746999399562,
+   "ms": 8.527605999915977,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9133,7 +9133,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 10.760176000076171,
+   "ms": 6.20231200082344,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9155,7 +9155,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 8.458721000351943,
+   "ms": 4.959498000971507,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9179,7 +9179,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 5.924373000198102,
+   "ms": 3.2990090003295336,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -9201,7 +9201,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 3.513175000080082,
+   "ms": 1.9389709996175952,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9221,7 +9221,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.85646400081896,
+   "ms": 2.3255889991560252,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9243,7 +9243,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 9.871977000329935,
+   "ms": 5.941527999311802,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9263,7 +9263,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.7874309998878743,
+   "ms": 1.5880110004218295,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9285,7 +9285,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 5.519456999536487,
+   "ms": 2.9589210007543443,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9307,7 +9307,7 @@
    "rules": [
     "TB-C2-005"
    ],
-   "ms": 5.3692629999204655,
+   "ms": 2.8197979991091415,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9327,7 +9327,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.6877330001298105,
+   "ms": 1.5412579996336717,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9347,7 +9347,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.539640000577492,
+   "ms": 1.3045690011495026,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9367,7 +9367,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 12.935918000039237,
+   "ms": 6.9679180032835575,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9387,7 +9387,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.547858000274573,
+   "ms": 1.8327729994780384,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9407,7 +9407,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.487073000134842,
+   "ms": 0.7571820005978225,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9427,7 +9427,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.549982000142336,
+   "ms": 0.8378059992537601,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9447,7 +9447,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4104900001257192,
+   "ms": 0.6719310003973078,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9467,7 +9467,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4294829998107161,
+   "ms": 0.6603990004805382,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9487,7 +9487,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0409830001663067,
+   "ms": 0.45955699897604063,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9507,7 +9507,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6839850004544132,
+   "ms": 0.7681440001761075,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9527,7 +9527,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4690859998154338,
+   "ms": 0.8250030005001463,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9550,7 +9550,7 @@
     "TB-EVADE-015",
     "TB-IMPACT-002"
    ],
-   "ms": 1.1378539993529557,
+   "ms": 0.5645159999403404,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -9572,7 +9572,7 @@
    "rules": [
     "TB-LAT-004"
    ],
-   "ms": 18.396471999949426,
+   "ms": 10.226538999631885,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9592,7 +9592,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4481120001146337,
+   "ms": 1.790731999790296,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9614,7 +9614,7 @@
    "rules": [
     "TB-EXFIL-002"
    ],
-   "ms": 1.4394310001080157,
+   "ms": 0.7032289995549945,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -9634,7 +9634,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.918506999980309,
+   "ms": 2.154953999706777,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9654,7 +9654,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.9517170002436615,
+   "ms": 3.3127689985121833,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9674,7 +9674,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.493068999683601,
+   "ms": 1.2889379995613126,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9694,7 +9694,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.6425760006532073,
+   "ms": 1.254734001122415,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9714,7 +9714,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.331667999693309,
+   "ms": 0.5652880008710781,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9734,7 +9734,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.5358270002252539,
+   "ms": 0.696363000315614,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9754,7 +9754,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.079663999917102,
+   "ms": 0.45247799971548375,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9774,7 +9774,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0402819998489576,
+   "ms": 0.44766599967260845,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9794,7 +9794,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1724440000762115,
+   "ms": 0.43528000060177874,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9817,7 +9817,7 @@
     "TB-EVADE-015",
     "TB-IMPACT-001"
    ],
-   "ms": 1.5022249999674386,
+   "ms": 0.7532789986726129,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -9839,7 +9839,7 @@
    "rules": [
     "TB-IMPACT-001"
    ],
-   "ms": 1.0898919999817736,
+   "ms": 0.4396800013637403,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -9861,7 +9861,7 @@
    "rules": [
     "TB-IMPACT-004"
    ],
-   "ms": 2.2645540002486086,
+   "ms": 0.9805929985304829,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -9883,7 +9883,7 @@
    "rules": [
     "TB-IMPACT-001"
    ],
-   "ms": 1.257369000086328,
+   "ms": 0.5918450005992781,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -9903,7 +9903,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.476342000089062,
+   "ms": 2.548421000028611,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9923,7 +9923,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 13.88813399898936,
+   "ms": 9.068649000255391,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9943,7 +9943,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2431040004230454,
+   "ms": 1.2691510000877315,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9963,7 +9963,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 18.138083999474475,
+   "ms": 19.77801700013515,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -9983,7 +9983,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.315751999456552,
+   "ms": 4.5647919996554265,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10003,7 +10003,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.3878230001864722,
+   "ms": 1.3291420000314247,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10023,7 +10023,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9028889999171952,
+   "ms": 0.8892690002539894,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10043,7 +10043,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 24.825757001053717,
+   "ms": 19.625804996394436,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10063,7 +10063,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.8201609993629972,
+   "ms": 1.716372000373667,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10083,7 +10083,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.5399360003793845,
+   "ms": 2.393970999037265,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10103,7 +10103,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.145104000395804,
+   "ms": 2.2700600002281135,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10123,7 +10123,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.188096000281803,
+   "ms": 1.7730629988363944,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10143,7 +10143,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.406923000511597,
+   "ms": 2.5892139983625384,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10165,7 +10165,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.401873999995587,
+   "ms": 3.2122899992828025,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10187,7 +10187,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 8.809640000436048,
+   "ms": 3.2474029994773446,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10209,7 +10209,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 5.6963520000863355,
+   "ms": 3.1226690007315483,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10231,7 +10231,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 1.9961660000262782,
+   "ms": 1.516440001068986,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10253,7 +10253,7 @@
    "rules": [
     "TB-DISC-001"
    ],
-   "ms": 11.238979000154359,
+   "ms": 9.340897000583936,
    "severity_label": null,
    "severity_got": "low",
    "sev_delta": null,
@@ -10273,7 +10273,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2541379992399015,
+   "ms": 0.8931930005928734,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10293,7 +10293,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 31.774037999639404,
+   "ms": 21.429593998618657,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10315,7 +10315,7 @@
    "rules": [
     "TB-EXEC-004"
    ],
-   "ms": 79.06695699966804,
+   "ms": 33.4174069994333,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10337,7 +10337,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 13.145095000254514,
+   "ms": 4.289295000489801,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10359,7 +10359,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 10.348935999900277,
+   "ms": 3.964497000197298,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10382,7 +10382,7 @@
     "TB-EXEC-008",
     "TB-PERSIST-004"
    ],
-   "ms": 12.933012000758026,
+   "ms": 4.436915998667246,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10402,7 +10402,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.912629999424098,
+   "ms": 0.4226610017212806,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10426,7 +10426,7 @@
     "TB-IMPACT-007",
     "TB-PERSIST-008"
    ],
-   "ms": 44.61687900038669,
+   "ms": 16.4665319971391,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10448,7 +10448,7 @@
    "rules": [
     "TB-PERSIST-005"
    ],
-   "ms": 31.759673999658844,
+   "ms": 23.545987998659257,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10470,7 +10470,7 @@
    "rules": [
     "TB-PERSIST-005"
    ],
-   "ms": 66.2112239997441,
+   "ms": 59.23172899929341,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10490,7 +10490,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.35669699961727,
+   "ms": 2.0402419995662058,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10512,7 +10512,7 @@
    "rules": [
     "TB-PERSIST-001"
    ],
-   "ms": 5.1267200005895575,
+   "ms": 3.176141999574611,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10532,7 +10532,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 11.058960000809748,
+   "ms": 7.880115999796544,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10552,7 +10552,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 13.3290069998111,
+   "ms": 8.983712998087867,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10572,7 +10572,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 15.266592999068962,
+   "ms": 10.487334000572446,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10592,7 +10592,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.424658000876661,
+   "ms": 6.039511001290521,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10612,7 +10612,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.3225709994439967,
+   "ms": 2.4650019986438565,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10632,7 +10632,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.857409999611264,
+   "ms": 5.072408999694744,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10652,7 +10652,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.052203999592166,
+   "ms": 5.354447001082008,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10674,7 +10674,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 5.834384000081627,
+   "ms": 4.341829000622965,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10696,7 +10696,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 19.45622600032948,
+   "ms": 18.065423999360064,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10716,7 +10716,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 47.30733799988229,
+   "ms": 43.66849199868739,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10738,7 +10738,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 20.653874999879918,
+   "ms": 19.51788599944848,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10761,7 +10761,7 @@
     "TB-PERSIST-004",
     "TB-PERSIST-008"
    ],
-   "ms": 4.4866970001749,
+   "ms": 3.918608999811113,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10783,7 +10783,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 3.226863000236335,
+   "ms": 3.318119999676128,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10805,7 +10805,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 13.444772999719135,
+   "ms": 12.970730000233743,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10827,7 +10827,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 8.160293999935675,
+   "ms": 8.046076000027824,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -10847,7 +10847,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.732019000490254,
+   "ms": 7.839722999051446,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10869,7 +10869,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 8.737856000152533,
+   "ms": 6.7831289998139255,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10889,7 +10889,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 15.973614000358793,
+   "ms": 12.635336999665014,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10909,7 +10909,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 10.731997000220872,
+   "ms": 8.293587001389824,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10929,7 +10929,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.9752250002275105,
+   "ms": 2.2907829988980666,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10951,7 +10951,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 10.880480000196258,
+   "ms": 12.080434000381501,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -10971,7 +10971,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.911108999796852,
+   "ms": 3.1051709993334953,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -10991,7 +10991,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.747769999994489,
+   "ms": 5.435840999780339,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11013,7 +11013,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 10.868389999814099,
+   "ms": 12.24161699974502,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11035,7 +11035,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 4.511854999691423,
+   "ms": 5.314448999342858,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11057,7 +11057,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 11.451510999904713,
+   "ms": 17.091603998778737,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11079,7 +11079,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 4.531054999461048,
+   "ms": 4.626158999599284,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11101,7 +11101,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 9.511127000223496,
+   "ms": 9.639774998504436,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11123,7 +11123,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 10.197506999247707,
+   "ms": 10.351656999773695,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11143,7 +11143,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.268224000043119,
+   "ms": 4.463737999685691,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11165,7 +11165,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 3.5890580011255224,
+   "ms": 3.4309379971091403,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11185,7 +11185,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.7329579986835597,
+   "ms": 2.033903996562003,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11205,7 +11205,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6676139994160621,
+   "ms": 1.797554999939166,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11225,7 +11225,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.8044499993266072,
+   "ms": 2.0679539993579965,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11247,7 +11247,7 @@
    "rules": [
     "TB-PRIV-008"
    ],
-   "ms": 0.5822929997520987,
+   "ms": 0.6563510014530038,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11270,7 +11270,7 @@
     "TB-PERSIST-008",
     "TB-PRIV-003"
    ],
-   "ms": 4.365115999462432,
+   "ms": 4.371028999230475,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11293,7 +11293,7 @@
     "TB-PERSIST-008",
     "TB-PRIV-003"
    ],
-   "ms": 8.084246000180428,
+   "ms": 7.967694000399206,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11315,7 +11315,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 11.31476200043835,
+   "ms": 10.714465001001372,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11337,7 +11337,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 11.133558999972593,
+   "ms": 11.636085000645835,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11360,7 +11360,7 @@
     "TB-EVADE-008",
     "TB-EVADE-013"
    ],
-   "ms": 3.311164000479039,
+   "ms": 3.171509999447153,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11380,7 +11380,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.3586560007752269,
+   "ms": 1.2969359995622654,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11400,7 +11400,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.584906999800296,
+   "ms": 2.3392599996441277,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11420,7 +11420,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.4463619993184693,
+   "ms": 2.716814999075723,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11440,7 +11440,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.5003839991768473,
+   "ms": 2.425782000500476,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11460,7 +11460,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.4476689995935885,
+   "ms": 2.383189999818569,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11480,7 +11480,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.4223979999078438,
+   "ms": 2.413967999018496,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11500,7 +11500,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.5129469995590625,
+   "ms": 2.450149000651436,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11522,7 +11522,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 8.880923000106122,
+   "ms": 8.685125998454168,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11544,7 +11544,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 8.692244000485516,
+   "ms": 8.986209000795498,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11568,7 +11568,7 @@
     "TB-EVADE-008",
     "TB-EVADE-013"
    ],
-   "ms": 2.9284190004545962,
+   "ms": 3.169453999362304,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11591,7 +11591,7 @@
     "TB-PERSIST-008",
     "TB-PRIV-003"
    ],
-   "ms": 7.971516999532469,
+   "ms": 8.156165999025689,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11611,7 +11611,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6479169999001897,
+   "ms": 1.6813239999464713,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11633,7 +11633,7 @@
    "rules": [
     "TB-PRIV-007"
    ],
-   "ms": 2.537934999963909,
+   "ms": 2.87957199907396,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11655,7 +11655,7 @@
    "rules": [
     "TB-PRIV-007"
    ],
-   "ms": 2.775240999653761,
+   "ms": 3.0596099986723857,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11677,7 +11677,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 3.8832970003568335,
+   "ms": 3.897954999047215,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -11699,7 +11699,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 1.4413279996006167,
+   "ms": 1.8263809997733915,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11721,7 +11721,7 @@
    "rules": [
     "TB-CRED-003"
    ],
-   "ms": 1.0200950000580633,
+   "ms": 1.4016229997650953,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11743,7 +11743,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 1.3224869999248767,
+   "ms": 1.6942160000326112,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11765,7 +11765,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 4.033185999105626,
+   "ms": 3.5430619991529966,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11787,7 +11787,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.4377330004863325,
+   "ms": 4.595881999193807,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11809,7 +11809,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.019982000500022,
+   "ms": 4.004659000202082,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11831,7 +11831,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.065786000865046,
+   "ms": 4.20157900043705,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11853,7 +11853,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 4.117827000300167,
+   "ms": 4.024883999591111,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -11875,7 +11875,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 4.042692999973951,
+   "ms": 3.95275099981518,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11895,7 +11895,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4729879998849356,
+   "ms": 3.448905999903218,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11915,7 +11915,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.5174860004190123,
+   "ms": 3.5041069986618822,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -11937,7 +11937,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 3.742651000720798,
+   "ms": 3.9622550011699786,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11959,7 +11959,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 3.3220810000784695,
+   "ms": 3.3469259997218614,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -11979,7 +11979,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.4443370004737517,
+   "ms": 3.3790870002121665,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12001,7 +12001,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 2.255117000458995,
+   "ms": 1.4267919996200362,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12021,7 +12021,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9314020000820165,
+   "ms": 1.4744250001967885,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12041,7 +12041,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2195210003701504,
+   "ms": 1.6802570007712347,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12063,7 +12063,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 2.674639000360912,
+   "ms": 2.1376690001488896,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12083,7 +12083,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.2867289992282167,
+   "ms": 2.638540996485972,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12103,7 +12103,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 61.073783000210824,
+   "ms": 59.95775300107198,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12126,7 +12126,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 6.251132999750553,
+   "ms": 6.228479000128573,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12148,7 +12148,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 5.224098000326194,
+   "ms": 5.180201998882694,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -12168,7 +12168,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4404449993890012,
+   "ms": 1.4637519998359494,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12188,7 +12188,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.7532200003624894,
+   "ms": 3.5841330009134253,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12208,7 +12208,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.220526000201062,
+   "ms": 2.2165979989949847,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12228,7 +12228,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.079156000239891,
+   "ms": 3.3525559992995113,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12248,7 +12248,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.7583609999055625,
+   "ms": 2.738319000854972,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12268,7 +12268,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.8809400002719485,
+   "ms": 3.8995979994069785,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12291,7 +12291,7 @@
     "TB-CRED-003",
     "TB-CRED-006"
    ],
-   "ms": 4.937245000292023,
+   "ms": 4.957944998750463,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12313,7 +12313,7 @@
    "rules": [
     "TB-CRED-003"
    ],
-   "ms": 2.5848069999483414,
+   "ms": 2.586747001259937,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12333,7 +12333,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.8328469998086803,
+   "ms": 2.663966000909568,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12353,7 +12353,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.0553590004274156,
+   "ms": 2.975594999952591,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12375,7 +12375,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.9916340001582284,
+   "ms": 4.010774999187561,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12395,7 +12395,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.434988999491907,
+   "ms": 4.944639998939238,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12417,7 +12417,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 4.245492999871203,
+   "ms": 4.767524000271806,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12439,7 +12439,7 @@
    "rules": [
     "TB-CRED-006"
    ],
-   "ms": 1.0131680000995402,
+   "ms": 1.2416860008670483,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12461,7 +12461,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.368118000253162,
+   "ms": 3.4603209987835726,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12481,7 +12481,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.2939360005693743,
+   "ms": 2.253258999189711,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12501,7 +12501,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.1996579998813104,
+   "ms": 2.329072000065935,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12523,7 +12523,7 @@
    "rules": [
     "TB-CRED-001"
    ],
-   "ms": 59.2033970006014,
+   "ms": 63.3132500006468,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -12543,7 +12543,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 75.05254199986666,
+   "ms": 84.56957199996396,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12567,7 +12567,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 3.22995699934836,
+   "ms": 3.3233880003535887,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12589,7 +12589,7 @@
    "rules": [
     "TB-DISC-002"
    ],
-   "ms": 5.554041999857873,
+   "ms": 5.721374998756801,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12611,7 +12611,7 @@
    "rules": [
     "TB-DISC-002"
    ],
-   "ms": 0.7106960001692642,
+   "ms": 0.7897570012573851,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12633,7 +12633,7 @@
    "rules": [
     "TB-DISC-002"
    ],
-   "ms": 8.557674000257975,
+   "ms": 9.046205999766244,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12656,7 +12656,7 @@
     "TB-DISC-002",
     "TB-EXEC-002"
    ],
-   "ms": 5.5145879996416625,
+   "ms": 5.794417998913559,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12676,7 +12676,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.801956999268441,
+   "ms": 3.720441000041319,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12696,7 +12696,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.833057999552693,
+   "ms": 6.338490000416641,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12716,7 +12716,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.689543998822046,
+   "ms": 8.14717699722678,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12736,7 +12736,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.483457001195347,
+   "ms": 6.6662199988059,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12756,7 +12756,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7075530002111918,
+   "ms": 0.7826769997336669,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12776,7 +12776,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.187306998777785,
+   "ms": 5.511000004844391,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12798,7 +12798,7 @@
    "rules": [
     "TB-LAT-004"
    ],
-   "ms": 33.45555600026273,
+   "ms": 34.584641000037664,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12818,7 +12818,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2749480001730262,
+   "ms": 1.2581480004882906,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12840,7 +12840,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 3.568818999156065,
+   "ms": 3.7700900011259364,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -12860,7 +12860,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.038348000496626,
+   "ms": 2.1255339997878764,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12880,7 +12880,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2018160005027312,
+   "ms": 1.200059999973746,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12900,7 +12900,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9218589995944058,
+   "ms": 1.9070590005867416,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12920,7 +12920,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8663449998493888,
+   "ms": 0.8799970000836765,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -12943,7 +12943,7 @@
     "TB-EXEC-002",
     "TB-EXEC-010"
    ],
-   "ms": 15.523421000580129,
+   "ms": 15.801536999788368,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12965,7 +12965,7 @@
    "rules": [
     "TB-EXFIL-003"
    ],
-   "ms": 19.96309000060137,
+   "ms": 21.63948100132984,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -12987,7 +12987,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 6.03829400097311,
+   "ms": 5.9445619972393615,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13009,7 +13009,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 4.74181600020529,
+   "ms": 4.779073999088723,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13031,7 +13031,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 1.5817559997231,
+   "ms": 1.4332110004033893,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13053,7 +13053,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 12.417163000463916,
+   "ms": 12.515315998825827,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13075,7 +13075,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 8.25329100007366,
+   "ms": 8.52104199839232,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13095,7 +13095,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.9938219990508514,
+   "ms": 5.7546509997337125,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13115,7 +13115,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.538733000823413,
+   "ms": 4.634743996575708,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13135,7 +13135,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4816680004514637,
+   "ms": 1.987005000046338,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13155,7 +13155,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9910249993699836,
+   "ms": 2.666924001459847,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13177,7 +13177,7 @@
    "rules": [
     "TB-EXEC-010"
    ],
-   "ms": 18.772960999740462,
+   "ms": 24.986566000734456,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13197,7 +13197,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 4.492731000027561,
+   "ms": 6.214111001099809,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13219,7 +13219,7 @@
    "rules": [
     "TB-PERSIST-006"
    ],
-   "ms": 0.47239899959095055,
+   "ms": 0.738307000574423,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13239,7 +13239,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 8.643810000648955,
+   "ms": 11.167085001943633,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13259,7 +13259,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.6461309998921934,
+   "ms": 3.017315999386483,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13281,7 +13281,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 3.627318999861018,
+   "ms": 4.512425999564584,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13303,7 +13303,7 @@
    "rules": [
     "TB-PERSIST-008"
    ],
-   "ms": 17.893615000502905,
+   "ms": 23.659911001232103,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13323,7 +13323,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 11.984896000285516,
+   "ms": 16.64744100162352,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13343,7 +13343,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.45010099984210683,
+   "ms": 0.5544300001929514,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13363,7 +13363,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4881670003887848,
+   "ms": 0.6539890000567539,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13383,7 +13383,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8987200008050422,
+   "ms": 0.8894370002963115,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13403,7 +13403,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.345180000498658,
+   "ms": 1.4732569998159306,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13425,7 +13425,7 @@
    "rules": [
     "TB-EXEC-008"
    ],
-   "ms": 0.8457579997411813,
+   "ms": 0.8992290004243841,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13445,7 +13445,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 7.2780039999997825,
+   "ms": 9.745227000166778,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13465,7 +13465,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.4504529997575446,
+   "ms": 0.5397929999162443,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13487,7 +13487,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.22996900013095,
+   "ms": 4.27935600055207,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13509,7 +13509,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.6629710002671345,
+   "ms": 4.318100000091363,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13531,7 +13531,7 @@
    "rules": [
     "TB-EXEC-002"
    ],
-   "ms": 3.408706999834976,
+   "ms": 5.269700001008459,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13555,7 +13555,7 @@
     "TB-EXEC-002",
     "TB-EXEC-014"
    ],
-   "ms": 3.3699169998726575,
+   "ms": 5.4493050010933075,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13575,7 +13575,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 6.617508999624988,
+   "ms": 10.130722999747377,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13597,7 +13597,7 @@
    "rules": [
     "TB-PERSIST-002"
    ],
-   "ms": 1.4215380006135092,
+   "ms": 3.054384000279242,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13619,7 +13619,7 @@
    "rules": [
     "TB-EXEC-003"
    ],
-   "ms": 2.0156590007900377,
+   "ms": 2.555003000452416,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -13639,7 +13639,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5084069998702034,
+   "ms": 0.5755399997724453,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13662,7 +13662,7 @@
     "TB-EXEC-005",
     "TB-EXEC-010"
    ],
-   "ms": 2.1415190003608586,
+   "ms": 2.616436999232974,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13684,7 +13684,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.1064280006394256,
+   "ms": 1.1319129989715293,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13704,7 +13704,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7954069997140323,
+   "ms": 0.942833001317922,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13726,7 +13726,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 0.7366489999185433,
+   "ms": 0.9069779989658855,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13748,7 +13748,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 0.7365569999819854,
+   "ms": 0.9360099993500626,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13768,7 +13768,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9180719998767017,
+   "ms": 1.0837329991773004,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13791,7 +13791,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.9369930003231275,
+   "ms": 1.0823119991982821,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13811,7 +13811,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5175690002943156,
+   "ms": 0.6253489991649985,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13833,7 +13833,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.9595949995855335,
+   "ms": 1.284096000745194,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13853,7 +13853,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6536659993798821,
+   "ms": 0.8398879999731435,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13873,7 +13873,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7603189997098525,
+   "ms": 0.9559909995005,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13893,7 +13893,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9395710003445856,
+   "ms": 1.112949999878765,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13913,7 +13913,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.775534000240441,
+   "ms": 1.0019879991887137,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13935,7 +13935,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 0.5830170002809609,
+   "ms": 0.7605050013808068,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -13957,7 +13957,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.7608620007886202,
+   "ms": 1.2457089997042203,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -13977,7 +13977,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5063530006736983,
+   "ms": 2.996969000378158,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -13999,7 +13999,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.295267000386957,
+   "ms": 2.3023929988994496,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14022,7 +14022,7 @@
     "TB-EXEC-011",
     "TB-IMPACT-001"
    ],
-   "ms": 0.8859079998728703,
+   "ms": 1.5120730004127836,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -14044,7 +14044,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.2558369999169372,
+   "ms": 2.4007039992284263,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14066,7 +14066,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.2942550001753261,
+   "ms": 1.9736340000235941,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14089,7 +14089,7 @@
     "TB-EXEC-016",
     "TB-EXEC-017"
    ],
-   "ms": 1.934673000505427,
+   "ms": 3.216082999642822,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14112,7 +14112,7 @@
     "TB-EXEC-016",
     "TB-EXEC-017"
    ],
-   "ms": 1.335687000391772,
+   "ms": 2.5932369990187,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14132,7 +14132,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.5285609997590655,
+   "ms": 2.648052000949974,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14152,7 +14152,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8011390000319807,
+   "ms": 1.5622790015186183,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14172,7 +14172,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1275610004304326,
+   "ms": 1.7455770012020366,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14195,7 +14195,7 @@
     "TB-EXEC-016",
     "TB-EXEC-017"
    ],
-   "ms": 2.6648830007616198,
+   "ms": 2.790476000882336,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14218,7 +14218,7 @@
     "TB-CRED-003",
     "TB-CRED-006"
    ],
-   "ms": 0.6779870000173105,
+   "ms": 0.7801770007063169,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -14238,7 +14238,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5842179998580832,
+   "ms": 0.6082150011934573,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14260,7 +14260,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 2.1177509997869493,
+   "ms": 2.1473500000865897,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14280,7 +14280,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.3124909994294285,
+   "ms": 2.69934599964472,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14302,7 +14302,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 1.1123069998575374,
+   "ms": 1.263848000235157,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14324,7 +14324,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 0.38354899970727274,
+   "ms": 0.4218969988869503,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14346,7 +14346,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.7719190007264842,
+   "ms": 1.3409290004346985,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -14368,7 +14368,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 0.7122510005501681,
+   "ms": 1.0186290001001908,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14388,7 +14388,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9346979995825677,
+   "ms": 1.1286790013400605,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14410,7 +14410,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.8595330000389367,
+   "ms": 1.1320470002829097,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -14430,7 +14430,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.561224999728438,
+   "ms": 0.7707439999649068,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14453,7 +14453,7 @@
     "TB-EXEC-016",
     "TB-EXFIL-002"
    ],
-   "ms": 1.1700490003931918,
+   "ms": 1.5036559998407029,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14477,7 +14477,7 @@
     "TB-EXEC-014",
     "TB-EXEC-016"
    ],
-   "ms": 1.0117790006916039,
+   "ms": 1.3546259997383459,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14497,7 +14497,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9067909995792434,
+   "ms": 1.1509930009196978,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14517,7 +14517,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8790230003796751,
+   "ms": 1.1084270008723252,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14541,7 +14541,7 @@
     "TB-EXEC-011",
     "TB-EXEC-016"
    ],
-   "ms": 0.7750699996904586,
+   "ms": 0.9864249987003859,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14564,7 +14564,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.8219970004574861,
+   "ms": 1.0409630012873095,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14586,7 +14586,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 0.9350159998575691,
+   "ms": 1.0707689998525893,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14606,7 +14606,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6128790000730078,
+   "ms": 0.6523470001411624,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14626,7 +14626,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6635749998386018,
+   "ms": 1.9483160012896406,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14646,7 +14646,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.7330199998468743,
+   "ms": 2.154771000277833,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14670,7 +14670,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 2.3322279994317796,
+   "ms": 2.931340000941418,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14694,7 +14694,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 2.339156999369152,
+   "ms": 3.0261289994086837,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14717,7 +14717,7 @@
     "TB-EXEC-005",
     "TB-EXEC-017"
    ],
-   "ms": 0.8013759997993475,
+   "ms": 1.0592319995339494,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14737,7 +14737,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6339399997159489,
+   "ms": 0.7508120015700115,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14759,7 +14759,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 0.5246380005701212,
+   "ms": 0.6867020001664059,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14783,7 +14783,7 @@
     "TB-EXEC-011",
     "TB-EXEC-016"
    ],
-   "ms": 0.8959660008258652,
+   "ms": 0.7193670007836772,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14805,7 +14805,7 @@
    "rules": [
     "TB-EXEC-005"
    ],
-   "ms": 0.6525839999085292,
+   "ms": 0.6616979990212712,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14825,7 +14825,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.39256099989870563,
+   "ms": 0.593546001255163,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14845,7 +14845,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5622469998343149,
+   "ms": 0.5943769992882153,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14868,7 +14868,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 1.769727000464627,
+   "ms": 1.509488000010606,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -14888,7 +14888,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1355930000718217,
+   "ms": 0.9801059986784821,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14908,7 +14908,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7460229999196599,
+   "ms": 0.8551070004614303,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14928,7 +14928,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5556079995585606,
+   "ms": 0.7442710011673626,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14948,7 +14948,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.644509000267135,
+   "ms": 0.8333630012202775,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14968,7 +14968,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8713480001460994,
+   "ms": 1.0853590010810876,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -14990,7 +14990,7 @@
    "rules": [
     "TB-EXEC-011"
    ],
-   "ms": 0.9419920006621396,
+   "ms": 1.1773860005632741,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15012,7 +15012,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.9202620003634365,
+   "ms": 1.1783959998865612,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15032,7 +15032,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.2449800005924772,
+   "ms": 1.6003399996407097,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15054,7 +15054,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.9617779998952756,
+   "ms": 2.3523510008089943,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15076,7 +15076,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.4519750002364162,
+   "ms": 1.6559499999857508,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15096,7 +15096,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8448260005025077,
+   "ms": 1.1204670008737594,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15116,7 +15116,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.764016999710293,
+   "ms": 0.9232630000042263,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15138,7 +15138,7 @@
    "rules": [
     "TB-CRED-002"
    ],
-   "ms": 1.2678909997703158,
+   "ms": 1.5718310005468084,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15161,7 +15161,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.8210940004573786,
+   "ms": 1.085064999642782,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15181,7 +15181,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5927820002398221,
+   "ms": 0.7277790009538876,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15201,7 +15201,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6526930001200526,
+   "ms": 0.8110500002658227,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15224,7 +15224,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.8030399994822801,
+   "ms": 1.0004880004998995,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15247,7 +15247,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.7781670001349994,
+   "ms": 0.9707830013212515,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15271,7 +15271,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 0.732348999918031,
+   "ms": 0.8798269991530105,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15294,7 +15294,7 @@
     "TB-EXEC-011",
     "TB-EXEC-016"
    ],
-   "ms": 1.2897189999421244,
+   "ms": 1.3883920000807848,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15318,7 +15318,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 0.8366590000150609,
+   "ms": 0.8760529999563005,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15341,7 +15341,7 @@
     "TB-EXEC-011",
     "TB-EXEC-016"
    ],
-   "ms": 1.0672999997041188,
+   "ms": 1.356319000478834,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15363,7 +15363,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 0.8678849999341764,
+   "ms": 1.1149760011903709,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15385,7 +15385,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.9067499997618143,
+   "ms": 2.1436509996419773,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15408,7 +15408,7 @@
     "TB-EXEC-007",
     "TB-EXEC-017"
    ],
-   "ms": 1.4863369997328846,
+   "ms": 1.8211129990959307,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15432,7 +15432,7 @@
     "TB-EXEC-011",
     "TB-EXEC-017"
    ],
-   "ms": 2.9313099994396907,
+   "ms": 3.824553999947966,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15452,7 +15452,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.4522370001941454,
+   "ms": 1.9193169991922332,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15474,7 +15474,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 4.350815000179864,
+   "ms": 4.997625999749289,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15496,7 +15496,7 @@
    "rules": [
     "TB-PERSIST-004"
    ],
-   "ms": 3.711090999786393,
+   "ms": 4.4698469991999445,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15518,7 +15518,7 @@
    "rules": [
     "TB-PERSIST-002"
    ],
-   "ms": 2.3359489996437333,
+   "ms": 2.648957000928931,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15540,7 +15540,7 @@
    "rules": [
     "TB-PERSIST-002"
    ],
-   "ms": 2.2125220002635615,
+   "ms": 2.721729999393574,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15562,7 +15562,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.1065720000260626,
+   "ms": 1.3364759997784859,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15584,7 +15584,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.4857839996693656,
+   "ms": 1.9467679994704667,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15604,7 +15604,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7159329998103203,
+   "ms": 0.8178279986168491,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15624,7 +15624,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1966309994022595,
+   "ms": 1.434182999219047,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15644,7 +15644,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8188100000552367,
+   "ms": 1.0127790010301396,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15664,7 +15664,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5562639998970553,
+   "ms": 0.6674080013908679,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15686,7 +15686,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.8501180000166642,
+   "ms": 1.1235260008106707,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15706,7 +15706,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 2.654751999216387,
+   "ms": 3.4110940014215885,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15726,7 +15726,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 3.8434119996964,
+   "ms": 4.40549899940379,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15746,7 +15746,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 5.956697000328859,
+   "ms": 7.094073998814565,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15766,7 +15766,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.912389999939478,
+   "ms": 1.0343969988753088,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15789,7 +15789,7 @@
     "TB-EXEC-016",
     "TB-EXEC-018"
    ],
-   "ms": 1.987892000215652,
+   "ms": 2.35359900034382,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15812,7 +15812,7 @@
     "TB-EXEC-008",
     "TB-EXEC-018"
    ],
-   "ms": 1.846914999987348,
+   "ms": 2.4503680015186546,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15834,7 +15834,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 2.4858469996615895,
+   "ms": 3.0853739990561735,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15854,7 +15854,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.6159719998540822,
+   "ms": 1.8445019995851908,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15876,7 +15876,7 @@
    "rules": [
     "TB-EXEC-007"
    ],
-   "ms": 0.7888059999459074,
+   "ms": 0.8191139986593043,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -15896,7 +15896,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5890060001547681,
+   "ms": 0.8088189988484373,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15916,7 +15916,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.6557579999935115,
+   "ms": 0.8280779984488618,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -15938,7 +15938,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.256773000022804,
+   "ms": 1.6278729999612551,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15960,7 +15960,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 1.440124000509968,
+   "ms": 1.6120519994728966,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -15982,7 +15982,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 2.0322640002632397,
+   "ms": 2.534297000238439,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16004,7 +16004,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 2.020840999648499,
+   "ms": 2.5383470001543174,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16026,7 +16026,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 0.7705210000494844,
+   "ms": 0.9971119998226641,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -16046,7 +16046,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8027559997572098,
+   "ms": 1.0506850012461655,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16066,7 +16066,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.4759319999720901,
+   "ms": 0.6816799996158807,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16089,7 +16089,7 @@
     "TB-EXEC-005",
     "TB-EXEC-016"
    ],
-   "ms": 0.9679080003479612,
+   "ms": 1.1992260006081779,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -16109,7 +16109,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.513963000230433,
+   "ms": 0.6905240006744862,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16131,7 +16131,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.7517739995819284,
+   "ms": 0.9761649998836219,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16151,7 +16151,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7688409996262635,
+   "ms": 1.0066510003525764,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16171,7 +16171,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7135289997677319,
+   "ms": 0.9157550011877902,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16191,7 +16191,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.9015790003322763,
+   "ms": 2.254334000099334,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16213,7 +16213,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.8389219992750441,
+   "ms": 1.097800999559695,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16235,7 +16235,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.190015000247513,
+   "ms": 1.6233579990512226,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16257,7 +16257,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.677772999755689,
+   "ms": 2.0588490006048232,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16277,7 +16277,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0264219999953639,
+   "ms": 1.3820149997627595,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16297,7 +16297,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.9528239997962373,
+   "ms": 1.2288210000406252,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16319,7 +16319,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.8789829998931964,
+   "ms": 1.1286949993518647,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16339,7 +16339,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.8087090000117314,
+   "ms": 1.0304370007361285,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16359,7 +16359,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.7979919992067153,
+   "ms": 0.9947560010914458,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16379,7 +16379,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.09735499972885,
+   "ms": 1.199966000058339,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16399,7 +16399,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0038689997600159,
+   "ms": 1.3207570009399205,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16421,7 +16421,7 @@
    "rules": [
     "TB-CRED-005"
    ],
-   "ms": 0.7838299998184084,
+   "ms": 0.9168500000669155,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -16441,7 +16441,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.5780260007668403,
+   "ms": 0.6492669999715872,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16463,7 +16463,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.9614279997549602,
+   "ms": 1.1813050005002879,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16485,7 +16485,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.9449119997952948,
+   "ms": 1.2733619987557177,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16507,7 +16507,7 @@
    "rules": [
     "TB-EXEC-016"
    ],
-   "ms": 0.7490050002161297,
+   "ms": 1.0177789990848396,
    "severity_label": null,
    "severity_got": "high",
    "sev_delta": null,
@@ -16527,7 +16527,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.4666109998652246,
+   "ms": 0.5184000001463573,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16547,7 +16547,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.43244600055913907,
+   "ms": 0.5251080001471564,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16567,7 +16567,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.81727899962425,
+   "ms": 2.391681000517565,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16589,7 +16589,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 0.8870550000210642,
+   "ms": 1.2035229992761742,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16611,7 +16611,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.4773600005355547,
+   "ms": 1.808860999517492,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16633,7 +16633,7 @@
    "rules": [
     "TB-EXEC-017"
    ],
-   "ms": 1.3854439994247514,
+   "ms": 1.8099489989253925,
    "severity_label": null,
    "severity_got": "medium",
    "sev_delta": null,
@@ -16653,7 +16653,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.0643639998306753,
+   "ms": 1.3500509994628374,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16673,7 +16673,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 1.1691680001604254,
+   "ms": 1.3507530002243584,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16693,7 +16693,7 @@
    "signal_only": false,
    "mapping_ok": false,
    "rules": [],
-   "ms": 0.958945000093081,
+   "ms": 1.1722499984898604,
    "severity_label": null,
    "severity_got": null,
    "sev_delta": null,
@@ -16715,7 +16715,7 @@
    "rules": [
     "TB-EXEC-003"
    ],
-   "ms": 1.8211450005765073,
+   "ms": 2.3094669995771255,
    "severity_label": null,
    "severity_got": "critical",
    "sev_delta": null,
@@ -16731,7 +16731,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 2.292971999850124
+   "ms": 2.508434999981546
   },
   {
    "id": "HB4-002",
@@ -16741,7 +16741,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.9028130007209256
+   "ms": 0.9995440013881307
   },
   {
    "id": "HB4-003",
@@ -16751,7 +16751,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5443540003398084
+   "ms": 0.749253998947097
   },
   {
    "id": "HB4-004",
@@ -16761,7 +16761,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.48416400043061
+   "ms": 0.6728850003128173
   },
   {
    "id": "HB4-005",
@@ -16771,7 +16771,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6177969999043853
+   "ms": 0.5395520001911791
   },
   {
    "id": "HB4-006",
@@ -16781,7 +16781,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.8104569997158251
+   "ms": 0.8998329994938103
   },
   {
    "id": "HB4-007",
@@ -16791,7 +16791,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5567439993683365
+   "ms": 0.6112000010034535
   },
   {
    "id": "HB4-008",
@@ -16801,7 +16801,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.9040750001076958
+   "ms": 1.15090799954487
   },
   {
    "id": "HB4-009",
@@ -16811,7 +16811,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.7491260003007483
+   "ms": 0.9414099986315705
   },
   {
    "id": "HB4-010",
@@ -16821,7 +16821,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.7181809998874087
+   "ms": 2.075406999210827
   },
   {
    "id": "HB4-011",
@@ -16831,7 +16831,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.2197890000607003
+   "ms": 1.3597080014733365
   },
   {
    "id": "HB4-012",
@@ -16841,7 +16841,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.306570999986434
+   "ms": 0.8342270011780784
   },
   {
    "id": "HB4-013",
@@ -16851,7 +16851,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6830860002082773
+   "ms": 0.6395250002242392
   },
   {
    "id": "HB4-014",
@@ -16861,7 +16861,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 2.6105629995072377
+   "ms": 3.2846340000105556
   },
   {
    "id": "HB4-015",
@@ -16871,7 +16871,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.5540320000582142
+   "ms": 1.9978679993073456
   },
   {
    "id": "HB4-016",
@@ -16881,7 +16881,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6492380007330212
+   "ms": 0.8389670001633931
   },
   {
    "id": "HB4-017",
@@ -16891,7 +16891,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.4986160001863027
+   "ms": 0.6743789999745786
   },
   {
    "id": "HB4-018",
@@ -16901,7 +16901,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.676909000503656
+   "ms": 0.7372349991783267
   },
   {
    "id": "HB4-019",
@@ -16911,7 +16911,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6722690004608012
+   "ms": 0.6775229994673282
   },
   {
    "id": "HB4-020",
@@ -16921,7 +16921,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5444620001071598
+   "ms": 0.5373860003601294
   },
   {
    "id": "HB4-021",
@@ -16931,7 +16931,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5593279993263423
+   "ms": 0.6084119995648507
   },
   {
    "id": "HB4-022",
@@ -16941,7 +16941,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 1.0800750005728332
+   "ms": 1.265586999579682
   },
   {
    "id": "HB4-023",
@@ -16951,7 +16951,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5009819997212617
+   "ms": 0.6542680002894485
   },
   {
    "id": "HB4-024",
@@ -16961,7 +16961,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.522607999300817
+   "ms": 0.6200850002642255
   },
   {
    "id": "HB4-025",
@@ -16971,7 +16971,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.71010000010574
+   "ms": 0.7492210006603273
   },
   {
    "id": "HB4-026",
@@ -16981,7 +16981,7 @@
    "signal_only": true,
    "any_hit": true,
    "rules": [],
-   "ms": 0.4377269997348776
+   "ms": 0.46378600018215366
   },
   {
    "id": "HB4-027",
@@ -16991,7 +16991,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6477130000348552
+   "ms": 0.8543849999114173
   },
   {
    "id": "HB4-028",
@@ -17001,7 +17001,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.661628000671044
+   "ms": 0.8038039995881263
   },
   {
    "id": "HB4-029",
@@ -17011,7 +17011,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.6991439995545079
+   "ms": 0.8926000009523705
   },
   {
    "id": "HB4-030",
@@ -17021,7 +17021,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.561193999601528
+   "ms": 0.7308010008273413
   },
   {
    "id": "HB4-031",
@@ -17031,7 +17031,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.75376199947641
+   "ms": 0.9423499996046303
   },
   {
    "id": "HB4-032",
@@ -17041,7 +17041,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5628219996651751
+   "ms": 0.6490989999292651
   },
   {
    "id": "HB4-033",
@@ -17051,7 +17051,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5143199996382464
+   "ms": 0.665423000100418
   },
   {
    "id": "HB4-034",
@@ -17061,7 +17061,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.854517999869131
+   "ms": 1.0526860005484195
   },
   {
    "id": "HB4-035",
@@ -17071,7 +17071,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5291719999149791
+   "ms": 0.6533609994221479
   },
   {
    "id": "HB4-036",
@@ -17081,7 +17081,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5590350001511979
+   "ms": 0.7147129999793833
   },
   {
    "id": "HB4-037",
@@ -17091,7 +17091,7 @@
    "signal_only": false,
    "any_hit": false,
    "rules": [],
-   "ms": 0.5658599993694224
+   "ms": 0.722635999409249
   }
  ],
  "campaigns": [

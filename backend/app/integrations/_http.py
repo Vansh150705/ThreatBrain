@@ -14,6 +14,7 @@ from tenacity import (
 
 # Overridable in tests with httpx.MockTransport.
 _transport: httpx.BaseTransport | None = None
+MAX_BYTES = 2_000_000          # a feed answer is a few KB; anything larger is a fault or an attack, and is not read into memory
 
 
 class FeedError(Exception):
@@ -42,11 +43,22 @@ def get_json(
         reraise=True,
     )
     def _call() -> httpx.Response:
-        with httpx.Client(timeout=10.0, transport=_transport) as client:
-            return client.get(url, headers=headers, params=params)
+        with httpx.Client(timeout=10.0, transport=_transport) as client, client.stream("GET", url, headers=headers, params=params) as r:
+            size = int(r.headers.get("content-length") or 0)
+            if size > MAX_BYTES:
+                raise FeedError(f"{feed} response too large ({size} bytes)")
+            chunks, total = [], 0
+            for chunk in r.iter_bytes():
+                total += len(chunk)
+                if total > MAX_BYTES:
+                    raise FeedError(f"{feed} response too large")
+                chunks.append(chunk)
+            return httpx.Response(r.status_code, content=b"".join(chunks), headers=r.headers, request=r.request)
 
     try:
         resp = _call()
+    except FeedError:
+        raise
     except Exception as exc:
         raise FeedError(f"{feed} request failed: {type(exc).__name__}") from exc
 

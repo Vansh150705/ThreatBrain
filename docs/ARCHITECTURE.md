@@ -7,7 +7,7 @@
 | Console | React 19, Vite, Tailwind v4 | Dashboards, cases, approvals, **detection management, operations, onboarding**, settings. Talks to the API with the Supabase user JWT; reads new threats live through Supabase Realtime. |
 | API | FastAPI (sync endpoints run in the thread pool) | Auth, RBAC, **durable ingest**, orchestration, case management, rule management, metrics, readiness. Single place that touches the database. |
 | Worker | Python (`python -m app.worker`, or embedded) | Claims jobs from the PostgreSQL queue (`FOR UPDATE SKIP LOCKED`, leases, retries, dead-letter), runs detection, correlation and the agent pipeline. Scale by running more. |
-| Detection layer | Pure Python + YAML | 101 compiled rules, 14 correlations, ATT&CK catalogue, Sigma converter, IOC extraction, fingerprints, risk score. No network, no LLM. |
+| Detection layer | Pure Python + YAML | 126 compiled rules, 17 correlations, a deobfuscation layer, ATT&CK catalogue, Sigma converter, IOC extraction, fingerprints, risk score. No network, no LLM. |
 | Agents | Groq or any OpenAI-compatible endpoint (JSON mode) | Nine narrowly-scoped prompts with Pydantic output schemas (incl. Detection Engineering). Optional: with no model the platform runs rules-only. |
 | Database | Supabase Postgres | Tenant data, event store, **job queue**, append-only `audit_logs`, `pipeline_runs`, `api_keys`, rule content, correlation ledger. |
 | `tb-collector` | Python daemon | Tails logs, detects attacks, posts events (API key, retry, disk spool). |
@@ -37,6 +37,12 @@ The synchronous `POST /ingest/event` (no `async`) and `/orchestrator/handle-even
 8. **Response ∥ Forensics ∥ Compliance** – independent, run concurrently. Forensics writes the timeline onto the incident; Response writes `playbook_runs`; Compliance writes its summary into `ai_summary`.
 
 Each stage is timed and bounded (`PIPELINE_STAGE_TIMEOUT_SECONDS`), retried only for schema-invalid model output, and recorded in `trace`. Full runs are persisted in `pipeline_runs` (sync, or background with `?async=true` / webhooks) and visible under **Pipelines** in the console.
+
+## Behavioural layer
+
+After deterministic rules run, `event_processor` passes the event to `behavior_service`, which extracts observations (sign-in network/hour/host, privileged actions, processes, destinations, bytes), compares them with the entity's tenant-specific baseline and peer group,
+and returns zero or more hits that are merged with the rule hits (`TB-UEBA-*`). Only events with no deterministic hit update baselines. Profiles are stored in `behavior_profiles` with optimistic concurrency; analyst dispositions and suppressions are stored beside them.
+Details and limits: [BEHAVIORAL_ANALYTICS.md](BEHAVIORAL_ANALYTICS.md).
 
 ## Response safety model
 

@@ -1,6 +1,6 @@
 # ThreatBrain validation report
 
-* Result: **PASS**  · mode `pipeline` · commit `e616bc6` · rules `2026.10.2` (101 rules) · 2026-10-28T19:34:21Z
+* Result: **PASS**  · mode `pipeline` · commit `1384acd` · rules `2026.11.1` (126 rules) · 2026-11-04T07:45:54Z
 * Fidelity: real FastAPI app, durable queue and worker; in-memory PostgREST stand-in; scripted LLM (no live services)
 
 ## Headline metrics
@@ -67,18 +67,18 @@
 
 ## Evasion probes
 
-5/12 detected. Open documented gaps: 7.
-* `EVA-001` PowerShell with string concatenation to hide IEX: MISSED (known gap)
-* `EVA-002` Reverse shell via renamed netcat: MISSED (known gap)
-* `EVA-003` Defender disabled via registry through reg import: MISSED (known gap)
-* `EVA-004` Log clearing with PowerShell .NET API: MISSED (known gap)
-* `EVA-005` Credential dump via direct syscalls tool with innocuous name: MISSED (known gap)
+11/12 detected. Open documented gaps: 1.
+* `EVA-001` PowerShell with string concatenation to hide IEX: detected
+* `EVA-002` Reverse shell via renamed netcat: detected
+* `EVA-003` Defender disabled via registry through reg import: detected
+* `EVA-004` Log clearing with PowerShell .NET API: detected
+* `EVA-005` Credential dump via direct syscalls tool with innocuous name: detected
 * `EVA-006` Exfil over HTTPS to attacker domain with no tooling signature: MISSED (known gap)
 * `EVA-007` base64 split across arguments: detected
 * `EVA-008` Case and whitespace variation of a known command: detected
 * `EVA-009` Quoted path variation of wevtutil: detected
 * `EVA-010` URL-encoded path traversal: detected
-* `EVA-011` Double URL-encoded traversal: MISSED (known gap)
+* `EVA-011` Double URL-encoded traversal: detected
 * `EVA-012` Mixed-case JNDI with nested lookups: detected
 
 ## Campaign correlation
@@ -107,30 +107,30 @@
 
 ## Latency
 
-`{"scenarios": 316, "p50": 16.7, "p95": 47.7, "p99": 129.1, "max": 519.0, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
+`{"scenarios": 316, "p50": 22.0, "p95": 61.9, "p99": 135.2, "max": 661.3, "note": "ingest->detect->correlate->scripted-LLM pipeline->threat, in-process, in-memory DB"}`
 
 ## LLM
 
-`{"mode": "scripted", "calls": 917, "tokens": null, "note": "scripted responses: token usage and LLM verdict quality are NOT measured"}`
+`{"mode": "scripted", "calls": 962, "tokens": null, "note": "scripted responses: token usage and LLM verdict quality are NOT measured"}`
 
 ## ATT&CK coverage (catalog subset)
 
 | Tactic | Catalog | With rule | Tested | Detected |
 |---|---|---|---|---|
-| Reconnaissance | 4 | 3 | 0 | 0 |
-| Resource Development | 0 | 0 | 0 | 0 |
-| Initial Access | 9 | 6 | 5 | 5 |
-| Execution | 16 | 11 | 8 | 8 |
-| Persistence | 23 | 18 | 17 | 17 |
-| Privilege Escalation | 23 | 20 | 18 | 18 |
-| Defense Evasion | 39 | 28 | 21 | 21 |
-| Credential Access | 22 | 17 | 15 | 14 |
-| Discovery | 18 | 7 | 6 | 6 |
-| Lateral Movement | 8 | 6 | 3 | 3 |
-| Collection | 12 | 7 | 6 | 6 |
-| Command and Control | 12 | 12 | 8 | 8 |
-| Exfiltration | 8 | 5 | 4 | 4 |
-| Impact | 11 | 10 | 7 | 7 |
+| Reconnaissance | 46 | 3 | 0 | 0 |
+| Resource Development | 51 | 0 | 0 | 0 |
+| Initial Access | 22 | 6 | 5 | 5 |
+| Execution | 63 | 14 | 8 | 8 |
+| Persistence | 113 | 21 | 17 | 17 |
+| Privilege Escalation | 96 | 25 | 18 | 18 |
+| Defense Evasion | 224 | 38 | 22 | 22 |
+| Credential Access | 68 | 19 | 16 | 15 |
+| Discovery | 49 | 8 | 6 | 6 |
+| Lateral Movement | 23 | 6 | 3 | 3 |
+| Collection | 41 | 7 | 6 | 6 |
+| Command and Control | 45 | 13 | 8 | 8 |
+| Exfiltration | 20 | 5 | 4 | 4 |
+| Impact | 33 | 10 | 7 | 7 |
 
 ## Limitations of this benchmark
 

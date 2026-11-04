@@ -69,12 +69,12 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 ```
 
 ### Database / schema change
-Migrations in `database/migrations/` (001-026) are **not applied automatically by the application**. Preferred: the ordered,
+Migrations in `database/migrations/` (001-027) are **not applied automatically by the application**. Preferred: the ordered,
 checksummed runner against the direct Postgres connection string (`DATABASE_URL=... ./database/migrate.sh`; `--dry-run` and `--status` available;
-refuses edited, already-applied files; rollback scripts for 025 and 026 in `database/rollback/`). Alternatively paste the files in order into the Supabase SQL editor,
+refuses edited, already-applied files; rollback scripts for 025, 026 and 027 in `database/rollback/`). Alternatively paste the files in order into the Supabase SQL editor,
 running `022` and `024` **each on its own** (they add an enum value, which cannot share a transaction with code that uses it).
 `./database/verify_migrations.sh` proves the whole chain on a scratch PostgreSQL before you touch production, and
-`python -m app.doctor` / `GET /api/v1/ready` tell you whether the deployed schema is current (`026_correlation_ledger.sql`).
+`python -m app.doctor` / `GET /api/v1/ready` tell you whether the deployed schema is current (`027_behavior_analytics.sql`).
 Take a backup first (`./database/backup.sh --verify`). Then deploy
 any backend code that depends on the new schema. A new table/column without the
 backend code that reads it does nothing; backend code without the table 500s.
@@ -113,7 +113,7 @@ cd frontend && npm run dev
 |---------|-------|
 | New page shows `404: Not Found` from the API | Backend code pushed to `origin` but not to `space`. Push to `space`. |
 | Feature works locally, not in production | Same — the HF Spaces backend is behind. |
-| `500` referencing a missing table/column | Migration not run in Supabase yet (new backend needs migrations through 026). |
+| `500` referencing a missing table/column | Migration not run in Supabase yet (new backend needs migrations through 027). |
 | Every request returns `429` behind the Space proxy | Set `TRUST_PROXY_HEADERS=true` so limits are per client, not per proxy. |
 | Agents all fail with `llm_unavailable` (502) | `GROQ_API_KEY` missing/invalid or Groq quota exhausted; detection rules still classify known attacks (degraded mode). |
 | Frontend change not live | Check the Vercel deployment finished; it follows `origin/main`. |

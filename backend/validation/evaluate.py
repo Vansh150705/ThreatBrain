@@ -390,7 +390,7 @@ def pipeline_sample(items: list[dict[str, Any]]) -> dict[str, Any]:
             "ms_ingest_to_detection": {"p50": round(pct(dts, 50), 1), "p95": round(pct(dts, 95), 1)} if dts else None,
             "ms_ingest_to_investigation_complete": {"p50": round(pct(its, 50), 1), "p95": round(pct(its, 95), 1)} if its else None,
             "llm": {"mode": "scripted", "calls": sum(r["llm_calls"] for r in rows), "tokens": None,
-                    "note": "latency and tokens of a real model are NOT measured here; see docs/AGENT_EVALUATION.md for the live-provider harness"},
+                    "note": "latency and tokens of a real model are NOT measured here; a live-provider mode does not exist yet, see docs/AGENT_EVALUATION.md"},
             "note": "wall time includes the in-memory database and a scripted model: it measures platform overhead, not production latency"}
 
 

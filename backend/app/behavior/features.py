@@ -48,7 +48,8 @@ FAMILY_CODE = {f.family: f.code for f in FEATURES.values()}
 
 _SUCCESS_LOGIN = ("authentication.success", "cloud.console_login", "identity.login", "identity.okta.login", "identity.signin")
 _WRITABLE = re.compile(r"(/tmp/|/dev/shm/|/var/tmp/|\\appdata\\|\\temp\\|\\users\\public\\|\\downloads\\|\\programdata\\|\\perflogs\\)", re.I)
-_WRITABLE_CLASS = (("tmp", re.compile(r"/tmp/|\\temp\\", re.I)), ("shm", re.compile(r"/dev/shm/", re.I)),
+# Regexes that classify paths seen in telemetry (B108 false positive): this program never creates or opens these paths.
+_WRITABLE_CLASS = (("tmp", re.compile(r"/tmp/|\\temp\\", re.I)), ("shm", re.compile(r"/dev/shm/", re.I)),   # nosec B108
                    ("appdata", re.compile(r"\\appdata\\", re.I)), ("public", re.compile(r"\\users\\public\\", re.I)),
                    ("downloads", re.compile(r"\\downloads\\", re.I)), ("programdata", re.compile(r"\\programdata\\", re.I)))
 _PRIV_ACTION = re.compile(

@@ -1,14 +1,14 @@
 {
  "schema": "threatbrain.evaluation/1",
  "environment": {
-  "generated_at": "2026-11-04T06:20:34Z",
-  "git_sha": "1bfcb65",
+  "generated_at": "2026-11-04T07:47:00Z",
+  "git_sha": "1384acd",
   "python": "3.11.17",
   "rules": {
    "count": 126,
    "version": "2026.11.1"
   },
-  "seconds": 59.7,
+  "seconds": 62.3,
   "mode": "engine"
  },
  "freeze": {
@@ -203,7 +203,7 @@
    "passed": true
   },
   "performance.engine_ms_p95": {
-   "value": 2.062,
+   "value": 2.146,
    "threshold": 25.0,
    "op": "<=",
    "passed": true
@@ -472,8 +472,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.639,
-      "p95": 2.062
+      "p50": 0.74,
+      "p95": 2.146
      },
      "missed": [],
      "false_positives": [],
@@ -870,8 +870,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.786,
-      "p95": 2.976
+      "p50": 0.949,
+      "p95": 3.698
      },
      "missed": [
       {
@@ -1122,8 +1122,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 3.328,
-      "p95": 18.842
+      "p50": 3.194,
+      "p95": 18.824
      },
      "missed": [
       {
@@ -1859,8 +1859,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 1.293,
-      "p95": 3.469
+      "p50": 1.476,
+      "p95": 3.761
      },
      "missed": [
       {
@@ -2346,8 +2346,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.921,
-      "p95": 4.053
+      "p50": 1.579,
+      "p95": 7.912
      },
      "missed": [],
      "false_positives": [],
@@ -2695,8 +2695,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 1.06,
-      "p95": 3.256
+      "p50": 1.053,
+      "p95": 3.285
      }
     },
     "atomic_red_team": {
@@ -2913,8 +2913,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 3.485,
-      "p95": 19.456
+      "p50": 3.323,
+      "p95": 19.518
      }
     },
     "lolbas": {
@@ -3176,8 +3176,8 @@
      },
      "precision": 1.0,
      "engine_ms_per_scenario": {
-      "p50": 0.935,
-      "p95": 2.486
+      "p50": 1.177,
+      "p95": 3.085
      }
     },
     "campaigns": {
@@ -3660,6 +3660,47 @@
      ]
     }
    }
+  },
+  "pipeline_sample": {
+   "scenarios": 40,
+   "attack_alerted": {
+    "k": 24,
+    "n": 27,
+    "rate": 0.8889,
+    "ci95": [
+     0.719,
+     0.961
+    ]
+   },
+   "benign_alerted": {
+    "k": 0,
+    "n": 13,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.228
+    ]
+   },
+   "pipeline_runs": 24,
+   "runs_completed": 24,
+   "runs_failed": 0,
+   "runs_degraded": 0,
+   "agent_execution_reliability": 1.0,
+   "ms_ingest_to_detection": {
+    "p50": 28.3,
+    "p95": 35.7
+   },
+   "ms_ingest_to_investigation_complete": {
+    "p50": 28.5,
+    "p95": 37.5
+   },
+   "llm": {
+    "mode": "scripted",
+    "calls": 117,
+    "tokens": null,
+    "note": "latency and tokens of a real model are NOT measured here; a live-provider mode does not exist yet, see docs/AGENT_EVALUATION.md"
+   },
+   "note": "wall time includes the in-memory database and a scripted model: it measures platform overhead, not production latency"
   },
   "datasets_not_run": []
  },

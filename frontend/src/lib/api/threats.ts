@@ -40,6 +40,11 @@ export interface ThreatDetail extends ThreatListItem {
     confidence: number;
     techniques: string[];
     matched_fields: string[];
+    /** rule = deterministic signature; correlation = deterministic sequence/threshold; behavior = statistical deviation from a baseline */
+    kind?: "rule" | "correlation" | "behavior";
+    /** context that never raises a threat on its own */
+    signal?: boolean;
+    explanation?: { risk?: number; decision?: string; note?: string; signals?: Array<{ feature: string; explanation?: { summary?: string } }> };
   }>;
 }
 
