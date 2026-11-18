@@ -1,0 +1,47 @@
+{
+ "definition": "nearest development/tuning scenario by token Jaccard; near >= 0.8, very near >= 0.9",
+ "groups": {
+  "handwritten": {
+   "scenarios": 86,
+   "median_max_similarity": 0.333,
+   "near_duplicates": 2,
+   "near_duplicate_rate": 0.0233,
+   "very_near_duplicates": 1,
+   "exact_duplicates": 0,
+   "verbatim_in_rule_tests": 3
+  },
+  "art": {
+   "scenarios": 607,
+   "median_max_similarity": 0.444,
+   "near_duplicates": 90,
+   "near_duplicate_rate": 0.1483,
+   "very_near_duplicates": 16,
+   "exact_duplicates": 2,
+   "verbatim_in_rule_tests": 5
+  },
+  "lolbas": {
+   "scenarios": 147,
+   "median_max_similarity": 0.5,
+   "near_duplicates": 7,
+   "near_duplicate_rate": 0.0476,
+   "very_near_duplicates": 0,
+   "exact_duplicates": 0,
+   "verbatim_in_rule_tests": 0
+  }
+ },
+ "gates": {
+  "handwritten_heldout_exact_duplicates": {
+   "value": 0,
+   "threshold": 0,
+   "op": "<=",
+   "passed": true
+  },
+  "handwritten_heldout_near_duplicate_rate": {
+   "value": 0.0233,
+   "threshold": 0.05,
+   "op": "<=",
+   "passed": true
+  }
+ },
+ "passed": true
+}

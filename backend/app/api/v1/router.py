@@ -4,16 +4,22 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     agents,
+    api_keys,
     audit,
     auth,
+    behavior,
     copilot,
     incidents,
     ingest,
     meta,
+    onboarding,
     orchestrator,
     organizations,
     playbooks,
+    rules,
     stats,
+)
+from app.api.v1.endpoints import (
     threats as threats_endpoints,
 )
 
@@ -25,6 +31,9 @@ api_router.include_router(meta.router)
 # Authentication (signup, login)
 api_router.include_router(auth.router)
 
+# API keys (collector / executor credentials)
+api_router.include_router(api_keys.router)
+
 # Audit trail
 api_router.include_router(audit.router)
 
@@ -33,6 +42,15 @@ api_router.include_router(playbooks.router)
 
 # Copilot
 api_router.include_router(copilot.router)
+
+# Detection content (rules, Sigma, coverage)
+api_router.include_router(rules.router)
+
+# Behavioural analytics (UEBA)
+api_router.include_router(behavior.router)
+
+# First-run checklist + demo data
+api_router.include_router(onboarding.router)
 
 # Ingest (universal collector front door)
 api_router.include_router(ingest.router)

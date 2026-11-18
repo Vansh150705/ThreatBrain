@@ -4,6 +4,14 @@ import * as me from "./me";
 import * as threats from "./threats";
 import * as incidents from "./incidents";
 import * as stats from "./stats";
+import * as cases from "./cases";
+import * as soc from "./soc";
+import * as admin from "./admin";
+import * as pipelines from "./pipelines";
+import * as logAnalysis from "./logAnalysis";
+import * as behavior from "./behavior";
+import * as detection from "./detection";
+import * as ops from "./ops";
 
 export { default as http } from "./client";
 export { ApiError, AuthError, ForbiddenError, NotFoundError } from "./errors";
@@ -36,6 +44,14 @@ export const api = {
   threats,
   incidents,
   stats,
+  cases,
+  soc,
+  admin,
+  pipelines,
+  logAnalysis,
+  behavior,
+  detection,
+  ops,
 };
 
 export type * from "./types";

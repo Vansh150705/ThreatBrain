@@ -77,13 +77,16 @@ export interface TriageEventPayload {
 }
 
 export interface OrchestratorStage {
-  status: "ok" | "failed" | "skipped";
+  /** degraded: the LLM failed but deterministic rules produced a verdict */
+  status: "ok" | "failed" | "skipped" | "degraded";
   run_id?: string;
   verdict?: Record<string, unknown>;
   latency_ms?: number;
   tokens?: number;
+  attempts?: number;
   error?: string;
   reason?: string;
+  reconciliation?: Record<string, unknown>;
 }
 
 export interface OrchestratorSummary {
@@ -93,9 +96,19 @@ export interface OrchestratorSummary {
   stages_skipped: number;
   incident_short_id: string | null;
   promoted_threat_id: string | null;
+  promoted_threat_short_id?: string | null;
+  stages_degraded?: number;
+  deduplicated?: boolean;
+  duplicate_of?: string | null;
+  event_count?: number;
+  degraded?: boolean;
+  final_severity?: string | null;
+  risk_score?: number | null;
 }
 
 export interface OrchestratorResponse {
   stages: Record<string, OrchestratorStage>;
   summary: OrchestratorSummary;
+  trace?: Array<Record<string, unknown>>;
+  run_id?: string | null;
 }

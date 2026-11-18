@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.agents.base import AgentInput, BaseAgent
@@ -21,7 +21,7 @@ class HuntAgent(BaseAgent):
         self, *, organization_id: str, lookback_hours: int
     ) -> list[dict[str, Any]]:
         client = get_supabase_admin()
-        since = (datetime.now(timezone.utc) - timedelta(hours=lookback_hours)).isoformat()
+        since = (datetime.now(UTC) - timedelta(hours=lookback_hours)).isoformat()
         result = (
             client.table("threats")
             .select(
@@ -41,7 +41,7 @@ class HuntAgent(BaseAgent):
         self, *, organization_id: str, lookback_hours: int
     ) -> list[dict[str, Any]]:
         client = get_supabase_admin()
-        since = (datetime.now(timezone.utc) - timedelta(hours=lookback_hours)).isoformat()
+        since = (datetime.now(UTC) - timedelta(hours=lookback_hours)).isoformat()
         result = (
             client.table("iocs")
             .select(

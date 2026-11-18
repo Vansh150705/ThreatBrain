@@ -15,6 +15,7 @@ import SeverityBadge from "@/components/SeverityBadge";
 import StatusBadge from "@/components/StatusBadge";
 import PriorityBadge from "@/components/PriorityBadge";
 import { Button } from "@/components/ui/button";
+import CasePanel from "@/components/CasePanel";
 import ColdStartNotice from "@/components/ColdStartNotice";
 
 type BottomTab = "timeline" | "playbook";
@@ -267,6 +268,8 @@ export default function IncidentDetailPage() {
       >
         {/* left column */}
         <div className="lg:col-span-2 space-y-5">
+          <CasePanel incident={incident} onUpdated={setIncident} />
+
           {/* Description */}
           {incident.description && (
             <InfoCard>

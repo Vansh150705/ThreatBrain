@@ -10,6 +10,12 @@ import {
   Globe,
   ScrollText,
   ShieldCheck,
+  ScanSearch,
+  Crosshair,
+  Fingerprint,
+  Gauge,
+  Workflow,
+  Settings,
   X,
 } from "lucide-react";
 
@@ -37,6 +43,10 @@ const navSections = [
     title: "Intelligence",
     items: [
       { to: "/agents", label: "Agents", icon: Bot },
+      { to: "/pipelines", label: "Pipelines", icon: Workflow },
+      { to: "/detection", label: "Detection", icon: Crosshair },
+      { to: "/behavior", label: "Behaviour", icon: Fingerprint },
+      { to: "/log-analysis", label: "Log analysis", icon: ScanSearch },
       { to: "/runs", label: "Run history", icon: Activity },
     ],
   },
@@ -45,6 +55,8 @@ const navSections = [
     items: [
       { to: "/approvals", label: "Approvals", icon: ShieldCheck },
       { to: "/audit", label: "Audit trail", icon: ScrollText },
+      { to: "/operations", label: "Operations", icon: Gauge },
+      { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { CheckCircle2, XCircle, MinusCircle, TriangleAlert } from "lucide-react";
 
 import type { OrchestratorStage } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 type Stage = { key: string; label: string; est: number; hints: string[] };
 
 const STAGES: Stage[] = [
+  { key: "detection", label: "Detection rules", est: 1, hints: ["Evaluating MITRE-mapped rules", "Extracting indicators", "Fingerprinting for de-duplication"] },
   { key: "triage", label: "Triage", est: 4, hints: ["Classifying severity", "Mapping to MITRE ATT&CK", "Scoring confidence"] },
   { key: "threat_intel", label: "Threat Intel", est: 5, hints: ["Querying AbuseIPDB", "Scoring IP reputation", "Checking known feeds"] },
   { key: "investigation", label: "Investigation", est: 16, hints: ["Correlating recent threats", "Grouping into incidents", "Tracing the kill chain"] },
@@ -39,7 +40,7 @@ function simIdxFor(elapsed: number): number {
   return idx;
 }
 
-type View = "pending" | "active" | "done" | "ok" | "failed" | "skipped";
+type View = "pending" | "active" | "done" | "ok" | "degraded" | "failed" | "skipped";
 
 interface PipelineProgressProps {
   stages: Record<string, OrchestratorStage> | null;
@@ -78,7 +79,7 @@ export default function PipelineProgress({ stages, isRunning }: PipelineProgress
   const viewFor = (i: number, key: string): View => {
     if (hasResult) {
       const s = stages?.[key]?.status;
-      return s === "ok" ? "ok" : s === "failed" ? "failed" : s === "skipped" ? "skipped" : "pending";
+      return s === "ok" ? "ok" : s === "degraded" ? "degraded" : s === "failed" ? "failed" : s === "skipped" ? "skipped" : "pending";
     }
     if (i < simIdx) return "done";
     if (i === simIdx) return "active";
@@ -149,6 +150,7 @@ export default function PipelineProgress({ stages, isRunning }: PipelineProgress
                     "relative flex-1 min-w-0 flex items-center justify-between gap-3 rounded-md px-3 py-2 overflow-hidden transition-colors",
                     active && "bg-accent/50",
                     view === "ok" && "bg-severity-low/[0.07]",
+                    view === "degraded" && "bg-severity-medium/[0.09]",
                     view === "failed" && "bg-severity-critical/[0.07]",
                     (view === "pending" || view === "skipped") && "bg-transparent"
                   )}
@@ -168,6 +170,7 @@ export default function PipelineProgress({ stages, isRunning }: PipelineProgress
                         active && "text-foreground font-medium",
                         view === "done" && "text-foreground/80",
                         view === "ok" && "text-foreground font-medium",
+                        view === "degraded" && "text-foreground font-medium",
                         view === "failed" && "text-severity-critical font-medium",
                         (view === "pending" || view === "skipped") && "text-muted-foreground/60"
                       )}
@@ -195,8 +198,18 @@ export default function PipelineProgress({ stages, isRunning }: PipelineProgress
 
                   {/* Right-side meta */}
                   <div className="relative flex items-center gap-2.5 font-mono text-[10.5px] text-muted-foreground tabular-nums flex-shrink-0">
-                    {view === "skipped" && <span className="italic text-muted-foreground/50">skipped</span>}
-                    {(view === "ok" || view === "failed") && stage?.latency_ms != null && (
+                    {view === "skipped" && (
+                      <span className="italic text-muted-foreground/60 max-w-[16rem] truncate" title={stage?.reason}>
+                        skipped{stage?.reason ? ` · ${stage.reason}` : ""}
+                      </span>
+                    )}
+                    {view === "degraded" && (
+                      <span className="text-severity-medium" title={stage?.reason}>rules-only</span>
+                    )}
+                    {view === "failed" && stage?.error && (
+                      <span className="text-severity-critical max-w-[16rem] truncate" title={stage.error}>{stage.error}</span>
+                    )}
+                    {(view === "ok" || view === "failed" || view === "degraded") && stage?.latency_ms != null && stage.latency_ms > 0 && (
                       <span>{formatMs(stage.latency_ms)}</span>
                     )}
                     {(view === "ok" || view === "failed") && stage?.tokens != null && stage.tokens > 0 && (
@@ -220,6 +233,9 @@ function StageNode({ view, reduce }: { view: View; reduce: boolean }) {
   }
   if (view === "failed") {
     return <XCircle className="w-[22px] h-[22px] text-severity-critical bg-background rounded-full" />;
+  }
+  if (view === "degraded") {
+    return <TriangleAlert className="w-[22px] h-[22px] text-severity-medium bg-background rounded-full" />;
   }
   if (view === "skipped") {
     return <MinusCircle className="w-[22px] h-[22px] text-muted-foreground/40 bg-background rounded-full" />;

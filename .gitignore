@@ -125,3 +125,8 @@ tmp/
 temp/
 
 storybook-static/
+# Runtime artifacts
+*.jsonl
+.pytest_cache/
+.ruff_cache/
+backend/validation/scenarios/external/

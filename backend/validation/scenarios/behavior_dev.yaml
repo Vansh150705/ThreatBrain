@@ -1,0 +1,184 @@
+# Behavioural scenarios (DEVELOPMENT split: thresholds in app/behavior/config.py were chosen while looking at these and at the noise simulation).
+# Each scenario = a seeded synthetic HISTORY (learned silently) + TEST events (judged). label attack => must alert; benign => must not.
+# `at_h` is hours after the end of the history. Nothing here is executed; all events are data.
+scenarios:
+# ------------------------------------------------------------------------------------------- attacks
+- id: BEH-A01
+  name: Stolen credentials - new external network, 3am, domain controller never used before
+  label: attack
+  history: [{gen: logins, user: alice, days: 21, per_day: 6, hours: [8, 9, 10, 13, 14, 16], nets: ["10.1.4.20"], hosts: [ws-alice, fs-01]}]
+  test: [{at_h: 3.2, event_type: authentication.success, username: alice, source_ip: 198.51.100.9, asset_name: dc-01}]
+- id: BEH-A02
+  name: Insider bulk access - twelve shares never opened by this account within the hour
+  label: attack
+  history:
+    - {gen: logins, user: carol, days: 21, per_day: 6, hours: [9, 10, 11, 14, 15], nets: ["10.1.5.30"], hosts: [ws-carol, fs-01]}
+    - {gen: cloud, user: carol, days: 21, per_day: 5, actions: [[GetObject, s3.amazonaws.com]], resources: [team-docs, team-reports]}
+  test:
+    - {at_h: 10.0, event_type: cloud.audit, username: carol, source_ip: 10.1.5.30, repeat: 12, step_min: 3,
+       raw_data: {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: hr-payroll},
+       vary: {raw_data: [{eventName: GetObject, eventSource: s3.amazonaws.com, bucket: hr-payroll}, {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: legal-contracts}, {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: board-minutes}, {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: m-and-a}, {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: exec-comp}]}}
+- id: BEH-A03
+  name: Service account fans out across hosts it has never used (lateral movement)
+  label: attack
+  history: [{gen: logins, user: svc-backup, days: 21, per_day: 8, hours: [1, 2, 3], nets: ["10.0.9.5"], hosts: [bk-01, bk-02]}]
+  test:
+    - {at_h: 14.0, event_type: authentication.success, username: svc-backup, source_ip: 10.0.9.5, repeat: 10, step_min: 2,
+       vary: {asset_name: [db-01, db-02, app-01, app-02, hr-srv, fin-srv, dc-01, dc-02, mail-01, file-02]}}
+- id: BEH-A04
+  name: Server uploads an order of magnitude more data than ever to a network it has never contacted
+  label: attack
+  history: [{gen: flows, host: srv-app-1, days: 12, per_hour: [1, 3], bytes_median: 40000, sigma: 0.6, dests: ["198.51.100.20", "198.51.100.21"]}]
+  test: [{at_h: 2.5, event_type: network.flow, asset_name: srv-app-1, source_ip: 10.0.2.9, destination_ip: 203.0.113.91, destination_port: 443, raw_data: {bytes_out: 90000000}}]
+- id: BEH-A05
+  name: Developer identity performs its first-ever privileged IAM action
+  label: attack
+  history: [{gen: cloud, user: dev-bot, days: 21, per_day: 8, actions: [[GetObject, s3.amazonaws.com], [PutObject, s3.amazonaws.com], [DescribeInstances, ec2.amazonaws.com]], resources: [ci-artifacts]}]
+  test: [{at_h: 5.0, event_type: cloud.audit, username: dev-bot, source_ip: 10.0.0.8, raw_data: {eventName: AttachUserPolicy, eventSource: iam.amazonaws.com}}]
+- id: BEH-A06
+  name: Stable web server runs an unknown program from /dev/shm and opens a new port
+  label: attack
+  history: [{gen: procs, host: web-01, days: 12, per_day: 40, names: [nginx, sshd, cron, python3, bash], parent: systemd}, {gen: flows, host: web-01, days: 12, per_hour: [1, 2], ports: [443, 5432], dests: ["10.0.3.5"]}]
+  test:
+    - {at_h: 6.0, event_type: process.start, asset_name: web-01, process_name: kdevtmpfsi, raw_data: {parent_process: bash, process_path: /dev/shm/.k/kdevtmpfsi}}
+    - {at_h: 6.1, event_type: network.flow, asset_name: web-01, source_ip: 10.0.2.9, destination_ip: 203.0.113.44, destination_port: 4444, raw_data: {bytes_out: 2000}}
+- id: BEH-A07
+  name: Account used from two new networks and a new host in the same evening
+  label: attack
+  history: [{gen: logins, user: dave, days: 21, per_day: 5, hours: [9, 10, 11, 14, 15], nets: ["10.1.6.40"], hosts: [ws-dave]}]
+  test:
+    - {at_h: 21.0, event_type: authentication.success, username: dave, source_ip: 198.51.100.77, asset_name: ws-dave}
+    - {at_h: 21.5, event_type: authentication.success, username: dave, source_ip: 203.0.113.77, asset_name: fin-srv}
+- id: BEH-A08
+  name: Slow exfiltration - hourly totals several times normal for six hours to a new destination
+  label: attack
+  history: [{gen: flows, host: srv-file-2, days: 14, per_hour: [2, 4], bytes_median: 60000, sigma: 0.5, dests: ["198.51.100.20"]}]
+  test: [{at_h: 3.0, event_type: network.flow, asset_name: srv-file-2, source_ip: 10.0.2.9, destination_ip: 203.0.113.99, destination_port: 443, repeat: 30, step_min: 2, raw_data: {bytes_out: 2500000}}]
+- id: BEH-A09
+  name: Secret read by a principal that has never read a secret
+  label: attack
+  history: [{gen: cloud, user: ci-runner, days: 21, per_day: 10, actions: [[PutObject, s3.amazonaws.com], [GetObject, s3.amazonaws.com]], resources: [build-cache]}, {gen: logins, user: ci-runner, days: 21, per_day: 4, hours: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], nets: ["10.0.7.7"], hosts: [ci-01]}]
+  test:
+    - {at_h: 4.0, event_type: cloud.audit, username: ci-runner, source_ip: 10.0.7.7, raw_data: {eventName: GetSecretValue, eventSource: secretsmanager.amazonaws.com, secretId: prod/db/master}}
+    - {at_h: 4.05, event_type: cloud.audit, username: ci-runner, source_ip: 198.51.100.200, raw_data: {eventName: CreateAccessKey, eventSource: iam.amazonaws.com}}
+- id: BEH-A10
+  name: Dormant-looking account (few events) suddenly active from a new place (cold start - not detectable by design)
+  label: attack
+  known_gap: true
+  gap_reason: Fewer than 40 events / 3 days of history; a baseline would be fiction. Deterministic rules and correlation still apply.
+  history: [{gen: logins, user: erin, days: 2, per_day: 3, hours: [9, 10], nets: ["10.1.7.1"], hosts: [ws-erin]}]
+  test: [{at_h: 3.0, event_type: authentication.success, username: erin, source_ip: 198.51.100.9, asset_name: dc-01}]
+# ------------------------------------------------------------------------------------------- benign: ordinary variation
+- id: BEH-B01
+  name: Employee travels - one new network, normal hours, usual systems
+  label: benign
+  history: [{gen: logins, user: alice, days: 21, per_day: 6, hours: [8, 9, 10, 13, 14, 16], nets: ["10.1.4.20"], hosts: [ws-alice, fs-01]}]
+  test: [{at_h: 9.0, event_type: authentication.success, username: alice, source_ip: 203.0.113.50, asset_name: ws-alice, repeat: 4, step_min: 40}]
+- id: BEH-B02
+  name: Late-evening deploy by an engineer (unusual hour only)
+  label: benign
+  history: [{gen: logins, user: frank, days: 21, per_day: 6, hours: [9, 10, 11, 14, 15, 16], nets: ["10.1.4.60"], hosts: [ws-frank, build-01]}]
+  test: [{at_h: 22.0, event_type: authentication.success, username: frank, source_ip: 10.1.4.60, asset_name: build-01}]
+- id: BEH-B03
+  name: New project - three new hosts over three days, shared by teammates
+  label: benign
+  history:
+    - {gen: logins, user: gina, days: 21, per_day: 6, hours: [9, 10, 11, 14, 15], nets: ["10.1.4.70"], hosts: [ws-gina, wiki-01]}
+    - {gen: logins, users: 10, user_prefix: team, days: 21, per_day: 6, hours: [9, 10, 11, 14, 15], nets: ["10.1.4.80"], hosts: [wiki-01, proj-01, proj-02, proj-03]}
+  test:
+    - {at_h: 10.0, event_type: authentication.success, username: gina, source_ip: 10.1.4.70, asset_name: proj-01}
+    - {at_h: 10.4, event_type: authentication.success, username: gina, source_ip: 10.1.4.70, asset_name: proj-02}
+    - {at_h: 11.0, event_type: authentication.success, username: gina, source_ip: 10.1.4.70, asset_name: proj-03}
+- id: BEH-B04
+  name: Shift change - same user now signs in four hours later every day
+  label: benign
+  history: [{gen: logins, user: hank, days: 21, per_day: 6, hours: [8, 9, 10, 11], nets: ["10.1.4.90"], hosts: [ws-hank]}]
+  test: [{at_h: 12.0, event_type: authentication.success, username: hank, source_ip: 10.1.4.90, asset_name: ws-hank, repeat: 4, step_min: 20},
+         {at_h: 36.0, event_type: authentication.success, username: hank, source_ip: 10.1.4.90, asset_name: ws-hank, repeat: 4, step_min: 20},
+         {at_h: 60.0, event_type: authentication.success, username: hank, source_ip: 10.1.4.90, asset_name: ws-hank, repeat: 4, step_min: 20}]
+- id: BEH-B05
+  name: Nightly backup window - large transfer every night (already in the baseline)
+  label: benign
+  history: [{gen: flows, host: srv-db-1, days: 14, per_hour: [1, 2], bytes_median: 30000, sigma: 0.5, dests: ["198.51.100.20"], nightly_mb: 400}]
+  test: [{at_h: 2.3, event_type: network.flow, asset_name: srv-db-1, source_ip: 10.0.2.9, destination_ip: 198.51.100.20, destination_port: 443, raw_data: {bytes_out: 410000000}}]
+- id: BEH-B06
+  name: Month-end batch triples outbound volume to the usual partner
+  label: benign
+  history: [{gen: flows, host: srv-erp-1, days: 21, per_hour: [2, 4], bytes_median: 80000, sigma: 0.6, dests: ["198.51.100.30"], spike_prob: 0.02, spike_mult: 6}]
+  test: [{at_h: 5.0, event_type: network.flow, asset_name: srv-erp-1, source_ip: 10.0.2.9, destination_ip: 198.51.100.30, destination_port: 443, repeat: 6, step_min: 8, raw_data: {bytes_out: 600000}}]
+- id: BEH-B07
+  name: Fleet-wide package rollout - the same new binary appears on a quarter of the hosts
+  label: benign
+  history:
+    - {gen: procs, host: web-01, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-02, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-03, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-04, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-05, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-06, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-07, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-08, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-09, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+    - {gen: procs, host: web-10, days: 12, per_day: 40, names: [nginx, sshd, cron, python3], parent: systemd}
+  test:
+    - {at_h: 3.0, event_type: process.start, asset_name: web-01, process_name: nginx-exporter, raw_data: {parent_process: systemd, process_path: /usr/local/bin/nginx-exporter}}
+    - {at_h: 3.1, event_type: process.start, asset_name: web-02, process_name: nginx-exporter, raw_data: {parent_process: systemd, process_path: /usr/local/bin/nginx-exporter}}
+    - {at_h: 3.2, event_type: process.start, asset_name: web-03, process_name: nginx-exporter, raw_data: {parent_process: systemd, process_path: /usr/local/bin/nginx-exporter}}
+    - {at_h: 3.3, event_type: process.start, asset_name: web-04, process_name: nginx-exporter, raw_data: {parent_process: systemd, process_path: /usr/local/bin/nginx-exporter}}
+- id: BEH-B08
+  name: New hire's first weeks - few events, common systems
+  label: benign
+  history: [{gen: logins, user: newhire, days: 3, per_day: 4, hours: [9, 10, 11, 14], nets: ["10.1.4.101"], hosts: [ws-newhire, wiki-01]}, {gen: logins, users: 12, user_prefix: staff, days: 21, per_day: 6, hours: [9, 10, 11, 14], nets: ["10.1.4.110"], hosts: [wiki-01, hr-portal, fs-01]}]
+  test: [{at_h: 10.0, event_type: authentication.success, username: newhire, source_ip: 10.1.4.101, asset_name: hr-portal}, {at_h: 11.0, event_type: authentication.success, username: newhire, source_ip: 10.1.4.101, asset_name: fs-01}]
+- id: BEH-B09
+  name: Weekend maintenance - usual admin, usual systems, unusual day and hour
+  label: benign
+  history: [{gen: logins, user: ops-lead, days: 28, per_day: 8, hours: [8, 9, 10, 11, 12, 13, 14, 15, 16], nets: ["10.1.4.120"], hosts: [ws-ops, jump-01, db-01, app-01]}]
+  test: [{at_h: 14.0, event_type: authentication.success, username: ops-lead, source_ip: 10.1.4.120, asset_name: db-01}, {at_h: 14.2, event_type: authentication.success, username: ops-lead, source_ip: 10.1.4.120, asset_name: app-01}]
+- id: BEH-B10
+  name: VPN exit address changes - new network, everything else identical
+  label: benign
+  history: [{gen: logins, user: ivy, days: 21, per_day: 6, hours: [8, 9, 10, 13, 14], nets: ["10.1.4.130"], hosts: [ws-ivy, fs-01]}]
+  test: [{at_h: 9.0, event_type: authentication.success, username: ivy, source_ip: 10.200.40.2, asset_name: ws-ivy}, {at_h: 9.5, event_type: authentication.success, username: ivy, source_ip: 10.200.40.2, asset_name: fs-01}]
+- id: BEH-B11
+  name: Helpdesk technician who touches many hosts every day
+  label: benign
+  history: [{gen: logins, user: helpdesk1, days: 21, per_day: 25, hours: [8, 9, 10, 11, 12, 13, 14, 15, 16], nets: ["10.1.4.140"], hosts: [pc-01, pc-02, pc-03, pc-04, pc-05, pc-06, pc-07, pc-08, pc-09, pc-10, pc-11, pc-12, pc-13, pc-14, pc-15, pc-16]}]
+  test: [{at_h: 10.0, event_type: authentication.success, username: helpdesk1, source_ip: 10.1.4.140, repeat: 12, step_min: 3, vary: {asset_name: [pc-01, pc-05, pc-09, pc-12, pc-03, pc-14, pc-02, pc-16, pc-07, pc-11, pc-04, pc-13]}}]
+- id: BEH-B12
+  name: Application starts talking to a new SaaS endpoint on 443 (new destination only)
+  label: benign
+  history: [{gen: flows, host: srv-app-3, days: 14, per_hour: [1, 3], bytes_median: 50000, sigma: 0.6, dests: ["198.51.100.20"]}]
+  test: [{at_h: 7.0, event_type: network.flow, asset_name: srv-app-3, source_ip: 10.0.2.9, destination_ip: 198.51.100.150, destination_port: 443, raw_data: {bytes_out: 60000}}]
+- id: BEH-B13
+  name: Cloud admin performs a routine privileged change they perform every week
+  label: benign
+  history: [{gen: cloud, user: cloud-admin, days: 28, per_day: 6, actions: [[AttachRolePolicy, iam.amazonaws.com], [DescribeInstances, ec2.amazonaws.com], [PutBucketPolicy, s3.amazonaws.com]], resources: [infra-state]}]
+  test: [{at_h: 4.0, event_type: cloud.audit, username: cloud-admin, source_ip: 10.0.0.8, raw_data: {eventName: AttachRolePolicy, eventSource: iam.amazonaws.com}}]
+- id: BEH-B14
+  name: Developer reads a new bucket after joining a team whose members all use it
+  label: benign
+  history:
+    - {gen: cloud, user: jo, days: 21, per_day: 5, actions: [[GetObject, s3.amazonaws.com]], resources: [team-a-data]}
+    - {gen: logins, user: jo, days: 21, per_day: 6, hours: [9, 10, 11, 14], nets: ["10.1.4.150"], hosts: [ws-jo]}
+  test: [{at_h: 10.0, event_type: cloud.audit, username: jo, source_ip: 10.1.4.150, raw_data: {eventName: GetObject, eventSource: s3.amazonaws.com, bucket: team-b-data}}]
+- id: BEH-B15
+  name: Occasional large legitimate download by a workstation to its known cloud storage
+  label: benign
+  history: [{gen: flows, host: ws-design-1, days: 21, per_hour: [1, 3], hours: [9, 10, 11, 12, 13, 14, 15, 16], bytes_median: 200000, sigma: 0.9, dests: ["198.51.100.40"], spike_prob: 0.03, spike_mult: 12}]
+  test: [{at_h: 10.0, event_type: network.flow, asset_name: ws-design-1, source_ip: 10.0.2.9, destination_ip: 198.51.100.40, destination_port: 443, raw_data: {bytes_out: 9000000}}]
+- id: BEH-B16
+  name: Service account high steady volume (the baseline is high)
+  label: benign
+  history: [{gen: flows, host: srv-etl-1, days: 14, per_hour: [3, 6], bytes_median: 30000000, sigma: 0.3, dests: ["198.51.100.60"]}]
+  test: [{at_h: 5.0, event_type: network.flow, asset_name: srv-etl-1, source_ip: 10.0.2.9, destination_ip: 198.51.100.60, destination_port: 443, repeat: 5, step_min: 10, raw_data: {bytes_out: 38000000}}]
+- id: BEH-B17
+  name: Contractor works Saturday on usual systems
+  label: benign
+  history: [{gen: logins, user: contractor1, days: 28, per_day: 6, weekdays_only: true, hours: [9, 10, 11, 14, 15], nets: ["10.1.4.160"], hosts: [ws-contractor, proj-01]}]
+  test: [{at_h: 17.0, event_type: authentication.success, username: contractor1, source_ip: 10.1.4.160, asset_name: proj-01}]
+- id: BEH-B18
+  name: New laptop - unfamiliar host name, otherwise ordinary
+  label: benign
+  history: [{gen: logins, user: kim, days: 21, per_day: 6, hours: [9, 10, 11, 14, 15], nets: ["10.1.4.170"], hosts: [ws-kim-old, fs-01]}]
+  test: [{at_h: 9.0, event_type: authentication.success, username: kim, source_ip: 10.1.4.170, asset_name: ws-kim-new}, {at_h: 9.2, event_type: authentication.success, username: kim, source_ip: 10.1.4.170, asset_name: fs-01}]

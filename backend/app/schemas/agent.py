@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.common import Pagination
 
-
 # Agent
 
 class AgentResponse(BaseModel):

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user
-from app.services import stats_service
+from app.api.deps import CurrentUser, require_viewer
+from app.services import soc_metrics, stats_service
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
@@ -19,9 +19,17 @@ class DashboardStats(BaseModel):
 
 
 @router.get("/dashboard", response_model=DashboardStats)
-async def dashboard_stats(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
+def dashboard_stats(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
 ) -> DashboardStats:
     """Return the aggregate counts shown on the main dashboard."""
     result = stats_service.get_dashboard_stats(user.organization_id)
     return DashboardStats(**result)
+
+
+@router.get("/soc", summary="SOC performance metrics (MTTD/MTTA/MTTC/MTTR, trends, top lists, agent health)")
+def soc_metrics_endpoint(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
+    days: Annotated[int, Query(ge=1, le=90)] = 7,
+) -> dict:
+    return soc_metrics.compute(user.organization_id, days)

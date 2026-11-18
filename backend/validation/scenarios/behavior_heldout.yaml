@@ -1,0 +1,1431 @@
+# FROZEN held-out behavioural scenarios. Parameters (entities, volumes, hours, destinations) were drawn from a seeded generator
+# AFTER the engine and its thresholds were fixed; the runner reports aggregates only. Do not edit (see validation/FROZEN.json).
+scenarios:
+- id: BEH-H01
+  label: attack
+  name: 'Compromised account 0: new external network, small hours, a server it never uses'
+  history:
+  - gen: logins
+    user: u-a0
+    days: 20
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    - 15
+    nets:
+    - 10.9.30.161
+    hosts:
+    - ws-u-a0
+    - fs-01
+  test:
+  - at_h: 2.5
+    event_type: authentication.success
+    username: u-a0
+    source_ip: 203.0.113.110
+    asset_name: dc-01
+- id: BEH-H02
+  label: attack
+  name: 'Compromised account 1: new external network, small hours, a server it never uses'
+  history:
+  - gen: logins
+    user: u-a1
+    days: 17
+    per_day: 9
+    hours:
+    - 10
+    - 11
+    - 12
+    - 15
+    - 16
+    nets:
+    - 10.6.70.120
+    hosts:
+    - ws-u-a1
+    - fs-01
+  test:
+  - at_h: 3.5
+    event_type: authentication.success
+    username: u-a1
+    source_ip: 192.0.2.246
+    asset_name: db-prod
+- id: BEH-H03
+  label: attack
+  name: 'Insider 0: 12 repositories never opened before, within the hour'
+  history:
+  - gen: logins
+    user: u-b0
+    days: 21
+    per_day: 5
+    hours:
+    - 11
+    - 12
+    - 13
+    - 14
+    - 17
+    nets:
+    - 10.2.116.12
+    hosts:
+    - ws-u-b0
+  - gen: cloud
+    user: u-b0
+    days: 21
+    per_day: 5
+    actions:
+    - - GetObject
+      - s3.amazonaws.com
+    resources:
+    - proj-0
+    - proj-1
+    - proj-2
+  test:
+  - at_h: 11.0
+    event_type: cloud.audit
+    username: u-b0
+    source_ip: 10.0.0.8
+    repeat: 12
+    step_min: 2
+    raw_data:
+      eventName: GetObject
+      eventSource: s3.amazonaws.com
+      bucket: restricted-0
+    vary:
+      raw_data:
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-0
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-1
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-2
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-3
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-4
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-5
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-6
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-7
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-8
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-9
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-10
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-11
+- id: BEH-H04
+  label: attack
+  name: 'Insider 1: 8 repositories never opened before, within the hour'
+  history:
+  - gen: logins
+    user: u-b1
+    days: 21
+    per_day: 5
+    hours:
+    - 9
+    - 11
+    - 13
+    - 14
+    - 17
+    nets:
+    - 10.3.134.175
+    hosts:
+    - ws-u-b1
+  - gen: cloud
+    user: u-b1
+    days: 21
+    per_day: 3
+    actions:
+    - - GetObject
+      - s3.amazonaws.com
+    resources:
+    - proj-0
+    - proj-1
+    - proj-2
+  test:
+  - at_h: 11.0
+    event_type: cloud.audit
+    username: u-b1
+    source_ip: 10.0.0.8
+    repeat: 8
+    step_min: 2
+    raw_data:
+      eventName: GetObject
+      eventSource: s3.amazonaws.com
+      bucket: restricted-0
+    vary:
+      raw_data:
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-0
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-1
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-2
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-3
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-4
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-5
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-6
+      - eventName: GetObject
+        eventSource: s3.amazonaws.com
+        bucket: restricted-7
+- id: BEH-H05
+  label: attack
+  name: Service account 0 reaches 11 unfamiliar systems in an hour
+  history:
+  - gen: logins
+    user: svc-c0
+    days: 21
+    per_day: 12
+    hours:
+    - 2
+    - 6
+    nets:
+    - 10.3.20.5
+    hosts:
+    - bk-01
+    - bk-02
+  test:
+  - at_h: 15.0
+    event_type: authentication.success
+    username: svc-c0
+    source_ip: 10.0.9.5
+    repeat: 11
+    step_min: 3
+    vary:
+      asset_name:
+      - srv-00
+      - srv-01
+      - srv-02
+      - srv-03
+      - srv-04
+      - srv-05
+      - srv-06
+      - srv-07
+      - srv-08
+      - srv-09
+      - srv-10
+- id: BEH-H06
+  label: attack
+  name: Service account 1 reaches 11 unfamiliar systems in an hour
+  history:
+  - gen: logins
+    user: svc-c1
+    days: 21
+    per_day: 8
+    hours:
+    - 2
+    - 6
+    nets:
+    - 10.8.16.124
+    hosts:
+    - bk-01
+    - bk-02
+  test:
+  - at_h: 15.0
+    event_type: authentication.success
+    username: svc-c1
+    source_ip: 10.0.9.5
+    repeat: 11
+    step_min: 3
+    vary:
+      asset_name:
+      - srv-00
+      - srv-01
+      - srv-02
+      - srv-03
+      - srv-04
+      - srv-05
+      - srv-06
+      - srv-07
+      - srv-08
+      - srv-09
+      - srv-10
+- id: BEH-H07
+  label: attack
+  name: Host 0 sends 150 MB to an unseen network (baseline median 20 KB)
+  history:
+  - gen: flows
+    host: srv-d0
+    days: 12
+    per_hour:
+    - 1
+    - 4
+    bytes_median: 20000
+    sigma: 0.4
+    dests:
+    - 192.0.2.20
+    - 192.0.2.115
+  test:
+  - at_h: 3.0
+    event_type: network.flow
+    asset_name: srv-d0
+    source_ip: 10.0.2.9
+    destination_ip: 203.0.113.47
+    destination_port: 8443
+    raw_data:
+      bytes_out: 150000000
+- id: BEH-H08
+  label: attack
+  name: Host 1 sends 400 MB to an unseen network (baseline median 90 KB)
+  history:
+  - gen: flows
+    host: srv-d1
+    days: 20
+    per_hour:
+    - 1
+    - 4
+    bytes_median: 90000
+    sigma: 0.4
+    dests:
+    - 192.0.2.167
+    - 203.0.113.68
+  test:
+  - at_h: 1.0
+    event_type: network.flow
+    asset_name: srv-d1
+    source_ip: 10.0.2.9
+    destination_ip: 203.0.113.221
+    destination_port: 443
+    raw_data:
+      bytes_out: 400000000
+- id: BEH-H09
+  label: attack
+  name: 'Automation identity 0: first-ever CreateUser'
+  history:
+  - gen: cloud
+    user: role-e0
+    days: 24
+    per_day: 5
+    actions:
+    - - GetObject
+      - s3.amazonaws.com
+    - - PutObject
+      - s3.amazonaws.com
+    - - ListBuckets
+      - s3.amazonaws.com
+    resources:
+    - build-out
+  test:
+  - at_h: 6.0
+    event_type: cloud.audit
+    username: role-e0
+    source_ip: 10.0.0.8
+    raw_data:
+      eventName: CreateUser
+      eventSource: iam.amazonaws.com
+- id: BEH-H10
+  label: attack
+  name: 'Automation identity 1: first-ever PutRolePolicy'
+  history:
+  - gen: cloud
+    user: role-e1
+    days: 24
+    per_day: 9
+    actions:
+    - - GetObject
+      - s3.amazonaws.com
+    - - PutObject
+      - s3.amazonaws.com
+    - - ListBuckets
+      - s3.amazonaws.com
+    resources:
+    - build-out
+  test:
+  - at_h: 6.0
+    event_type: cloud.audit
+    username: role-e1
+    source_ip: 10.0.0.8
+    raw_data:
+      eventName: PutRolePolicy
+      eventSource: iam.amazonaws.com
+- id: BEH-H11
+  label: attack
+  name: 'Application server 0: unknown binary from /tmp and a new outbound port'
+  history:
+  - gen: procs
+    host: app-f0
+    days: 14
+    per_day: 42
+    names:
+    - java
+    - sshd
+    - cron
+    - node
+    - bash
+    parent: systemd
+  - gen: flows
+    host: app-f0
+    days: 14
+    per_hour:
+    - 1
+    - 2
+    ports:
+    - 443
+    - 3306
+    dests:
+    - 10.0.3.5
+  test:
+  - at_h: 7.0
+    event_type: process.start
+    asset_name: app-f0
+    process_name: xmr-helper
+    raw_data:
+      parent_process: bash
+      process_path: /tmp/.cache/xmr-helper
+  - at_h: 7.1
+    event_type: network.flow
+    asset_name: app-f0
+    source_ip: 10.0.2.9
+    destination_ip: 203.0.113.47
+    destination_port: 3333
+    raw_data:
+      bytes_out: 4000
+- id: BEH-H12
+  label: attack
+  name: 'Application server 1: unknown binary from /tmp and a new outbound port'
+  history:
+  - gen: procs
+    host: app-f1
+    days: 14
+    per_day: 54
+    names:
+    - java
+    - sshd
+    - cron
+    - node
+    - bash
+    parent: systemd
+  - gen: flows
+    host: app-f1
+    days: 14
+    per_hour:
+    - 1
+    - 2
+    ports:
+    - 443
+    - 3306
+    dests:
+    - 10.0.3.5
+  test:
+  - at_h: 7.0
+    event_type: process.start
+    asset_name: app-f1
+    process_name: xmr-helper
+    raw_data:
+      parent_process: bash
+      process_path: /tmp/.cache/xmr-helper
+  - at_h: 7.1
+    event_type: network.flow
+    asset_name: app-f1
+    source_ip: 10.0.2.9
+    destination_ip: 192.0.2.101
+    destination_port: 3333
+    raw_data:
+      bytes_out: 4000
+- id: BEH-H13
+  label: attack
+  name: 'Sustained exfiltration: hourly totals far above normal for five hours to a new destination'
+  history:
+  - gen: flows
+    host: srv-g0
+    days: 16
+    per_hour:
+    - 2
+    - 3
+    bytes_median: 70000
+    sigma: 0.5
+    dests:
+    - 198.51.100.20
+  test:
+  - at_h: 2.0
+    event_type: network.flow
+    asset_name: srv-g0
+    source_ip: 10.0.2.9
+    destination_ip: 203.0.113.150
+    destination_port: 443
+    repeat: 40
+    step_min: 7
+    raw_data:
+      bytes_out: 3000000
+- id: BEH-H14
+  label: attack
+  name: Build runner reads a production secret then mints an access key from a new network
+  history:
+  - gen: cloud
+    user: runner-h0
+    days: 21
+    per_day: 9
+    actions:
+    - - PutObject
+      - s3.amazonaws.com
+    - - GetObject
+      - s3.amazonaws.com
+    resources:
+    - cache
+  - gen: logins
+    user: runner-h0
+    days: 21
+    per_day: 4
+    hours:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    nets:
+    - 10.0.7.7
+    hosts:
+    - ci-02
+  test:
+  - at_h: 5.0
+    event_type: cloud.audit
+    username: runner-h0
+    source_ip: 10.0.7.7
+    raw_data:
+      eventName: GetSecretValue
+      eventSource: secretsmanager.amazonaws.com
+      secretId: prod/payments/key
+  - at_h: 5.1
+    event_type: cloud.audit
+    username: runner-h0
+    source_ip: 203.0.113.104
+    raw_data:
+      eventName: CreateAccessKey
+      eventSource: iam.amazonaws.com
+- id: BEH-H15
+  label: attack
+  name: 'Remote admin: two new networks and an administrative server in one evening'
+  history:
+  - gen: logins
+    user: adm-i0
+    days: 28
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    - 15
+    nets:
+    - 10.1.8.8
+    hosts:
+    - ws-adm
+    - jump-01
+  test:
+  - at_h: 22.0
+    event_type: authentication.success
+    username: adm-i0
+    source_ip: 203.0.113.3
+    asset_name: jump-01
+  - at_h: 22.6
+    event_type: authentication.success
+    username: adm-i0
+    source_ip: 203.0.113.135
+    asset_name: dc-02
+- id: BEH-H16
+  label: benign
+  name: 'Traveller 0: new network for 5 sign-ins, normal hours and systems'
+  history:
+  - gen: logins
+    user: u-t0
+    days: 19
+    per_day: 9
+    hours:
+    - 8
+    - 10
+    - 12
+    - 13
+    - 16
+    nets:
+    - 10.7.221.185
+    hosts:
+    - ws-u-t0
+    - fs-01
+  test:
+  - at_h: 9.0
+    event_type: authentication.success
+    username: u-t0
+    source_ip: 203.0.113.64
+    asset_name: ws-u-t0
+    repeat: 4
+    step_min: 45
+- id: BEH-H17
+  label: benign
+  name: 'Traveller 1: new network for 2 sign-ins, normal hours and systems'
+  history:
+  - gen: logins
+    user: u-t1
+    days: 19
+    per_day: 8
+    hours:
+    - 8
+    - 11
+    - 13
+    - 15
+    - 16
+    nets:
+    - 10.8.180.141
+    hosts:
+    - ws-u-t1
+    - fs-01
+  test:
+  - at_h: 9.0
+    event_type: authentication.success
+    username: u-t1
+    source_ip: 198.51.100.191
+    asset_name: ws-u-t1
+    repeat: 4
+    step_min: 45
+- id: BEH-H18
+  label: benign
+  name: 'Traveller 2: new network for 4 sign-ins, normal hours and systems'
+  history:
+  - gen: logins
+    user: u-t2
+    days: 19
+    per_day: 5
+    hours:
+    - 8
+    - 9
+    - 13
+    - 14
+    - 16
+    nets:
+    - 10.7.61.198
+    hosts:
+    - ws-u-t2
+    - fs-01
+  test:
+  - at_h: 9.0
+    event_type: authentication.success
+    username: u-t2
+    source_ip: 198.51.100.219
+    asset_name: ws-u-t2
+    repeat: 4
+    step_min: 45
+- id: BEH-H19
+  label: benign
+  name: 'Late finish 0: usual systems at an unusual hour'
+  history:
+  - gen: logins
+    user: u-l0
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 14
+    - 15
+    - 16
+    - 17
+    nets:
+    - 10.5.10.159
+    hosts:
+    - ws-u-l0
+    - build-01
+  test:
+  - at_h: 21.5
+    event_type: authentication.success
+    username: u-l0
+    source_ip: 10.1.4.9
+    asset_name: build-01
+- id: BEH-H20
+  label: benign
+  name: 'Late finish 1: usual systems at an unusual hour'
+  history:
+  - gen: logins
+    user: u-l1
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 12
+    - 14
+    - 16
+    nets:
+    - 10.5.135.57
+    hosts:
+    - ws-u-l1
+    - build-01
+  test:
+  - at_h: 5.0
+    event_type: authentication.success
+    username: u-l1
+    source_ip: 10.1.4.9
+    asset_name: build-01
+- id: BEH-H21
+  label: benign
+  name: 'Home VPN gateway renumbered: new internal network, everything else the same'
+  history:
+  - gen: logins
+    user: u-v0
+    days: 21
+    per_day: 6
+    hours:
+    - 8
+    - 9
+    - 10
+    - 13
+    - 14
+    nets:
+    - 10.1.4.131
+    hosts:
+    - ws-v0
+    - fs-01
+  test:
+  - at_h: 9.0
+    event_type: authentication.success
+    username: u-v0
+    source_ip: 10.201.7.2
+    asset_name: ws-v0
+    repeat: 3
+    step_min: 30
+- id: BEH-H22
+  label: benign
+  name: 'Nightly job 0: 120 MB at 02:00 every night, tonight included'
+  history:
+  - gen: flows
+    host: srv-n0
+    days: 15
+    per_hour:
+    - 1
+    - 2
+    bytes_median: 40000
+    sigma: 0.5
+    dests:
+    - 198.51.100.20
+    nightly_mb: 120
+  test:
+  - at_h: 2.2
+    event_type: network.flow
+    asset_name: srv-n0
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.20
+    destination_port: 443
+    raw_data:
+      bytes_out: 126000000
+- id: BEH-H23
+  label: benign
+  name: 'Nightly job 1: 900 MB at 02:00 every night, tonight included'
+  history:
+  - gen: flows
+    host: srv-n1
+    days: 15
+    per_hour:
+    - 1
+    - 2
+    bytes_median: 40000
+    sigma: 0.5
+    dests:
+    - 198.51.100.20
+    nightly_mb: 900
+  test:
+  - at_h: 2.2
+    event_type: network.flow
+    asset_name: srv-n1
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.20
+    destination_port: 443
+    raw_data:
+      bytes_out: 945000000
+- id: BEH-H24
+  label: benign
+  name: 'Nightly job 2: 2500 MB at 02:00 every night, tonight included'
+  history:
+  - gen: flows
+    host: srv-n2
+    days: 15
+    per_hour:
+    - 1
+    - 2
+    bytes_median: 40000
+    sigma: 0.5
+    dests:
+    - 198.51.100.20
+    nightly_mb: 2500
+  test:
+  - at_h: 2.2
+    event_type: network.flow
+    asset_name: srv-n2
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.20
+    destination_port: 443
+    raw_data:
+      bytes_out: 2625000000
+- id: BEH-H25
+  label: benign
+  name: 'Quarter-end reporting 0: several times normal volume to the usual recipient'
+  history:
+  - gen: flows
+    host: srv-q0
+    days: 21
+    per_hour:
+    - 2
+    - 4
+    bytes_median: 90000
+    sigma: 0.6
+    dests:
+    - 198.51.100.30
+    spike_prob: 0.03
+    spike_mult: 8
+  test:
+  - at_h: 4.0
+    event_type: network.flow
+    asset_name: srv-q0
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.30
+    destination_port: 443
+    repeat: 5
+    step_min: 9
+    raw_data:
+      bytes_out: 900000
+- id: BEH-H26
+  label: benign
+  name: 'Quarter-end reporting 1: several times normal volume to the usual recipient'
+  history:
+  - gen: flows
+    host: srv-q1
+    days: 21
+    per_hour:
+    - 2
+    - 4
+    bytes_median: 90000
+    sigma: 0.6
+    dests:
+    - 198.51.100.30
+    spike_prob: 0.03
+    spike_mult: 8
+  test:
+  - at_h: 4.0
+    event_type: network.flow
+    asset_name: srv-q1
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.30
+    destination_port: 443
+    repeat: 5
+    step_min: 9
+    raw_data:
+      bytes_out: 900000
+- id: BEH-H27
+  label: benign
+  name: 'Rolling upgrade: a new agent binary appears on eight of twelve hosts within the hour'
+  history:
+  - gen: procs
+    host: fleet-00
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-01
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-02
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-03
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-04
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-05
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-06
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-07
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-08
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-09
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-10
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  - gen: procs
+    host: fleet-11
+    days: 12
+    per_day: 40
+    names:
+    - nginx
+    - sshd
+    - cron
+    - python3
+    parent: systemd
+  test:
+  - at_h: 3.0
+    event_type: process.start
+    asset_name: fleet-00
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.1
+    event_type: process.start
+    asset_name: fleet-01
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.2
+    event_type: process.start
+    asset_name: fleet-02
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.3
+    event_type: process.start
+    asset_name: fleet-03
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.4
+    event_type: process.start
+    asset_name: fleet-04
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.5
+    event_type: process.start
+    asset_name: fleet-05
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.6
+    event_type: process.start
+    asset_name: fleet-06
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+  - at_h: 3.7
+    event_type: process.start
+    asset_name: fleet-07
+    process_name: otel-agent
+    raw_data:
+      parent_process: systemd
+      process_path: /opt/otel/otel-agent
+- id: BEH-H28
+  label: benign
+  name: 'New hire, week one: common systems only'
+  history:
+  - gen: logins
+    user: nh-0
+    days: 4
+    per_day: 4
+    hours:
+    - 9
+    - 10
+    - 11
+    nets:
+    - 10.1.9.9
+    hosts:
+    - ws-nh
+    - wiki-01
+  - gen: logins
+    users: 14
+    user_prefix: colleague
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    nets:
+    - 10.1.9.20
+    hosts:
+    - wiki-01
+    - hr-portal
+    - fs-01
+    - crm-01
+  test:
+  - at_h: 10.0
+    event_type: authentication.success
+    username: nh-0
+    source_ip: 10.1.9.9
+    asset_name: crm-01
+  - at_h: 11.0
+    event_type: authentication.success
+    username: nh-0
+    source_ip: 10.1.9.9
+    asset_name: hr-portal
+- id: BEH-H29
+  label: benign
+  name: 'Teammates adopt a new internal tool: everyone on the team starts signing in to it'
+  history:
+  - gen: logins
+    users: 9
+    user_prefix: devteam
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    - 15
+    nets:
+    - 10.1.10.10
+    hosts:
+    - git-01
+    - ci-01
+    - tool-new
+  - gen: logins
+    user: devteam-x
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    - 15
+    nets:
+    - 10.1.10.11
+    hosts:
+    - git-01
+    - ci-01
+  test:
+  - at_h: 10.0
+    event_type: authentication.success
+    username: devteam-x
+    source_ip: 10.1.10.11
+    asset_name: tool-new
+- id: BEH-H30
+  label: benign
+  name: Service desk lead moves between a few dozen machines every hour (baseline breadth is high)
+  history:
+  - gen: logins
+    user: sd-lead
+    days: 21
+    per_day: 30
+    hours:
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    nets:
+    - 10.1.4.141
+    hosts:
+    - pc-01
+    - pc-02
+    - pc-03
+    - pc-04
+    - pc-05
+    - pc-06
+    - pc-07
+    - pc-08
+    - pc-09
+    - pc-10
+    - pc-11
+    - pc-12
+    - pc-13
+    - pc-14
+    - pc-15
+    - pc-16
+    - pc-17
+    - pc-18
+    - pc-19
+    - pc-20
+  test:
+  - at_h: 10.0
+    event_type: authentication.success
+    username: sd-lead
+    source_ip: 10.1.4.141
+    repeat: 15
+    step_min: 3
+    vary:
+      asset_name:
+      - pc-03
+      - pc-08
+      - pc-01
+      - pc-14
+      - pc-19
+      - pc-05
+      - pc-11
+      - pc-02
+      - pc-16
+      - pc-07
+      - pc-13
+      - pc-20
+      - pc-04
+      - pc-10
+      - pc-06
+- id: BEH-H31
+  label: benign
+  name: Application adopts a new payment provider endpoint on 443
+  history:
+  - gen: flows
+    host: app-pay
+    days: 14
+    per_hour:
+    - 1
+    - 3
+    bytes_median: 30000
+    sigma: 0.5
+    dests:
+    - 198.51.100.20
+    - 198.51.100.21
+  test:
+  - at_h: 6.0
+    event_type: network.flow
+    asset_name: app-pay
+    source_ip: 10.0.2.9
+    destination_ip: 192.0.2.141
+    destination_port: 443
+    raw_data:
+      bytes_out: 40000
+- id: BEH-H32
+  label: benign
+  name: Platform engineer's weekly IAM change (performed every week for months)
+  history:
+  - gen: cloud
+    user: plat-eng
+    days: 35
+    per_day: 5
+    actions:
+    - - AttachRolePolicy
+      - iam.amazonaws.com
+    - - DescribeInstances
+      - ec2.amazonaws.com
+    - - GetObject
+      - s3.amazonaws.com
+    resources:
+    - tf-state
+  test:
+  - at_h: 4.0
+    event_type: cloud.audit
+    username: plat-eng
+    source_ip: 10.0.0.8
+    raw_data:
+      eventName: AttachRolePolicy
+      eventSource: iam.amazonaws.com
+- id: BEH-H33
+  label: benign
+  name: Workstation uploads a large design file to its usual storage once
+  history:
+  - gen: flows
+    host: ws-art-3
+    days: 21
+    per_hour:
+    - 1
+    - 3
+    hours:
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    bytes_median: 300000
+    sigma: 0.9
+    dests:
+    - 198.51.100.40
+    spike_prob: 0.04
+    spike_mult: 15
+  test:
+  - at_h: 11.0
+    event_type: network.flow
+    asset_name: ws-art-3
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.40
+    destination_port: 443
+    raw_data:
+      bytes_out: 22000000
+- id: BEH-H34
+  label: benign
+  name: ETL account with a very high, steady transfer rate
+  history:
+  - gen: flows
+    host: srv-etl-9
+    days: 14
+    per_hour:
+    - 4
+    - 8
+    bytes_median: 45000000
+    sigma: 0.25
+    dests:
+    - 198.51.100.60
+  test:
+  - at_h: 6.0
+    event_type: network.flow
+    asset_name: srv-etl-9
+    source_ip: 10.0.2.9
+    destination_ip: 198.51.100.60
+    destination_port: 443
+    repeat: 4
+    step_min: 12
+    raw_data:
+      bytes_out: 52000000
+- id: BEH-H35
+  label: benign
+  name: 'Staff member replaced their laptop: unfamiliar host name, same networks and hours'
+  history:
+  - gen: logins
+    user: u-w0
+    days: 21
+    per_day: 6
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    - 15
+    nets:
+    - 10.1.4.171
+    hosts:
+    - ws-w0-old
+    - fs-01
+  test:
+  - at_h: 9.0
+    event_type: authentication.success
+    username: u-w0
+    source_ip: 10.1.4.171
+    asset_name: ws-w0-new
+  - at_h: 9.3
+    event_type: authentication.success
+    username: u-w0
+    source_ip: 10.1.4.171
+    asset_name: fs-01
+- id: BEH-H36
+  label: benign
+  name: 'Weekend on-call: usual administrator, usual systems, Sunday afternoon'
+  history:
+  - gen: logins
+    user: oncall-9
+    days: 28
+    per_day: 7
+    hours:
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    nets:
+    - 10.1.4.121
+    hosts:
+    - jump-01
+    - db-01
+    - app-01
+  test:
+  - at_h: 15.0
+    event_type: authentication.success
+    username: oncall-9
+    source_ip: 10.1.4.121
+    asset_name: db-01
+    repeat: 3
+    step_min: 20
+- id: BEH-H37
+  label: benign
+  name: Contractor from a new office network at normal hours, usual project systems
+  history:
+  - gen: logins
+    user: ctr-2
+    days: 25
+    per_day: 5
+    weekdays_only: true
+    hours:
+    - 9
+    - 10
+    - 11
+    - 14
+    nets:
+    - 10.1.4.161
+    hosts:
+    - ws-ctr
+    - proj-01
+  test:
+  - at_h: 10.0
+    event_type: authentication.success
+    username: ctr-2
+    source_ip: 10.1.20.5
+    asset_name: proj-01
+- id: BEH-H38
+  label: benign
+  name: Scheduled batch account always runs at odd hours (this is its schedule)
+  history:
+  - gen: logins
+    user: batch-2
+    days: 21
+    per_day: 6
+    hours:
+    - 1
+    - 2
+    - 3
+    nets:
+    - 10.0.9.9
+    hosts:
+    - etl-01
+    - db-01
+  test:
+  - at_h: 2.0
+    event_type: authentication.success
+    username: batch-2
+    source_ip: 10.0.9.9
+    asset_name: etl-01
+- id: BEH-H39
+  label: benign
+  name: Host starts listening on and calling a new internal port after an app upgrade
+  history:
+  - gen: flows
+    host: app-up
+    days: 14
+    per_hour:
+    - 1
+    - 2
+    ports:
+    - 443
+    - 5432
+    dests:
+    - 10.0.3.5
+  test:
+  - at_h: 5.0
+    event_type: network.flow
+    asset_name: app-up
+    source_ip: 10.0.2.9
+    destination_ip: 10.0.3.5
+    destination_port: 9200
+    raw_data:
+      bytes_out: 5000

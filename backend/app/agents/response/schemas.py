@@ -19,9 +19,8 @@ class ResponseInput(BaseModel):
     execute_auto_playbooks: bool = Field(
         default=False,
         description=(
-            "If True, playbooks with auto_execute=True will be executed "
-            "(simulated for portfolio). Otherwise all actions are "
-            "recommendations only."
+            "Deprecated and ignored: the server never executes actions itself. "
+            "Approved actions are carried out by tb-executor on the target host."
         ),
     )
 
@@ -39,11 +38,16 @@ class ActionRecommendation(BaseModel):
         description="What this action targets (IP, user, host, etc.).",
     )
     priority: int = Field(..., ge=1, le=10)
-    rationale: str
+    rationale: str = ""
     status: str = Field(
         default="recommended",
-        description="recommended | simulated | executed | skipped",
+        description=(
+            "recommended (queued for human approval) | simulated (dry run, nothing "
+            "queued) | skipped (rejected by a safety check; see skip_reason). "
+            "'executed' only ever appears via the approval queue after tb-executor reports."
+        ),
     )
+    skip_reason: str | None = None
 
 
 class ResponseOutput(BaseModel):

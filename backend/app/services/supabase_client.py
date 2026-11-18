@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional
 
 from supabase import Client, create_client
 from supabase.client import ClientOptions
@@ -82,7 +81,7 @@ def supabase_health_check() -> dict[str, object]:
             exception_type=type(exc).__name__,
             exception_message=str(exc),
         )
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False}
 
 
 __all__ = [

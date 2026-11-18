@@ -40,11 +40,14 @@ CREATE INDEX IF NOT EXISTS idx_playbook_approvals_org_status
 -- rls on with no policies, so only the backend service role can touch this table
 ALTER TABLE public.playbook_approvals ENABLE ROW LEVEL SECURITY;
 
--- seed a couple of pending approvals for the demo org
+-- seed a couple of pending approvals for the demo org, but only when the demo
+-- organization and incident from seeders/001_demo_data.sql already exist (a
+-- fresh database has neither, and the foreign keys would otherwise fail).
 INSERT INTO public.playbook_approvals (
   organization_id, incident_id, incident_short_id, incident_title,
   playbook_name, action_type, target, priority, rationale
-) VALUES
+)
+SELECT v.* FROM (VALUES
   ('00000000-0000-0000-0000-00000000ac01'::uuid,
    '00000000-0000-0000-0000-00000000c001'::uuid,
    'INC-ACT001', 'Suspected APT29 intrusion via SSH brute-force chain',
@@ -55,4 +58,7 @@ INSERT INTO public.playbook_approvals (
    '00000000-0000-0000-0000-00000000c001'::uuid,
    'INC-ACT001', 'Suspected APT29 intrusion via SSH brute-force chain',
    'Isolate Compromised Host', 'isolate_host', 'prod-web-01 (10.0.1.10)', 8,
-   'Reverse shell to 198.51.100.7:4444 is active on this host. Isolation stops lateral movement toward db-prod-master.');
+   'Reverse shell to 198.51.100.7:4444 is active on this host. Isolation stops lateral movement toward db-prod-master.')
+) AS v(organization_id, incident_id, incident_short_id, incident_title, playbook_name, action_type, target, priority, rationale)
+WHERE EXISTS (SELECT 1 FROM public.organizations o WHERE o.id = v.organization_id)
+  AND EXISTS (SELECT 1 FROM public.incidents i WHERE i.id = v.incident_id);

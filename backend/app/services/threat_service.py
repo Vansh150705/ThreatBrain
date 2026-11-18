@@ -6,6 +6,12 @@ from uuid import UUID
 from app.services.supabase_client import get_supabase_admin
 
 
+def ilike_pattern(term: str) -> str:
+    """Build a safe ``%term%`` pattern: strip PostgREST/LIKE metacharacters."""
+    cleaned = "".join(ch for ch in term.strip()[:100] if ch not in "%_,()*\\")
+    return f"%{cleaned}%"
+
+
 VALID_SORT_FIELDS = {"created_at", "detected_at", "severity", "status", "confidence", "risk_score"}
 VALID_SORT_DIRS = {"asc", "desc"}
 
@@ -18,6 +24,8 @@ def list_threats(
     status: str | None = None,
     sort_by: str = "created_at",
     sort_dir: str = "desc",
+    search: str | None = None,
+    assigned_to: str | None = None,
 ) -> dict[str, Any]:
     """Fetch paginated threats for an organization with filters and sorting."""
     client = get_supabase_admin()
@@ -39,6 +47,7 @@ def list_threats(
         client.table("threats")
         .select("*", count="exact")
         .eq("organization_id", str(organization_id))
+        .is_("deleted_at", "null")
     )
 
     # Apply filters
@@ -46,6 +55,10 @@ def list_threats(
         query = query.eq("severity", severity)
     if status:
         query = query.eq("status", status)
+    if assigned_to:
+        query = query.eq("assigned_to", assigned_to)
+    if search and search.strip():
+        query = query.ilike("title", ilike_pattern(search))
 
     # Sort and paginate
     query = query.order(sort_by, desc=(sort_dir == "desc"))
@@ -72,6 +85,7 @@ def get_threat_detail(organization_id: UUID, threat_id: UUID) -> dict[str, Any] 
         .select("*")
         .eq("organization_id", str(organization_id))
         .eq("id", str(threat_id))
+        .is_("deleted_at", "null")
         .limit(1)
         .execute()
     )
@@ -87,8 +101,17 @@ def get_threat_by_short_id(organization_id: UUID, short_id: str) -> dict[str, An
         .select("*")
         .eq("organization_id", str(organization_id))
         .eq("short_id", short_id)
+        .is_("deleted_at", "null")
         .limit(1)
         .execute()
     )
     rows = response.data or []
     return rows[0] if rows else None
+
+
+def get_threat(organization_id: UUID | str, identifier: str) -> dict[str, Any] | None:
+    """Look a threat up by UUID or short_id, scoped to the organization."""
+    try:
+        return get_threat_detail(organization_id, UUID(identifier))
+    except ValueError:
+        return get_threat_by_short_id(organization_id, identifier)

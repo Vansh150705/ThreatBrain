@@ -31,7 +31,7 @@ def get_organization_by_id(organization_id: str | UUID) -> dict[str, Any] | None
             .limit(1)
             .execute()
         )
-    except Exception as exc:
+    except Exception:
         log.exception("organization_query_failed", organization_id=org_id_str)
         raise
 

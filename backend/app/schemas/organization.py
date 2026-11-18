@@ -98,9 +98,9 @@ class OrganizationCreate(BaseModel):
 class OrganizationUpdate(BaseModel):
 
 
+    model_config = ConfigDict(extra="forbid")   # plan / status / id are not self-service: unknown fields are a 422, not a silent no-op
+
     name: str | None = Field(default=None, min_length=2, max_length=120)
-    plan: OrgPlan | None = None
-    status: OrgStatus | None = None
     billing_email: EmailStr | None = None
     settings: dict[str, Any] | None = None
     # slug is intentionally not mutable, changing it breaks urls and fks

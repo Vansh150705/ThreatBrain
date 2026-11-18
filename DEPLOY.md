@@ -1,5 +1,11 @@
 # Deployment
 
+> **Enterprise / self-hosted deployment** (separate API and worker processes, hardened containers, migration job,
+> health/readiness probes, metrics, backup and restore, retention): see **[docs/OPERATIONS.md](docs/OPERATIONS.md)** and
+> `docker-compose.prod.yml`. The compose files have been validated with `docker compose config` but **not built or run**
+> in the environment where they were written (no Docker daemon) - do a staging deployment first.
+> This file documents the original hosted setup (Vercel + Hugging Face Spaces + Supabase), which still works.
+
 ThreatBrain ships as **three independently deployed pieces**. The trap to avoid:
 the frontend and backend live in the same working tree but deploy from **two
 different git repos** to **two different hosts**. A backend change is not live
@@ -63,8 +69,13 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 ```
 
 ### Database / schema change
-Migrations in `database/migrations/` are **not applied automatically**. Run the
-SQL manually in the Supabase SQL editor (Dashboard → SQL Editor), then deploy
+Migrations in `database/migrations/` (001-027) are **not applied automatically by the application**. Preferred: the ordered,
+checksummed runner against the direct Postgres connection string (`DATABASE_URL=... ./database/migrate.sh`; `--dry-run` and `--status` available;
+refuses edited, already-applied files; rollback scripts for 025, 026 and 027 in `database/rollback/`). Alternatively paste the files in order into the Supabase SQL editor,
+running `022` and `024` **each on its own** (they add an enum value, which cannot share a transaction with code that uses it).
+`./database/verify_migrations.sh` proves the whole chain on a scratch PostgreSQL before you touch production, and
+`python -m app.doctor` / `GET /api/v1/ready` tell you whether the deployed schema is current (`027_behavior_analytics.sql`).
+Take a backup first (`./database/backup.sh --verify`). Then deploy
 any backend code that depends on the new schema. A new table/column without the
 backend code that reads it does nothing; backend code without the table 500s.
 Run the migration **first**, then push the backend.
@@ -77,14 +88,20 @@ Secrets are configured per host, never committed:
   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Local dev uses
   `frontend/.env.local` with `VITE_API_BASE_URL=http://localhost:8000/api/v1`.
 - **Hugging Face Spaces** (backend): `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `GROQ_API_KEY`. Set under
+  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `GROQ_API_KEY`, plus for a real deployment
+  `CORS_ORIGINS` (your frontend origin), `ALLOW_PUBLIC_SIGNUP=false`, `SEED_DEMO_DATA=false`,
+  `TRUST_PROXY_HEADERS=true` (the Space proxy sets `X-Forwarded-For`, so per-client rate limits work),
+  `APP_SECRET` (>= 32 chars, required for signed ingestion keys), `METRICS_TOKEN` (enables `/metrics`), `EMBEDDED_WORKER=true` on a single-container host (queue workers run inside the API process; use `python -m app.worker` replicas elsewhere),
+  and optionally `ABUSEIPDB_API_KEY`, `VIRUSTOTAL_API_KEY`, `OTX_API_KEY`, `DISCORD_WEBHOOK_URL`.
+  `.env.example` documents every variable. Set under
   the Space's Settings → Variables and secrets.
 
 ## Local development
 
 ```bash
 # backend  (http://localhost:8000)
-cd backend && ./venv/Scripts/python.exe -m uvicorn app.main:app --port 8000
+cd backend && python -m venv venv && ./venv/bin/pip install -r requirements-dev.txt
+./venv/bin/uvicorn app.main:app --reload --port 8000     # Windows: venv\Scripts\python.exe -m uvicorn ...
 
 # frontend (http://localhost:5173) — reads frontend/.env.local
 cd frontend && npm run dev
@@ -96,5 +113,7 @@ cd frontend && npm run dev
 |---------|-------|
 | New page shows `404: Not Found` from the API | Backend code pushed to `origin` but not to `space`. Push to `space`. |
 | Feature works locally, not in production | Same — the HF Spaces backend is behind. |
-| `500` referencing a missing table/column | Migration not run in Supabase yet. |
+| `500` referencing a missing table/column | Migration not run in Supabase yet (new backend needs migrations through 027). |
+| Every request returns `429` behind the Space proxy | Set `TRUST_PROXY_HEADERS=true` so limits are per client, not per proxy. |
+| Agents all fail with `llm_unavailable` (502) | `GROQ_API_KEY` missing/invalid or Groq quota exhausted; detection rules still classify known attacks (degraded mode). |
 | Frontend change not live | Check the Vercel deployment finished; it follows `origin/main`. |

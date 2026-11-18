@@ -1,17 +1,33 @@
 # Copy to collector.yaml and fill in. Then: chmod 600 collector.yaml
-base_url: https://vansh150705-threatbrain-backend.hf.space/api/v1
-email: you@example.com
-password: your-threatbrain-password
+base_url: https://YOUR-BACKEND-HOST/api/v1
+
+# Authentication. RECOMMENDED: a scoped API key (create one in the console under
+# Settings -> API keys, scope "ingest"). It can only send events: it cannot read
+# your data or call any other endpoint, and you can revoke it at any time.
+api_key: tbk_paste-your-ingest-key-here
+# Alternative: an analyst account login (less safe: a full user password on disk).
+# email: you@example.com
+# password: your-threatbrain-password
+
 collector_id: kali-lab-01
 asset_name: kali-box
+
 # Watch one log:
 log_path: /var/log/auth.log
-# ...or watch several at once (SSH + web + mail + FTP) — all feed one detector set:
+# ...or watch several at once (SSH + web + mail + FTP) - all feed one detector set:
 # log_paths:
 #   - /var/log/auth.log            # SSH / sudo / su / PAM (ftp, imap via PAM)
 #   - /var/log/nginx/access.log    # web-app login brute force / credential stuffing
 #   - /var/log/mail.log            # postfix SASL / dovecot
 #   - /var/log/vsftpd.log          # FTP
+
 threshold: 10
 window_seconds: 60
 cooldown_seconds: 300
+
+# Return immediately and let the backend run the agent pipeline in the background
+# (keeps log tailing responsive). Set false to wait for each pipeline result.
+async_ingest: true
+# Detections the backend could not take (outage) are queued here and replayed.
+spool_path: /var/lib/tb-collector/spool.jsonl
+spool_max_items: 2000

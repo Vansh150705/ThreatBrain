@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Literal
 
-from app.api.deps import CurrentUser, get_current_user, require_admin
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+
+from app.api.deps import CurrentUser, require_admin, require_analyst, require_viewer
 from app.core.logging import get_logger
 from app.schemas import OrganizationResponse, OrganizationUpdate
-from app.services import organization_service
+from app.services import case_service, member_service, organization_service
 
 router = APIRouter()
 log = get_logger(__name__)
@@ -20,8 +23,8 @@ log = get_logger(__name__)
         404: {"description": "Organization not found or deleted."},
     },
 )
-async def get_my_organization(
-    user: CurrentUser = Depends(get_current_user),
+def get_my_organization(
+    user: CurrentUser = Depends(require_viewer),
 ) -> OrganizationResponse:
     """Returns the authenticated user's organization."""
     if not user.organization_id:
@@ -65,7 +68,7 @@ async def get_my_organization(
         404: {"description": "Organization not found."},
     },
 )
-async def update_my_organization(
+def update_my_organization(
     updates: OrganizationUpdate,
     user: CurrentUser = Depends(require_admin),
 ) -> OrganizationResponse:
@@ -109,3 +112,26 @@ async def update_my_organization(
         )
 
     return OrganizationResponse.model_validate(row)
+
+
+@router.get("/members", summary="Active members of the caller's organization (for assignment)")
+def list_members(
+    include_disabled: bool = False, user: CurrentUser = Depends(require_analyst)
+) -> dict:
+    members = case_service.list_members(user.organization_id)
+    if not (include_disabled and user.is_admin):
+        members = [m for m in members if m.get("status") != "disabled"]
+    return {"items": members, "total": len(members)}
+
+
+class MemberUpdate(BaseModel):
+    role: Literal["viewer", "analyst", "admin", "owner"] | None = None
+    status: Literal["active", "disabled"] | None = None
+
+
+@router.patch("/members/{user_id}", summary="Change a member's role or disable/re-enable them (admin)")
+def update_member(user_id: str, body: MemberUpdate, user: CurrentUser = Depends(require_admin)) -> dict:
+    try:
+        return member_service.update_member(user, user_id, role=body.role, status=body.status)
+    except member_service.MemberError as exc:
+        raise HTTPException(exc.status, detail={"error": exc.code, "message": exc.message}) from exc

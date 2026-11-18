@@ -48,6 +48,10 @@ class ThreatListItem(BaseModel):
     target_ips: list[str] = Field(default_factory=list)
     affected_users: list[str] = Field(default_factory=list)
     assigned_to: UUID | None = None
+    event_count: int = 1
+    last_seen_at: datetime | None = None
+    resolved_at: datetime | None = None
+    incident_id: UUID | None = None
     detected_at: datetime
     created_at: datetime
     updated_at: datetime
@@ -71,5 +75,5 @@ class ThreatDetail(ThreatListItem):
     ai_analysis: dict[str, Any] = Field(default_factory=dict)
     tags: list[str] = Field(default_factory=list)
     primary_asset_id: UUID | None = None
-    incident_id: UUID | None = None
+    rule_hits: list[dict[str, Any]] = Field(default_factory=list)
     resolved_at: datetime | None = None

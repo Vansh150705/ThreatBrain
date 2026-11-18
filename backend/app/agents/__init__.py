@@ -10,6 +10,11 @@ from app.agents.compliance import (  # noqa: F401
     ComplianceOutput,
     RegulationReport,
 )
+from app.agents.detection_engineering import (  # noqa: F401
+    DetectionEngineeringAgent,
+    TuningInput,
+    TuningOutput,
+)
 from app.agents.forensics import (  # noqa: F401
     ForensicsAgent,
     ForensicsInput,
@@ -27,6 +32,11 @@ from app.agents.investigation import (  # noqa: F401
     InvestigationInput,
     InvestigationOutput,
     ThreatGroup,
+)
+from app.agents.log_analysis import (  # noqa: F401,E402
+    LogAnalysisAgent,
+    LogAnalysisInput,
+    LogAnalysisOutput,
 )
 from app.agents.response import (  # noqa: F401
     ActionRecommendation,

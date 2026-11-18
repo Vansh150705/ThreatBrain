@@ -1,0 +1,3569 @@
+{
+ "schema": "threatbrain.evaluation/1",
+ "environment": {
+  "generated_at": "2026-11-04T06:16:57Z",
+  "git_sha": "1bfcb65",
+  "python": "3.11.17",
+  "rules": {
+   "count": 125,
+   "version": "2026.11.1"
+  },
+  "seconds": 61.6,
+  "mode": "engine"
+ },
+ "freeze": {
+  "intact": true,
+  "problems": []
+ },
+ "gates": {
+  "development.attack_recall": {
+   "value": 1.0,
+   "threshold": 0.95,
+   "op": ">=",
+   "passed": true
+  },
+  "development.benign_fpr": {
+   "value": 0.0,
+   "threshold": 0.02,
+   "op": "<=",
+   "passed": true
+  },
+  "development.campaigns": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "development.behavior_attack_recall": {
+   "value": 1.0,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "development.behavior_benign_fpr": {
+   "value": 0.0,
+   "threshold": 0.05,
+   "op": "<=",
+   "passed": true
+  },
+  "tuning.attack_recall": {
+   "value": 0.9839,
+   "threshold": 0.88,
+   "op": ">=",
+   "passed": true
+  },
+  "tuning.benign_fpr": {
+   "value": 0.0094,
+   "threshold": 0.03,
+   "op": "<=",
+   "passed": true
+  },
+  "tuning.art_high_signal_recall": {
+   "value": 0.582,
+   "threshold": 0.6,
+   "op": ">=",
+   "passed": false
+  },
+  "tuning.adversarial_detect": {
+   "value": 1.0,
+   "threshold": 0.8,
+   "op": ">=",
+   "passed": true
+  },
+  "tuning.adversarial_benign_fpr": {
+   "value": 0.0,
+   "threshold": 0.05,
+   "op": "<=",
+   "passed": true
+  },
+  "tuning.behavior_attack_recall": {
+   "value": 1.0,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "tuning.behavior_benign_fpr": {
+   "value": 0.0833,
+   "threshold": 0.1,
+   "op": "<=",
+   "passed": true
+  },
+  "heldout.attack_recall": {
+   "value": 0.9487,
+   "threshold": 0.8,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.benign_fpr": {
+   "value": 0.1081,
+   "threshold": 0.05,
+   "op": "<=",
+   "passed": false
+  },
+  "heldout.mapping_accuracy": {
+   "value": 0.7838,
+   "threshold": 0.7,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.severity_within_one": {
+   "value": 0.9459,
+   "threshold": 0.8,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.severity_underrated": {
+   "value": 0.0541,
+   "threshold": 0.1,
+   "op": "<=",
+   "passed": true
+  },
+  "heldout.campaigns": {
+   "value": 1.0,
+   "threshold": 0.8,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.campaign_near_misses": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.art_high_signal_recall": {
+   "value": 0.4641,
+   "threshold": 0.6,
+   "op": ">=",
+   "passed": false
+  },
+  "heldout.behavior_attack_recall": {
+   "value": 1.0,
+   "threshold": 0.75,
+   "op": ">=",
+   "passed": true
+  },
+  "heldout.behavior_benign_fpr": {
+   "value": 0.0833,
+   "threshold": 0.1,
+   "op": "<=",
+   "passed": true
+  },
+  "heldout.behavior_noise": {
+   "value": 0.262,
+   "threshold": 0.5,
+   "op": "<=",
+   "passed": true
+  },
+  "metamorphic.development_and_tuning.retention": {
+   "value": 0.9973,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "metamorphic.development_and_tuning.benign_mutation_fpr": {
+   "value": 0.1352,
+   "threshold": 0.03,
+   "op": "<=",
+   "passed": false
+  },
+  "metamorphic.heldout.retention": {
+   "value": 1.0,
+   "threshold": 0.85,
+   "op": ">=",
+   "passed": true
+  },
+  "metamorphic.heldout.benign_mutation_fpr": {
+   "value": 0.2137,
+   "threshold": 0.03,
+   "op": "<=",
+   "passed": false
+  },
+  "degraded.reordered_chains": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.duplicated_chains": {
+   "value": 1.0,
+   "threshold": 1.0,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.truncated_commands": {
+   "value": 0.9949,
+   "threshold": 0.75,
+   "op": ">=",
+   "passed": true
+  },
+  "degraded.field_loss": {
+   "value": 0.9924,
+   "threshold": 0.9,
+   "op": ">=",
+   "passed": true
+  },
+  "performance.engine_ms_p95": {
+   "value": 1.67,
+   "threshold": 25.0,
+   "op": "<=",
+   "passed": true
+  }
+ },
+ "failed_gates": [
+  "heldout.art_high_signal_recall",
+  "heldout.benign_fpr",
+  "metamorphic.development_and_tuning.benign_mutation_fpr",
+  "metamorphic.heldout.benign_mutation_fpr",
+  "tuning.art_high_signal_recall"
+ ],
+ "passed": false,
+ "results": {
+  "splits": {
+   "development": {
+    "scenario_counts": {
+     "attacks": 90,
+     "benign": 70,
+     "campaigns": 21
+    },
+    "handwritten": {
+     "attacks": {
+      "all": {
+       "k": 90,
+       "n": 90,
+       "rate": 1.0,
+       "ci95": [
+        0.959,
+        1.0
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 81,
+       "n": 81,
+       "rate": 1.0,
+       "ci95": [
+        0.955,
+        1.0
+       ]
+      },
+      "other_tactics": {
+       "k": 9,
+       "n": 9,
+       "rate": 1.0,
+       "ci95": [
+        0.701,
+        1.0
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 12,
+       "n": 12,
+       "rate": 1.0,
+       "ci95": [
+        0.757,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 9,
+       "n": 9,
+       "rate": 1.0,
+       "ci95": [
+        0.701,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 10,
+       "n": 10,
+       "rate": 1.0,
+       "ci95": [
+        0.722,
+        1.0
+       ]
+      },
+      "TA0006": {
+       "k": 12,
+       "n": 12,
+       "rate": 1.0,
+       "ci95": [
+        0.757,
+        1.0
+       ]
+      },
+      "TA0007": {
+       "k": 4,
+       "n": 4,
+       "rate": 1.0,
+       "ci95": [
+        0.51,
+        1.0
+       ]
+      },
+      "TA0008": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0009": {
+       "k": 5,
+       "n": 5,
+       "rate": 1.0,
+       "ci95": [
+        0.566,
+        1.0
+       ]
+      },
+      "TA0010": {
+       "k": 4,
+       "n": 4,
+       "rate": 1.0,
+       "ci95": [
+        0.51,
+        1.0
+       ]
+      },
+      "TA0011": {
+       "k": 10,
+       "n": 10,
+       "rate": 1.0,
+       "ci95": [
+        0.722,
+        1.0
+       ]
+      },
+      "TA0040": {
+       "k": 8,
+       "n": 8,
+       "rate": 1.0,
+       "ci95": [
+        0.676,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "antivirus": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "cloud/identity": {
+       "k": 11,
+       "n": 11,
+       "rate": 1.0,
+       "ci95": [
+        0.741,
+        1.0
+       ]
+      },
+      "container": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "file": {
+       "k": 4,
+       "n": 4,
+       "rate": 1.0,
+       "ci95": [
+        0.51,
+        1.0
+       ]
+      },
+      "network/auth": {
+       "k": 8,
+       "n": 8,
+       "rate": 1.0,
+       "ci95": [
+        0.676,
+        1.0
+       ]
+      },
+      "process": {
+       "k": 55,
+       "n": 55,
+       "rate": 1.0,
+       "ci95": [
+        0.935,
+        1.0
+       ]
+      },
+      "web": {
+       "k": 8,
+       "n": 8,
+       "rate": 1.0,
+       "ci95": [
+        0.676,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 90,
+      "n": 90,
+      "rate": 1.0,
+      "ci95": [
+       0.959,
+       1.0
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 66,
+      "techniques_with_a_detected_scenario": 66
+     },
+     "evidence_correct": {
+      "k": 90,
+      "n": 90,
+      "rate": 1.0,
+      "ci95": [
+       0.959,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 70,
+      "rate": 0.0,
+      "ci95": [
+       0.0,
+       0.052
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 0.58,
+      "p95": 1.67
+     },
+     "missed": [],
+     "false_positives": [],
+     "wrong_mapping": []
+    },
+    "campaigns": {
+     "campaigns": {
+      "k": 14,
+      "n": 14,
+      "rate": 1.0,
+      "ci95": [
+       0.785,
+       1.0
+      ]
+     },
+     "near_misses_stay_quiet": {
+      "k": 7,
+      "n": 7,
+      "rate": 1.0,
+      "ci95": [
+       0.646,
+       1.0
+      ]
+     },
+     "evidence_correct": {
+      "k": 12,
+      "n": 14,
+      "rate": 0.8571,
+      "ci95": [
+       0.601,
+       0.96
+      ]
+     },
+     "minutes_from_first_to_last_stage_median": 15.0,
+     "minutes_to_first_alert_median": 0.0,
+     "failed": []
+    },
+    "behavior": {
+     "attacks_detected": {
+      "k": 9,
+      "n": 9,
+      "rate": 1.0,
+      "ci95": [
+       0.701,
+       1.0
+      ]
+     },
+     "benign_alerted": {
+      "k": 0,
+      "n": 18,
+      "rate": 0.0,
+      "ci95": [
+       0.0,
+       0.176
+      ]
+     },
+     "documented_cold_start_gaps": 1,
+     "median_hours_to_first_alert": 5.0,
+     "failed": [],
+     "noise_simulation": {
+      "entities": 140,
+      "days": 45,
+      "warmup_days": 14,
+      "entity_days": 3476,
+      "alerts": 6,
+      "alerts_per_100_entity_days": 0.173,
+      "by_family": {
+       "auth_location": 6,
+       "auth_time": 6
+      },
+      "seed": 11
+     }
+    }
+   },
+   "tuning": {
+    "scenario_counts": {
+     "attacks": 947,
+     "benign": 115,
+     "campaigns": 17
+    },
+    "handwritten": {
+     "attacks": {
+      "all": {
+       "k": 183,
+       "n": 186,
+       "rate": 0.9839,
+       "ci95": [
+        0.954,
+        0.994
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 171,
+       "n": 174,
+       "rate": 0.9828,
+       "ci95": [
+        0.951,
+        0.994
+       ]
+      },
+      "other_tactics": {
+       "k": 12,
+       "n": 12,
+       "rate": 1.0,
+       "ci95": [
+        0.757,
+        1.0
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 31,
+       "n": 31,
+       "rate": 1.0,
+       "ci95": [
+        0.89,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 22,
+       "n": 22,
+       "rate": 1.0,
+       "ci95": [
+        0.851,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 10,
+       "n": 10,
+       "rate": 1.0,
+       "ci95": [
+        0.722,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 32,
+       "n": 32,
+       "rate": 1.0,
+       "ci95": [
+        0.893,
+        1.0
+       ]
+      },
+      "TA0006": {
+       "k": 21,
+       "n": 22,
+       "rate": 0.9545,
+       "ci95": [
+        0.782,
+        0.992
+       ]
+      },
+      "TA0007": {
+       "k": 5,
+       "n": 5,
+       "rate": 1.0,
+       "ci95": [
+        0.566,
+        1.0
+       ]
+      },
+      "TA0008": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "TA0009": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "TA0010": {
+       "k": 6,
+       "n": 8,
+       "rate": 0.75,
+       "ci95": [
+        0.409,
+        0.929
+       ]
+      },
+      "TA0011": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
+        1.0
+       ]
+      },
+      "TA0040": {
+       "k": 14,
+       "n": 14,
+       "rate": 1.0,
+       "ci95": [
+        0.785,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "adapter:cef": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "adapter:cloudtrail": {
+       "k": 12,
+       "n": 13,
+       "rate": 0.9231,
+       "ci95": [
+        0.667,
+        0.986
+       ]
+      },
+      "adapter:ecs": {
+       "k": 4,
+       "n": 4,
+       "rate": 1.0,
+       "ci95": [
+        0.51,
+        1.0
+       ]
+      },
+      "adapter:wazuh": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "cloud/identity": {
+       "k": 9,
+       "n": 9,
+       "rate": 1.0,
+       "ci95": [
+        0.701,
+        1.0
+       ]
+      },
+      "container": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "file": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "network/auth": {
+       "k": 9,
+       "n": 11,
+       "rate": 0.8182,
+       "ci95": [
+        0.523,
+        0.949
+       ]
+      },
+      "process": {
+       "k": 117,
+       "n": 117,
+       "rate": 1.0,
+       "ci95": [
+        0.968,
+        1.0
+       ]
+      },
+      "web": {
+       "k": 24,
+       "n": 24,
+       "rate": 1.0,
+       "ci95": [
+        0.862,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 175,
+      "n": 183,
+      "rate": 0.9563,
+      "ci95": [
+       0.916,
+       0.978
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 85,
+      "techniques_with_a_detected_scenario": 83
+     },
+     "severity": {
+      "labelled": 93,
+      "exact": {
+       "k": 63,
+       "n": 93,
+       "rate": 0.6774,
+       "ci95": [
+        0.577,
+        0.764
+       ]
+      },
+      "within_one": {
+       "k": 90,
+       "n": 93,
+       "rate": 0.9677,
+       "ci95": [
+        0.909,
+        0.989
+       ]
+      },
+      "underrated_2plus": {
+       "k": 1,
+       "n": 93,
+       "rate": 0.0108,
+       "ci95": [
+        0.002,
+        0.058
+       ]
+      },
+      "overrated_2plus": {
+       "k": 2,
+       "n": 93,
+       "rate": 0.0215,
+       "ci95": [
+        0.006,
+        0.075
+       ]
+      }
+     },
+     "evidence_correct": {
+      "k": 183,
+      "n": 183,
+      "rate": 1.0,
+      "ci95": [
+       0.979,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 1,
+      "n": 106,
+      "rate": 0.0094,
+      "ci95": [
+       0.002,
+       0.052
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 0.9946,
+     "engine_ms_per_scenario": {
+      "p50": 0.926,
+      "p95": 3.527
+     },
+     "missed": [
+      {
+       "id": "HL2-011",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1552"
+       ]
+      },
+      {
+       "id": "EVA-006",
+       "tactic": "TA0010",
+       "techniques": [
+        "T1041"
+       ]
+      },
+      {
+       "id": "HO3-090",
+       "tactic": "TA0010",
+       "techniques": [
+        "T1048"
+       ]
+      }
+     ],
+     "false_positives": [
+      {
+       "id": "HB3-011",
+       "rules": [
+        "TB-DISC-001"
+       ]
+      }
+     ],
+     "wrong_mapping": [
+      "HL2-014",
+      "EVA-001",
+      "EVA-007",
+      "HO3-027",
+      "HO3-057",
+      "HO3-058",
+      "HO3-091",
+      "HO3-093"
+     ]
+    },
+    "atomic_red_team": {
+     "attacks": {
+      "all": {
+       "k": 255,
+       "n": 580,
+       "rate": 0.4397,
+       "ci95": [
+        0.4,
+        0.48
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 188,
+       "n": 323,
+       "rate": 0.582,
+       "ci95": [
+        0.528,
+        0.635
+       ]
+      },
+      "other_tactics": {
+       "k": 67,
+       "n": 257,
+       "rate": 0.2607,
+       "ci95": [
+        0.211,
+        0.318
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "TA0002": {
+       "k": 34,
+       "n": 51,
+       "rate": 0.6667,
+       "ci95": [
+        0.53,
+        0.78
+       ]
+      },
+      "TA0003": {
+       "k": 23,
+       "n": 29,
+       "rate": 0.7931,
+       "ci95": [
+        0.616,
+        0.902
+       ]
+      },
+      "TA0004": {
+       "k": 15,
+       "n": 24,
+       "rate": 0.625,
+       "ci95": [
+        0.427,
+        0.788
+       ]
+      },
+      "TA0005": {
+       "k": 48,
+       "n": 103,
+       "rate": 0.466,
+       "ci95": [
+        0.373,
+        0.562
+       ]
+      },
+      "TA0006": {
+       "k": 43,
+       "n": 58,
+       "rate": 0.7414,
+       "ci95": [
+        0.616,
+        0.837
+       ]
+      },
+      "TA0007": {
+       "k": 29,
+       "n": 84,
+       "rate": 0.3452,
+       "ci95": [
+        0.252,
+        0.452
+       ]
+      },
+      "TA0008": {
+       "k": 6,
+       "n": 7,
+       "rate": 0.8571,
+       "ci95": [
+        0.487,
+        0.974
+       ]
+      },
+      "TA0009": {
+       "k": 1,
+       "n": 8,
+       "rate": 0.125,
+       "ci95": [
+        0.022,
+        0.471
+       ]
+      },
+      "TA0010": {
+       "k": 2,
+       "n": 3,
+       "rate": 0.6667,
+       "ci95": [
+        0.208,
+        0.939
+       ]
+      },
+      "TA0011": {
+       "k": 9,
+       "n": 31,
+       "rate": 0.2903,
+       "ci95": [
+        0.161,
+        0.466
+       ]
+      },
+      "TA0040": {
+       "k": 8,
+       "n": 16,
+       "rate": 0.5,
+       "ci95": [
+        0.28,
+        0.72
+       ]
+      },
+      "unmapped": {
+       "k": 37,
+       "n": 165,
+       "rate": 0.2242,
+       "ci95": [
+        0.167,
+        0.294
+       ]
+      }
+     },
+     "recall_by_category": {
+      "art:linux": {
+       "k": 45,
+       "n": 150,
+       "rate": 0.3,
+       "ci95": [
+        0.232,
+        0.378
+       ]
+      },
+      "art:windows": {
+       "k": 210,
+       "n": 430,
+       "rate": 0.4884,
+       "ci95": [
+        0.441,
+        0.536
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 160,
+      "n": 255,
+      "rate": 0.6275,
+      "ci95": [
+       0.567,
+       0.684
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 135,
+      "techniques_with_a_detected_scenario": 93
+     },
+     "evidence_correct": {
+      "k": 255,
+      "n": 255,
+      "rate": 1.0,
+      "ci95": [
+       0.985,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "ci95": [
+       0.0,
+       1.0
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 3.344,
+      "p95": 17.61
+     },
+     "missed": [
+      {
+       "id": "ART-T1003.002-04",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003.002"
+       ]
+      },
+      {
+       "id": "ART-T1003.002-06",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003.002"
+       ]
+      },
+      {
+       "id": "ART-T1003.003-07",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003.003"
+       ]
+      },
+      {
+       "id": "ART-T1003.007-01",
+       "tactic": "",
+       "techniques": [
+        "T1003.007"
+       ]
+      },
+      {
+       "id": "ART-T1003.007-04",
+       "tactic": "",
+       "techniques": [
+        "T1003.007"
+       ]
+      },
+      {
+       "id": "ART-T1003.008-03",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003.008"
+       ]
+      },
+      {
+       "id": "ART-T1003.008-04",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003.008"
+       ]
+      },
+      {
+       "id": "ART-T1003-07",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003"
+       ]
+      },
+      {
+       "id": "ART-T1007-02",
+       "tactic": "",
+       "techniques": [
+        "T1007"
+       ]
+      },
+      {
+       "id": "ART-T1007-06",
+       "tactic": "",
+       "techniques": [
+        "T1007"
+       ]
+      },
+      {
+       "id": "ART-T1007-07",
+       "tactic": "",
+       "techniques": [
+        "T1007"
+       ]
+      },
+      {
+       "id": "ART-T1012-02",
+       "tactic": "",
+       "techniques": [
+        "T1012"
+       ]
+      },
+      {
+       "id": "ART-T1012-03",
+       "tactic": "",
+       "techniques": [
+        "T1012"
+       ]
+      },
+      {
+       "id": "ART-T1012-04",
+       "tactic": "",
+       "techniques": [
+        "T1012"
+       ]
+      },
+      {
+       "id": "ART-T1016-01",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1016"
+       ]
+      },
+      {
+       "id": "ART-T1016-03",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1016"
+       ]
+      },
+      {
+       "id": "ART-T1016-09",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1016"
+       ]
+      },
+      {
+       "id": "ART-T1018-04",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-06",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-08",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-11",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-13",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-15",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-18",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1018-20",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1018"
+       ]
+      },
+      {
+       "id": "ART-T1021.001-01",
+       "tactic": "TA0008",
+       "techniques": [
+        "T1021.001"
+       ]
+      },
+      {
+       "id": "ART-T1021.003-01",
+       "tactic": "",
+       "techniques": [
+        "T1021.003"
+       ]
+      },
+      {
+       "id": "ART-T1027.001-01",
+       "tactic": "",
+       "techniques": [
+        "T1027.001"
+       ]
+      },
+      {
+       "id": "ART-T1027.001-02",
+       "tactic": "",
+       "techniques": [
+        "T1027.001"
+       ]
+      },
+      {
+       "id": "ART-T1027.001-03",
+       "tactic": "",
+       "techniques": [
+        "T1027.001"
+       ]
+      },
+      {
+       "id": "ART-T1027-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1027"
+       ]
+      },
+      {
+       "id": "ART-T1027-05",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1027"
+       ]
+      },
+      {
+       "id": "ART-T1027-06",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1027"
+       ]
+      },
+      {
+       "id": "ART-T1027-07",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1027"
+       ]
+      },
+      {
+       "id": "ART-T1027-10",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1027"
+       ]
+      },
+      {
+       "id": "ART-T1033-04",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1033"
+       ]
+      },
+      {
+       "id": "ART-T1033-05",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1033"
+       ]
+      },
+      {
+       "id": "ART-T1036.004-04",
+       "tactic": "",
+       "techniques": [
+        "T1036.004"
+       ]
+      },
+      {
+       "id": "ART-T1036.005-02",
+       "tactic": "",
+       "techniques": [
+        "T1036.005"
+       ]
+      },
+      {
+       "id": "ART-T1040-02",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1040-04",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1040-06",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1040-07",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1040-11",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1040-16",
+       "tactic": "",
+       "techniques": [
+        "T1040"
+       ]
+      },
+      {
+       "id": "ART-T1046-04",
+       "tactic": "TA0007",
+       "techniques": [
+        "T1046"
+       ]
+      },
+      {
+       "id": "ART-T1047-01",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1047"
+       ]
+      },
+      {
+       "id": "ART-T1047-02",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1047"
+       ]
+      },
+      {
+       "id": "ART-T1047-03",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1047"
+       ]
+      },
+      {
+       "id": "ART-T1047-05",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1047"
+       ]
+      },
+      {
+       "id": "ART-T1047-10",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1047"
+       ]
+      },
+      {
+       "id": "ART-T1048.003-02",
+       "tactic": "TA0010",
+       "techniques": [
+        "T1048.003"
+       ]
+      },
+      {
+       "id": "ART-T1049-01",
+       "tactic": "",
+       "techniques": [
+        "T1049"
+       ]
+      },
+      {
+       "id": "ART-T1049-03",
+       "tactic": "",
+       "techniques": [
+        "T1049"
+       ]
+      },
+      {
+       "id": "ART-T1049-05",
+       "tactic": "",
+       "techniques": [
+        "T1049"
+       ]
+      },
+      {
+       "id": "ART-T1049-06",
+       "tactic": "",
+       "techniques": [
+        "T1049"
+       ]
+      },
+      {
+       "id": "ART-T1053.002-02",
+       "tactic": "",
+       "techniques": [
+        "T1053.002"
+       ]
+      },
+      {
+       "id": "ART-T1053.005-06",
+       "tactic": "TA0002",
+       "techniques": [
+        "T1053.005"
+       ]
+      },
+      {
+       "id": "ART-T1055-05",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1055"
+       ]
+      },
+      {
+       "id": "ART-T1055-10",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1055"
+       ]
+      }
+     ],
+     "false_positives": [],
+     "wrong_mapping": [
+      "ART-T1003.002-07",
+      "ART-T1003.003-10",
+      "ART-T1003.004-02",
+      "ART-T1003.007-03",
+      "ART-T1003-04",
+      "ART-T1003-05",
+      "ART-T1005-02",
+      "ART-T1010-01",
+      "ART-T1016-04",
+      "ART-T1018-01",
+      "ART-T1018-10",
+      "ART-T1020-01",
+      "ART-T1021.001-02",
+      "ART-T1021.001-03",
+      "ART-T1021.002-02",
+      "ART-T1021.002-04",
+      "ART-T1021.006-01",
+      "ART-T1027-01",
+      "ART-T1033-03",
+      "ART-T1036.004-01",
+      "ART-T1036.004-03",
+      "ART-T1046-08",
+      "ART-T1053.005-05",
+      "ART-T1053.005-10",
+      "ART-T1055-02",
+      "ART-T1059.001-01",
+      "ART-T1059.001-02",
+      "ART-T1059.001-08",
+      "ART-T1059.001-12",
+      "ART-T1059.004-04",
+      "ART-T1059.006-01",
+      "ART-T1069.002-05",
+      "ART-T1070.004-08",
+      "ART-T1070.006-04",
+      "ART-T1071.004-04",
+      "ART-T1074.001-01",
+      "ART-T1078.003-07",
+      "ART-T1082-14",
+      "ART-T1082-17",
+      "ART-T1082-18"
+     ]
+    },
+    "lolbas": {
+     "attacks": {
+      "all": {
+       "k": 110,
+       "n": 149,
+       "rate": 0.7383,
+       "ci95": [
+        0.662,
+        0.802
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 110,
+       "n": 148,
+       "rate": 0.7432,
+       "ci95": [
+        0.667,
+        0.807
+       ]
+      },
+      "other_tactics": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 1,
+       "n": 4,
+       "rate": 0.25,
+       "ci95": [
+        0.046,
+        0.699
+       ]
+      },
+      "TA0005": {
+       "k": 76,
+       "n": 106,
+       "rate": 0.717,
+       "ci95": [
+        0.625,
+        0.794
+       ]
+      },
+      "TA0006": {
+       "k": 2,
+       "n": 5,
+       "rate": 0.4,
+       "ci95": [
+        0.118,
+        0.769
+       ]
+      },
+      "TA0009": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "TA0010": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "TA0011": {
+       "k": 26,
+       "n": 27,
+       "rate": 0.963,
+       "ci95": [
+        0.817,
+        0.993
+       ]
+      },
+      "TA0040": {
+       "k": 1,
+       "n": 2,
+       "rate": 0.5,
+       "ci95": [
+        0.095,
+        0.905
+       ]
+      }
+     },
+     "recall_by_category": {
+      "lolbas:ADS": {
+       "k": 15,
+       "n": 19,
+       "rate": 0.7895,
+       "ci95": [
+        0.567,
+        0.915
+       ]
+      },
+      "lolbas:AWL Bypass": {
+       "k": 14,
+       "n": 17,
+       "rate": 0.8235,
+       "ci95": [
+        0.59,
+        0.938
+       ]
+      },
+      "lolbas:Compile": {
+       "k": 3,
+       "n": 4,
+       "rate": 0.75,
+       "ci95": [
+        0.301,
+        0.954
+       ]
+      },
+      "lolbas:Copy": {
+       "k": 5,
+       "n": 6,
+       "rate": 0.8333,
+       "ci95": [
+        0.436,
+        0.97
+       ]
+      },
+      "lolbas:Credentials": {
+       "k": 1,
+       "n": 3,
+       "rate": 0.3333,
+       "ci95": [
+        0.061,
+        0.792
+       ]
+      },
+      "lolbas:Download": {
+       "k": 24,
+       "n": 24,
+       "rate": 1.0,
+       "ci95": [
+        0.862,
+        1.0
+       ]
+      },
+      "lolbas:Dump": {
+       "k": 1,
+       "n": 2,
+       "rate": 0.5,
+       "ci95": [
+        0.095,
+        0.905
+       ]
+      },
+      "lolbas:Execute": {
+       "k": 44,
+       "n": 64,
+       "rate": 0.6875,
+       "ci95": [
+        0.566,
+        0.788
+       ]
+      },
+      "lolbas:Reconnaissance": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "lolbas:Tamper": {
+       "k": 1,
+       "n": 3,
+       "rate": 0.3333,
+       "ci95": [
+        0.061,
+        0.792
+       ]
+      },
+      "lolbas:UAC Bypass": {
+       "k": 0,
+       "n": 4,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.49
+       ]
+      },
+      "lolbas:Upload": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 74,
+      "n": 110,
+      "rate": 0.6727,
+      "ci95": [
+       0.581,
+       0.753
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 29,
+      "techniques_with_a_detected_scenario": 23
+     },
+     "evidence_correct": {
+      "k": 110,
+      "n": 110,
+      "rate": 1.0,
+      "ci95": [
+       0.966,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "ci95": [
+       0.0,
+       1.0
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 1.379,
+      "p95": 3.47
+     },
+     "missed": [
+      {
+       "id": "LOL-OSBinaries_Atbroker-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Bash-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Bash-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Bash-04",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Cmstp-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218.003"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_CustomShellHost-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Diantz-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1036"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Diskshadow-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Eventvwr-01",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1548.002"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Eventvwr-02",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1548.002"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Expand-02",
+       "tactic": "TA0011",
+       "techniques": [
+        "T1105"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Fsutil-01",
+       "tactic": "TA0040",
+       "techniques": [
+        "T1485"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Fsutil-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Fsutil-04",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1562.001"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Ilasm-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1127"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Mmc-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218.014"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Msdt-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Print-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1564.004"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Psr-01",
+       "tactic": "TA0009",
+       "techniques": [
+        "T1113"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Reg-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1564.004"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Regedit-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1564.004"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Regini-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1564.004"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Rpcping-01",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Rpcping-02",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1187"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Rundll32-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218.011"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Rundll32-05",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218.011"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Runonce-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Stordiag-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Stordiag-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Tttracer-02",
+       "tactic": "TA0006",
+       "techniques": [
+        "T1003"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Wab-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_WorkFolders-01",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_WorkFolders-02",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OSBinaries_Wsreset-01",
+       "tactic": "TA0004",
+       "techniques": [
+        "T1548.002"
+       ]
+      },
+      {
+       "id": "LOL-OtherMSBinaries_Cdb-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1127"
+       ]
+      },
+      {
+       "id": "LOL-OtherMSBinaries_Update-08",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OtherMSBinaries_Update-11",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      },
+      {
+       "id": "LOL-OtherMSBinaries_Wsl-03",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1202"
+       ]
+      },
+      {
+       "id": "LOL-OtherMSBinaries_Wsl-05",
+       "tactic": "TA0005",
+       "techniques": [
+        "T1218"
+       ]
+      }
+     ],
+     "false_positives": [],
+     "wrong_mapping": [
+      "LOL-OSBinaries_Bitsadmin-01",
+      "LOL-OSBinaries_Certutil-03",
+      "LOL-OSBinaries_Cmd-01",
+      "LOL-OSBinaries_Cmd-04",
+      "LOL-OSBinaries_Cmdkey-01",
+      "LOL-OSBinaries_ConfigSecurityPolicy-01",
+      "LOL-OSBinaries_Cscript-01",
+      "LOL-OSBinaries_Dnscmd-01",
+      "LOL-OSBinaries_Esentutl-01",
+      "LOL-OSBinaries_Esentutl-05",
+      "LOL-OSBinaries_Expand-03",
+      "LOL-OSBinaries_Extrac32-01",
+      "LOL-OSBinaries_Extrac32-02",
+      "LOL-OSBinaries_Extrac32-04",
+      "LOL-OSBinaries_Findstr-01",
+      "LOL-OSBinaries_Fsutil-02",
+      "LOL-OSBinaries_Ftp-02",
+      "LOL-OSBinaries_Makecab-02",
+      "LOL-OSBinaries_Makecab-04",
+      "LOL-OSBinaries_Mavinject-02",
+      "LOL-OSBinaries_Microsoft.Workflow.Compiler-01",
+      "LOL-OSBinaries_Microsoft.Workflow.Compiler-02",
+      "LOL-OSBinaries_Microsoft.Workflow.Compiler-03",
+      "LOL-OSBinaries_MpCmdRun-03",
+      "LOL-OSBinaries_Netsh-01",
+      "LOL-OSBinaries_Replace-01",
+      "LOL-OSBinaries_Rundll32-04",
+      "LOL-OSBinaries_Tar-01",
+      "LOL-OSBinaries_Wmic-02",
+      "LOL-OSBinaries_Wmic-06",
+      "LOL-OSBinaries_Wscript-02",
+      "LOL-OtherMSBinaries_Msxsl-01",
+      "LOL-OtherMSBinaries_Msxsl-02",
+      "LOL-OtherMSBinaries_Msxsl-04",
+      "LOL-OtherMSBinaries_Remote-03",
+      "LOL-OtherMSBinaries_Wsl-02"
+     ]
+    },
+    "adversarial_variants": {
+     "attacks": {
+      "all": {
+       "k": 32,
+       "n": 32,
+       "rate": 1.0,
+       "ci95": [
+        0.893,
+        1.0
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 32,
+       "n": 32,
+       "rate": 1.0,
+       "ci95": [
+        0.893,
+        1.0
+       ]
+      },
+      "other_tactics": {
+       "k": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        0.0,
+        1.0
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 11,
+       "n": 11,
+       "rate": 1.0,
+       "ci95": [
+        0.741,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 5,
+       "n": 5,
+       "rate": 1.0,
+       "ci95": [
+        0.566,
+        1.0
+       ]
+      },
+      "TA0011": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0040": {
+       "k": 5,
+       "n": 5,
+       "rate": 1.0,
+       "ci95": [
+        0.566,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "cmd": {
+       "k": 7,
+       "n": 7,
+       "rate": 1.0,
+       "ci95": [
+        0.646,
+        1.0
+       ]
+      },
+      "posix": {
+       "k": 8,
+       "n": 8,
+       "rate": 1.0,
+       "ci95": [
+        0.676,
+        1.0
+       ]
+      },
+      "powershell": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      },
+      "web": {
+       "k": 11,
+       "n": 11,
+       "rate": 1.0,
+       "ci95": [
+        0.741,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 30,
+      "n": 32,
+      "rate": 0.9375,
+      "ci95": [
+       0.799,
+       0.983
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 11,
+      "techniques_with_a_detected_scenario": 11
+     },
+     "evidence_correct": {
+      "k": 32,
+      "n": 32,
+      "rate": 1.0,
+      "ci95": [
+       0.893,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 9,
+      "rate": 0.0,
+      "ci95": [
+       0.0,
+       0.299
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 1.384,
+      "p95": 5.174
+     },
+     "missed": [],
+     "false_positives": [],
+     "wrong_mapping": [
+      "ADV-015",
+      "ADV-016"
+     ]
+    },
+    "campaigns": {
+     "campaigns": {
+      "k": 11,
+      "n": 11,
+      "rate": 1.0,
+      "ci95": [
+       0.741,
+       1.0
+      ]
+     },
+     "near_misses_stay_quiet": {
+      "k": 6,
+      "n": 6,
+      "rate": 1.0,
+      "ci95": [
+       0.61,
+       1.0
+      ]
+     },
+     "evidence_correct": {
+      "k": 8,
+      "n": 11,
+      "rate": 0.7273,
+      "ci95": [
+       0.434,
+       0.903
+      ]
+     },
+     "minutes_from_first_to_last_stage_median": 60,
+     "minutes_to_first_alert_median": 0.0,
+     "failed": []
+    },
+    "behavior": {
+     "attacks_detected": {
+      "k": 15,
+      "n": 15,
+      "rate": 1.0,
+      "ci95": [
+       0.796,
+       1.0
+      ]
+     },
+     "benign_alerted": {
+      "k": 2,
+      "n": 24,
+      "rate": 0.0833,
+      "ci95": [
+       0.023,
+       0.258
+      ]
+     },
+     "documented_cold_start_gaps": 0,
+     "median_hours_to_first_alert": 6.0,
+     "failed": [
+      {
+       "id": "BEH-H19",
+       "label": "benign"
+      },
+      {
+       "id": "BEH-H20",
+       "label": "benign"
+      }
+     ],
+     "noise_simulation": {
+      "entities": 233,
+      "days": 50,
+      "warmup_days": 14,
+      "entity_days": 6794,
+      "alerts": 30,
+      "alerts_per_100_entity_days": 0.442,
+      "by_family": {
+       "auth_location": 29,
+       "auth_time": 29,
+       "net_dest": 1,
+       "volume": 1
+      },
+      "seed": 2027
+     }
+    }
+   },
+   "heldout": {
+    "scenario_counts": {
+     "attacks": 793,
+     "benign": 37,
+     "campaigns": 10
+    },
+    "handwritten": {
+     "attacks": {
+      "all": {
+       "k": 37,
+       "n": 39,
+       "rate": 0.9487,
+       "ci95": [
+        0.831,
+        0.986
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 36,
+       "n": 38,
+       "rate": 0.9474,
+       "ci95": [
+        0.827,
+        0.985
+       ]
+      },
+      "other_tactics": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      },
+      "TA0002": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0003": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0004": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0005": {
+       "k": 9,
+       "n": 10,
+       "rate": 0.9,
+       "ci95": [
+        0.596,
+        0.982
+       ]
+      },
+      "TA0006": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "TA0008": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "TA0009": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0010": {
+       "k": 3,
+       "n": 4,
+       "rate": 0.75,
+       "ci95": [
+        0.301,
+        0.954
+       ]
+      },
+      "TA0011": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "TA0040": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      }
+     },
+     "recall_by_category": {
+      "adapter:cloudtrail": {
+       "k": 3,
+       "n": 3,
+       "rate": 1.0,
+       "ci95": [
+        0.438,
+        1.0
+       ]
+      },
+      "network/auth": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "process": {
+       "k": 27,
+       "n": 29,
+       "rate": 0.931,
+       "ci95": [
+        0.78,
+        0.981
+       ]
+      },
+      "web": {
+       "k": 6,
+       "n": 6,
+       "rate": 1.0,
+       "ci95": [
+        0.61,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 29,
+      "n": 37,
+      "rate": 0.7838,
+      "ci95": [
+       0.628,
+       0.886
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 30,
+      "techniques_with_a_detected_scenario": 28
+     },
+     "severity": {
+      "labelled": 37,
+      "exact": {
+       "k": 27,
+       "n": 37,
+       "rate": 0.7297,
+       "ci95": [
+        0.57,
+        0.846
+       ]
+      },
+      "within_one": {
+       "k": 35,
+       "n": 37,
+       "rate": 0.9459,
+       "ci95": [
+        0.823,
+        0.985
+       ]
+      },
+      "underrated_2plus": {
+       "k": 2,
+       "n": 37,
+       "rate": 0.0541,
+       "ci95": [
+        0.015,
+        0.177
+       ]
+      },
+      "overrated_2plus": {
+       "k": 0,
+       "n": 37,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.094
+       ]
+      }
+     },
+     "evidence_correct": {
+      "k": 37,
+      "n": 37,
+      "rate": 1.0,
+      "ci95": [
+       0.906,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 4,
+      "n": 37,
+      "rate": 0.1081,
+      "ci95": [
+       0.043,
+       0.247
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 0.9024,
+     "engine_ms_per_scenario": {
+      "p50": 1.054,
+      "p95": 3.333
+     }
+    },
+    "atomic_red_team": {
+     "attacks": {
+      "all": {
+       "k": 245,
+       "n": 607,
+       "rate": 0.4036,
+       "ci95": [
+        0.365,
+        0.443
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 155,
+       "n": 334,
+       "rate": 0.4641,
+       "ci95": [
+        0.411,
+        0.518
+       ]
+      },
+      "other_tactics": {
+       "k": 90,
+       "n": 273,
+       "rate": 0.3297,
+       "ci95": [
+        0.277,
+        0.387
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0001": {
+       "k": 1,
+       "n": 2,
+       "rate": 0.5,
+       "ci95": [
+        0.095,
+        0.905
+       ]
+      },
+      "TA0002": {
+       "k": 27,
+       "n": 51,
+       "rate": 0.5294,
+       "ci95": [
+        0.395,
+        0.659
+       ]
+      },
+      "TA0003": {
+       "k": 19,
+       "n": 33,
+       "rate": 0.5758,
+       "ci95": [
+        0.408,
+        0.728
+       ]
+      },
+      "TA0004": {
+       "k": 15,
+       "n": 33,
+       "rate": 0.4545,
+       "ci95": [
+        0.298,
+        0.62
+       ]
+      },
+      "TA0005": {
+       "k": 29,
+       "n": 99,
+       "rate": 0.2929,
+       "ci95": [
+        0.212,
+        0.389
+       ]
+      },
+      "TA0006": {
+       "k": 39,
+       "n": 54,
+       "rate": 0.7222,
+       "ci95": [
+        0.591,
+        0.824
+       ]
+      },
+      "TA0007": {
+       "k": 24,
+       "n": 70,
+       "rate": 0.3429,
+       "ci95": [
+        0.242,
+        0.46
+       ]
+      },
+      "TA0008": {
+       "k": 3,
+       "n": 4,
+       "rate": 0.75,
+       "ci95": [
+        0.301,
+        0.954
+       ]
+      },
+      "TA0009": {
+       "k": 1,
+       "n": 10,
+       "rate": 0.1,
+       "ci95": [
+        0.018,
+        0.404
+       ]
+      },
+      "TA0010": {
+       "k": 2,
+       "n": 7,
+       "rate": 0.2857,
+       "ci95": [
+        0.082,
+        0.641
+       ]
+      },
+      "TA0011": {
+       "k": 11,
+       "n": 28,
+       "rate": 0.3929,
+       "ci95": [
+        0.236,
+        0.576
+       ]
+      },
+      "TA0040": {
+       "k": 9,
+       "n": 23,
+       "rate": 0.3913,
+       "ci95": [
+        0.222,
+        0.592
+       ]
+      },
+      "unmapped": {
+       "k": 65,
+       "n": 193,
+       "rate": 0.3368,
+       "ci95": [
+        0.274,
+        0.406
+       ]
+      }
+     },
+     "recall_by_category": {
+      "art:linux": {
+       "k": 43,
+       "n": 126,
+       "rate": 0.3413,
+       "ci95": [
+        0.264,
+        0.428
+       ]
+      },
+      "art:windows": {
+       "k": 202,
+       "n": 481,
+       "rate": 0.42,
+       "ci95": [
+        0.377,
+        0.465
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 147,
+      "n": 245,
+      "rate": 0.6,
+      "ci95": [
+       0.538,
+       0.659
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 145,
+      "techniques_with_a_detected_scenario": 97
+     },
+     "evidence_correct": {
+      "k": 245,
+      "n": 245,
+      "rate": 1.0,
+      "ci95": [
+       0.985,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "ci95": [
+       0.0,
+       1.0
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 3.563,
+      "p95": 23.032
+     }
+    },
+    "lolbas": {
+     "attacks": {
+      "all": {
+       "k": 82,
+       "n": 147,
+       "rate": 0.5578,
+       "ci95": [
+        0.477,
+        0.636
+       ]
+      },
+      "high_signal_tactics": {
+       "k": 82,
+       "n": 146,
+       "rate": 0.5616,
+       "ci95": [
+        0.481,
+        0.64
+       ]
+      },
+      "other_tactics": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      }
+     },
+     "recall_by_tactic": {
+      "TA0002": {
+       "k": 3,
+       "n": 5,
+       "rate": 0.6,
+       "ci95": [
+        0.231,
+        0.882
+       ]
+      },
+      "TA0003": {
+       "k": 0,
+       "n": 2,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.658
+       ]
+      },
+      "TA0005": {
+       "k": 59,
+       "n": 112,
+       "rate": 0.5268,
+       "ci95": [
+        0.435,
+        0.617
+       ]
+      },
+      "TA0006": {
+       "k": 4,
+       "n": 6,
+       "rate": 0.6667,
+       "ci95": [
+        0.3,
+        0.903
+       ]
+      },
+      "TA0007": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "TA0010": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      },
+      "TA0011": {
+       "k": 15,
+       "n": 20,
+       "rate": 0.75,
+       "ci95": [
+        0.531,
+        0.888
+       ]
+      }
+     },
+     "recall_by_category": {
+      "lolbas:ADS": {
+       "k": 11,
+       "n": 17,
+       "rate": 0.6471,
+       "ci95": [
+        0.413,
+        0.827
+       ]
+      },
+      "lolbas:AWL Bypass": {
+       "k": 9,
+       "n": 12,
+       "rate": 0.75,
+       "ci95": [
+        0.468,
+        0.911
+       ]
+      },
+      "lolbas:Compile": {
+       "k": 1,
+       "n": 2,
+       "rate": 0.5,
+       "ci95": [
+        0.095,
+        0.905
+       ]
+      },
+      "lolbas:Conceal": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "lolbas:Copy": {
+       "k": 3,
+       "n": 6,
+       "rate": 0.5,
+       "ci95": [
+        0.188,
+        0.812
+       ]
+      },
+      "lolbas:Credentials": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "lolbas:Decode": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "lolbas:Download": {
+       "k": 13,
+       "n": 17,
+       "rate": 0.7647,
+       "ci95": [
+        0.527,
+        0.904
+       ]
+      },
+      "lolbas:Dump": {
+       "k": 2,
+       "n": 2,
+       "rate": 1.0,
+       "ci95": [
+        0.342,
+        1.0
+       ]
+      },
+      "lolbas:Encode": {
+       "k": 0,
+       "n": 1,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.793
+       ]
+      },
+      "lolbas:Execute": {
+       "k": 38,
+       "n": 82,
+       "rate": 0.4634,
+       "ci95": [
+        0.36,
+        0.571
+       ]
+      },
+      "lolbas:Reconnaissance": {
+       "k": 0,
+       "n": 2,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.658
+       ]
+      },
+      "lolbas:Upload": {
+       "k": 1,
+       "n": 1,
+       "rate": 1.0,
+       "ci95": [
+        0.207,
+        1.0
+       ]
+      }
+     },
+     "mapping_accuracy": {
+      "k": 59,
+      "n": 82,
+      "rate": 0.7195,
+      "ci95": [
+       0.614,
+       0.805
+      ]
+     },
+     "technique_coverage": {
+      "techniques_tested": 38,
+      "techniques_with_a_detected_scenario": 26
+     },
+     "evidence_correct": {
+      "k": 82,
+      "n": 82,
+      "rate": 1.0,
+      "ci95": [
+       0.955,
+       1.0
+      ]
+     },
+     "benign": {
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "ci95": [
+       0.0,
+       1.0
+      ],
+      "note": "rate = false-positive rate"
+     },
+     "precision": 1.0,
+     "engine_ms_per_scenario": {
+      "p50": 1.188,
+      "p95": 3.295
+     }
+    },
+    "campaigns": {
+     "campaigns": {
+      "k": 7,
+      "n": 7,
+      "rate": 1.0,
+      "ci95": [
+       0.646,
+       1.0
+      ]
+     },
+     "near_misses_stay_quiet": {
+      "k": 3,
+      "n": 3,
+      "rate": 1.0,
+      "ci95": [
+       0.438,
+       1.0
+      ]
+     },
+     "evidence_correct": {
+      "k": 5,
+      "n": 7,
+      "rate": 0.7143,
+      "ci95": [
+       0.359,
+       0.918
+      ]
+     },
+     "minutes_from_first_to_last_stage_median": 25,
+     "minutes_to_first_alert_median": 0
+    },
+    "behavior": {
+     "attacks_detected": {
+      "k": 15,
+      "n": 15,
+      "rate": 1.0,
+      "ci95": [
+       0.796,
+       1.0
+      ]
+     },
+     "benign_alerted": {
+      "k": 2,
+      "n": 24,
+      "rate": 0.0833,
+      "ci95": [
+       0.023,
+       0.258
+      ]
+     },
+     "documented_cold_start_gaps": 0,
+     "median_hours_to_first_alert": 7.0,
+     "noise_simulation": {
+      "entities": 303,
+      "days": 55,
+      "warmup_days": 14,
+      "entity_days": 9908,
+      "alerts": 26,
+      "alerts_per_100_entity_days": 0.262,
+      "by_family": {
+       "auth_location": 26,
+       "auth_time": 26
+      },
+      "seed": 4242
+     }
+    }
+   }
+  },
+  "metamorphic": {
+   "development_and_tuning": {
+    "base_scenarios_detected": 482,
+    "variants": 1859,
+    "retention": {
+     "k": 1854,
+     "n": 1859,
+     "rate": 0.9973,
+     "ci95": [
+      0.994,
+      0.999
+     ]
+    },
+    "retention_same_technique": {
+     "k": 1850,
+     "n": 1859,
+     "rate": 0.9952,
+     "ci95": [
+      0.991,
+      0.997
+     ]
+    },
+    "by_mutation": {
+     "case_swap": {
+      "applicable": 236,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "space_pad": {
+      "applicable": 314,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "caret_insert": {
+      "applicable": 194,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "quote_split": {
+      "applicable": 273,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "comspec_wrap": {
+      "applicable": 214,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "absolute_path": {
+      "applicable": 246,
+      "retention": 0.9919,
+      "same_technique": 0.9919
+     },
+     "ps_string_concat": {
+      "applicable": 9,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_backtick": {
+      "applicable": 24,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_encodedcommand_wrap": {
+      "applicable": 236,
+      "retention": 1.0,
+      "same_technique": 0.9831
+     },
+     "sh_base64_pipe": {
+      "applicable": 41,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ifs_spaces": {
+      "applicable": 40,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "url_encode_twice": {
+      "applicable": 32,
+      "retention": 0.9062,
+      "same_technique": 0.9062
+     }
+    },
+    "benign_mutations": {
+     "k": 48,
+     "n": 355,
+     "rate": 0.1352,
+     "ci95": [
+      0.104,
+      0.175
+     ],
+     "note": "rate = false positives on mutated benign events"
+    }
+   },
+   "heldout": {
+    "base_scenarios_detected": 119,
+    "variants": 641,
+    "retention": {
+     "k": 641,
+     "n": 641,
+     "rate": 1.0,
+     "ci95": [
+      0.994,
+      1.0
+     ]
+    },
+    "retention_same_technique": {
+     "k": 640,
+     "n": 641,
+     "rate": 0.9984,
+     "ci95": [
+      0.991,
+      1.0
+     ]
+    },
+    "by_mutation": {
+     "case_swap": {
+      "applicable": 91,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "space_pad": {
+      "applicable": 92,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "caret_insert": {
+      "applicable": 80,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "quote_split": {
+      "applicable": 93,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "comspec_wrap": {
+      "applicable": 90,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "absolute_path": {
+      "applicable": 90,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_backtick": {
+      "applicable": 1,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ps_encodedcommand_wrap": {
+      "applicable": 91,
+      "retention": 1.0,
+      "same_technique": 0.989
+     },
+     "sh_base64_pipe": {
+      "applicable": 6,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "ifs_spaces": {
+      "applicable": 6,
+      "retention": 1.0,
+      "same_technique": 1.0
+     },
+     "url_encode_twice": {
+      "applicable": 1,
+      "retention": 1.0,
+      "same_technique": 1.0
+     }
+    },
+    "benign_mutations": {
+     "k": 25,
+     "n": 117,
+     "rate": 0.2137,
+     "ci95": [
+      0.149,
+      0.296
+     ],
+     "note": "rate = false positives on mutated benign events"
+    }
+   }
+  },
+  "degraded_telemetry": {
+   "development_and_tuning": {
+    "chains_correlating_cleanly": 25,
+    "reordered_arrival": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "duplicated_events": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "timestamps_jittered_within_window": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "clock_skew_all_events_plus_3h": {
+     "k": 25,
+     "n": 25,
+     "rate": 1.0,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "one_non_final_event_lost": {
+     "k": 23,
+     "n": 25,
+     "rate": 0.92,
+     "ci95": [
+      0.75,
+      0.978
+     ]
+    },
+    "final_event_delayed_beyond_all_windows": {
+     "k": 5,
+     "n": 25,
+     "rate": 0.2,
+     "ci95": [
+      0.089,
+      0.391
+     ],
+     "note": "rate = still correlated; EXPECTED LOW: a correlation window is a limit by design"
+    },
+    "identity_field_lost_on_one_stage": {
+     "k": 7,
+     "n": 25,
+     "rate": 0.28,
+     "ci95": [
+      0.143,
+      0.476
+     ]
+    },
+    "command_line_truncated_to_120_chars": {
+     "k": 391,
+     "n": 393,
+     "rate": 0.9949,
+     "ci95": [
+      0.982,
+      0.999
+     ]
+    },
+    "username_asset_and_process_name_missing": {
+     "k": 390,
+     "n": 393,
+     "rate": 0.9924,
+     "ci95": [
+      0.978,
+      0.997
+     ]
+    },
+    "event_type_unknown": {
+     "k": 378,
+     "n": 393,
+     "rate": 0.9618,
+     "ci95": [
+      0.938,
+      0.977
+     ]
+    },
+    "raw_data_dropped_keeping_command_line": {
+     "k": 392,
+     "n": 393,
+     "rate": 0.9975,
+     "ci95": [
+      0.986,
+      1.0
+     ]
+    }
+   },
+   "heldout_chains_and_attacks": {
+    "chains_correlating_cleanly": 7,
+    "reordered_arrival": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "duplicated_events": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "timestamps_jittered_within_window": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "clock_skew_all_events_plus_3h": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "one_non_final_event_lost": {
+     "k": 7,
+     "n": 7,
+     "rate": 1.0,
+     "ci95": [
+      0.646,
+      1.0
+     ]
+    },
+    "final_event_delayed_beyond_all_windows": {
+     "k": 2,
+     "n": 7,
+     "rate": 0.2857,
+     "ci95": [
+      0.082,
+      0.641
+     ],
+     "note": "rate = still correlated; EXPECTED LOW: a correlation window is a limit by design"
+    },
+    "identity_field_lost_on_one_stage": {
+     "k": 2,
+     "n": 7,
+     "rate": 0.2857,
+     "ci95": [
+      0.082,
+      0.641
+     ]
+    },
+    "command_line_truncated_to_120_chars": {
+     "k": 115,
+     "n": 116,
+     "rate": 0.9914,
+     "ci95": [
+      0.953,
+      0.998
+     ]
+    },
+    "username_asset_and_process_name_missing": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
+    },
+    "event_type_unknown": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
+    },
+    "raw_data_dropped_keeping_command_line": {
+     "k": 116,
+     "n": 116,
+     "rate": 1.0,
+     "ci95": [
+      0.968,
+      1.0
+     ]
+    }
+   }
+  },
+  "datasets_not_run": []
+ },
+ "protocol": "Held-out results are aggregates only. Per-scenario held-out detail is written to heldout.detail.json for the NEXT remediation round and must not be consulted to tune rules against these same scenarios."
+}

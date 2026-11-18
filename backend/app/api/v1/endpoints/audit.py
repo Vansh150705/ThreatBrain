@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, get_current_user
+from app.api.deps import CurrentUser, require_viewer
 from app.services.supabase_client import get_supabase_admin
 
 router = APIRouter(prefix="/audit", tags=["audit"])
@@ -37,10 +37,10 @@ class AuditListResponse(BaseModel):
 
 
 @router.get("", response_model=AuditListResponse)
-async def list_audit_logs(
-    user: Annotated[CurrentUser, Depends(get_current_user)],
-    severity: Optional[str] = Query(default=None),
-    actor_type: Optional[str] = Query(default=None),
+def list_audit_logs(
+    user: Annotated[CurrentUser, Depends(require_viewer)],
+    severity: Optional[Literal["critical", "high", "medium", "low", "info"]] = Query(default=None),
+    actor_type: Optional[Literal["user", "agent", "system", "api", "webhook", "anonymous"]] = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ) -> AuditListResponse:

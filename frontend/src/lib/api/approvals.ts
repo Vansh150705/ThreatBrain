@@ -16,6 +16,9 @@ export interface ApprovalItem {
   decision_note: string | null;
   decided_at: string | null;
   created_at: string;
+  execution_status: "executed" | "failed" | null;
+  executed_at: string | null;
+  execution_detail: string | null;
 }
 
 export interface ApprovalListResponse {

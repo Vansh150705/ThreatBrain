@@ -245,6 +245,24 @@ export default function ApprovalsPage() {
                     <div className="flex-1 min-w-0">
                       <span className="text-[13.5px] font-medium text-foreground">{a.playbook_name}</span>
                       <span className="font-mono text-[12px] text-muted-foreground ml-2">{a.target}</span>
+                      {a.status === "approved" && (
+                        <div
+                          className={`font-mono text-[10.5px] mt-0.5 ${
+                            a.execution_status === "executed"
+                              ? "text-severity-low"
+                              : a.execution_status === "failed"
+                                ? "text-severity-critical"
+                                : "text-muted-foreground"
+                          }`}
+                          title={a.execution_detail ?? undefined}
+                        >
+                          {a.execution_status === "executed"
+                            ? `Executed on host${a.executed_at ? ` · ${relativeTime(a.executed_at)}` : ""}`
+                            : a.execution_status === "failed"
+                              ? `Executor refused/failed: ${a.execution_detail ?? "see audit trail"}`
+                              : "Approved · waiting for tb-executor (nothing has run yet)"}
+                        </div>
+                      )}
                     </div>
                     <div className="font-mono text-[11px] text-muted-foreground flex-shrink-0">
                       {a.decided_by_name && <span>{a.decided_by_name} · </span>}

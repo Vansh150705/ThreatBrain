@@ -574,7 +574,7 @@ function AgentList() {
           Agents
         </h1>
         <p className="text-[13.5px] text-muted-foreground mt-1">
-          Seven specialized AI agents power the SOC pipeline — each an expert at a single job.
+          Eight specialized AI agents plus a deterministic detection engine power the SOC pipeline — each an expert at a single job.
         </p>
       </motion.div>
 

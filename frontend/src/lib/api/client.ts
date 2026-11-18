@@ -52,13 +52,38 @@ http.interceptors.response.use(
 
     const { status, data } = error.response;
     const body = (data as Record<string, unknown>) || {};
-    const rawMessage =
-      body.message ?? body.detail ?? `Request failed with status ${status}`;
-    // FastAPI returns a structured `detail` (object/array) for validation and
-    // some auth errors; coerce so it never renders as "[object Object]".
+    const detail = body.detail;
+    // Backend errors arrive as {detail: "text"}, {detail: {error, message}},
+    // {detail: [{loc, msg}]} (validation) or {error, message} (unhandled).
+    const detailObj =
+      detail && typeof detail === "object" && !Array.isArray(detail)
+        ? (detail as Record<string, unknown>)
+        : null;
+    let rawMessage: unknown =
+      body.message ?? detailObj?.message ?? detail ?? `Request failed with status ${status}`;
+    if (Array.isArray(rawMessage)) {
+      rawMessage = rawMessage
+        .map((e) => {
+          const item = e as { loc?: unknown[]; msg?: string };
+          const field = Array.isArray(item.loc) ? item.loc.filter((p) => p !== "body").join(".") : "";
+          return field ? `${field}: ${item.msg}` : item.msg;
+        })
+        .join("; ");
+    }
     const message =
       typeof rawMessage === "string" ? rawMessage : JSON.stringify(rawMessage);
-    const code = body.error as string | undefined;
+    const code = (body.error ?? detailObj?.error) as string | undefined;
+
+    if (status === 429) {
+      return Promise.reject(
+        new ApiError(
+          "Too many requests. Please wait a moment and try again.",
+          429,
+          "rate_limited",
+          body
+        )
+      );
+    }
 
     if (status === 401) {
       clearToken();

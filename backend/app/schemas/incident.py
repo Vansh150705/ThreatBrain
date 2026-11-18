@@ -50,3 +50,4 @@ class IncidentDetail(IncidentListItem):
     playbook_runs: list[dict[str, Any]] | dict[str, Any] = Field(default_factory=list)
     ai_summary: dict[str, Any] = Field(default_factory=dict)
     tags: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)

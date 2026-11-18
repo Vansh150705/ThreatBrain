@@ -1,0 +1,10 @@
+# Release gates for the validation benchmark. Raising a threshold is always fine; lowering one to
+# make a run pass is not (git history shows every change). Measured on the corpus in scenarios/.
+gates:
+  attack_recall_min: 0.90          # attack scenarios detected (known_gap probes excluded)
+  precision_min: 0.95              # TP / (TP + FP) at scenario level
+  benign_fpr_max: 0.03             # benign hard negatives that raised any alert
+  mapping_accuracy_min: 0.80       # detected attacks whose rule ATT&CK ids include the expected technique family
+  chain_recall_min: 1.0            # multi-step campaigns that correlate as expected
+  chain_negative_pass_min: 1.0     # near-miss campaigns that stay uncorrelated
+  engine_event_p95_ms_max: 25.0    # per-event detection latency (single core, this machine)

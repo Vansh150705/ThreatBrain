@@ -10,6 +10,7 @@ const statusStyles: Record<string, string> = {
   investigating:  "bg-severity-medium/8 text-severity-medium border-severity-medium/30",
   contained:      "bg-severity-info/8 text-severity-info border-severity-info/30",
   resolved:       "bg-severity-low/8 text-severity-low border-severity-low/30",
+  closed:         "bg-muted text-muted-foreground border-border",
   false_positive: "bg-muted text-muted-foreground border-border",
 };
 
@@ -18,6 +19,7 @@ const statusLabels: Record<string, string> = {
   investigating:  "Investigating",
   contained:      "Contained",
   resolved:       "Resolved",
+  closed:         "Closed",
   false_positive: "False positive",
 };
 
