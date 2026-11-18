@@ -8,6 +8,27 @@ import uuid
 os.environ.update(
     {
         "APP_ENV": "development",
+        # Hermetic: pydantic-settings also reads backend/.env, so pin every behaviour-affecting setting to its
+        # code default. Otherwise a developer's real .env (debug on, live threat-intel keys, ...) changes results.
+        "APP_DEBUG": "false",
+        "CORS_ORIGINS": "http://localhost:5173,http://localhost:3000",
+        "VIRUSTOTAL_API_KEY": "",
+        "SHODAN_API_KEY": "",
+        "OTX_API_KEY": "",
+        "ABUSEIPDB_BASE_URL": "https://api.abuseipdb.com/api/v2",
+        "VIRUSTOTAL_BASE_URL": "https://www.virustotal.com/api/v3",
+        "SHODAN_BASE_URL": "https://api.shodan.io",
+        "OTX_BASE_URL": "https://otx.alienvault.com/api/v1",
+        "RESEND_API_KEY": "",
+        "N8N_WEBHOOK_BASE_URL": "",
+        "N8N_API_KEY": "",
+        "LLM_PROVIDER": "groq",
+        "LLM_BASE_URL": "",
+        "LLM_API_KEY": "",
+        "LLM_MODEL_OVERRIDE": "",
+        "APP_SECRET": "",
+        "METRICS_TOKEN": "",
+        "OIDC_ISSUER": "",
         "SUPABASE_URL": "http://localhost:54321",
         "SUPABASE_ANON_KEY": "anon-key",
         "SUPABASE_SERVICE_ROLE_KEY": "service-key",
