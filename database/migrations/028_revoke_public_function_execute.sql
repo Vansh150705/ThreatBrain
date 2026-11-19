@@ -16,7 +16,14 @@ REVOKE EXECUTE ON FUNCTION public.seed_log_analysis_agent(UUID)        FROM PUBL
 REVOKE EXECUTE ON FUNCTION public.seed_enterprise_agents(UUID)         FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.handle_new_organization()            FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user()               FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.rls_auto_enable()                    FROM PUBLIC, anon, authenticated;
+-- rls_auto_enable() is created by the Supabase platform (an event-trigger helper), not by these migrations, so it is absent on a
+-- plain PostgreSQL. Only revoke it where it exists.
+DO $$
+BEGIN
+  IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+  END IF;
+END $$;
 
 -- the backend (service role) keeps access
 GRANT EXECUTE ON FUNCTION public.log_audit_event(UUID, public.actor_type, TEXT, UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT,
