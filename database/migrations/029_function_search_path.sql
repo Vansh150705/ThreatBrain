@@ -8,17 +8,34 @@
 -- the <=> operator), pgcrypto and uuid-ossp are installed in the "extensions" schema, so search_agent_memory and any
 -- function using gen_random_bytes()/uuid helpers would stop resolving them with "public" alone. pg_temp goes last so
 -- temporary objects cannot shadow real ones. Idempotent: re-running just re-applies the same setting.
-ALTER FUNCTION public.claim_jobs(text, integer, integer, text[])                    SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.generate_short_id(text)                                       SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.handle_updated_at()                                           SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.normalize_ioc_value()                                         SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.prevent_audit_log_mutation()                                  SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.purge_behavior(integer, integer)                              SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.purge_correlation_ledger(integer)                             SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.purge_expired(integer, integer, integer, integer)             SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.recompute_memory_decay_score()                                SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.search_agent_memory(uuid, vector, integer, numeric, memory_type) SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.set_incident_status_timestamps()                              SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.set_threat_resolved_at()                                      SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.update_agent_stats_on_insert()                                SET search_path = public, extensions, pg_temp;
-ALTER FUNCTION public.update_agent_stats_on_run()                                   SET search_path = public, extensions, pg_temp;
+-- The functions are looked up by name rather than by full signature: search_agent_memory takes a pgvector argument, and on a
+-- database without pgvector that signature cannot even be parsed. Each of these names has a single overload; any function that
+-- does not exist on this database is skipped.
+DO $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN
+    SELECT p.oid::regprocedure AS sig
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.prokind = 'f'
+       AND p.proname = ANY (ARRAY[
+         'claim_jobs',
+         'generate_short_id',
+         'handle_updated_at',
+         'normalize_ioc_value',
+         'prevent_audit_log_mutation',
+         'purge_behavior',
+         'purge_correlation_ledger',
+         'purge_expired',
+         'recompute_memory_decay_score',
+         'search_agent_memory',
+         'set_incident_status_timestamps',
+         'set_threat_resolved_at',
+         'update_agent_stats_on_insert',
+         'update_agent_stats_on_run'
+       ])
+  LOOP
+    EXECUTE format('ALTER FUNCTION %s SET search_path = public, extensions, pg_temp', r.sig);
+  END LOOP;
+END $$;
