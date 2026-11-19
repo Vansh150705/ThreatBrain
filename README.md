@@ -153,6 +153,8 @@ backend 815 tests on Python 3.11 · detection benchmark gates in engine and pipe
 collector 140 tests (13 run the real executor in a disposable namespace) · frontend lint (0 errors), type-check, 26 component tests, production build · 19 Chromium checks against the real app and bundle · on **PostgreSQL 16**: all 27 migrations, the queue under concurrency and worker-kill recovery, RLS/tenant isolation/append-only audit,
 migration runner (drift refusal, concurrent runners, baseline), rollback, backup/verify/atomic restore · `pip-audit` (installed tree) and `npm audit --omit=dev` at 0 known vulnerabilities · `bandit` medium+ clean · `docker compose config` for both compose files · the backend image builds and runs under the hardened profile.
 
+**Checked against the live deployment (2026-11-19):** the hosted backend reports ready with a healthy database connection, an authenticated read-only pass over the main API endpoints (me, threats, incidents, agents, approvals, rule coverage, behaviour, system status) returned 200 against the live Supabase project, and the Vercel frontend serves its routes and calls that backend. The Playwright suite also passes on Windows (19/19). This was a smoke test, not a load or penetration test.
+
 **Not exercised** (no credentials/daemon in the build environment, so treat as unverified): a live Supabase project (PostgREST, GoTrue, Realtime), live Groq/AbuseIPDB/VirusTotal/OTX/Discord calls (HTTP layers and the OpenAI-compatible client are tested against local stubs), a live OIDC/JWKS endpoint (locally generated keys only),
 **the frontend image and the full compose stacks**, a live LLM provider, `tb-executor` against a real firewall or on Windows, any SIEM product (adapters are tested with synthetic payloads), and performance on production infrastructure. Apply migrations through 027 and do a staging deployment before relying on it ([docs/OPERATIONS.md](docs/OPERATIONS.md)).
 
@@ -163,6 +165,7 @@ migration runner (drift refusal, concurrent runners, baseline), rollback, backup
 * **Detection quality numbers are optimistic**: the benchmark was written by the rule authors. Seven evasion probes in twelve are still missed and one realistic behaviour (secret read by an unfamiliar principal) needs a baseline, which does not exist. No UEBA/statistical detection, no SAML/SCIM.
 * LLM output is non-deterministic. Mitigations are schema validation, bounded retries, rule reconciliation, server-side target validation and human approval, not guarantees. LLM verdict quality is not measured by any gate.
 * API rate limits are per process. `re` has no timeout: rule safety is a load-time heuristic plus input caps.
+* **The hosted demo runs on free tiers.** Supabase pauses free projects after a period of inactivity, and while paused the API answers but sign-in and data requests fail (`/api/v1/health/db` reports `ok: false`). Restore the project from the Supabase dashboard if that happens. The Hugging Face Space can also take about a minute to wake from sleep.
 * The demo seed data and the `203.0.113.x` / `198.51.100.x` sample addresses are fixtures; set `SEED_DEMO_DATA=false` and `ALLOW_DEMO_LOAD=false` for real use.
 
 ## License
