@@ -55,7 +55,7 @@ class Settings(BaseSettings):
 
     # Groq AI
     GROQ_API_KEY: str = Field(default="", description="Groq API key for LLM inference.")
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     GROQ_TEMPERATURE: float = 0.2
     GROQ_MAX_TOKENS: int = 4096
     LLM_TIMEOUT_SECONDS: float = 45.0

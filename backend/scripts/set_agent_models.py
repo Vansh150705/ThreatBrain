@@ -1,6 +1,6 @@
 """Apply per-agent LLM model + completion-budget routing (migrations 019 & 020).
 
-All agents run on llama-3.1-8b-instant to maximize free-tier throughput. That
+All agents run on openai/gpt-oss-20b (successor to the retired llama-3.1-8b-instant) to maximize free-tier throughput. That
 model's free tier caps a single request at 6000 tokens/minute (TPM), counting
 prompt + reserved max_tokens, so max_tokens is capped at 2048 — comfortably above
 the largest real completion while leaving room for the prompt under the ceiling.
@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.services.supabase_client import get_supabase_admin
 
-AGENT_MODEL = "llama-3.1-8b-instant"
+AGENT_MODEL = "openai/gpt-oss-20b"
 AGENT_MAX_TOKENS = 2048
 
 AGENT_KEYS = [

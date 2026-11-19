@@ -181,6 +181,31 @@ def _gate() -> threading.BoundedSemaphore:
     return _semaphore
 
 
+# Groq retired these Llama models (the API now answers 404 "model does not exist"). Agent rows created by the older
+# migrations and seed functions still name them, so they are mapped to the closest current model at call time. That keeps
+# every existing and newly seeded workspace working without rewriting data first. Groq provider only: an
+# OpenAI-compatible endpoint serves whatever names its operator chose.
+RETIRED_GROQ_MODELS: dict[str, str] = {
+    "llama-3.1-8b-instant": "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+}
+
+
+def _groq_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Resolve retired model names and keep the reasoning models' hidden reasoning short.
+
+    The gpt-oss models spend part of ``max_tokens`` on reasoning before the answer. Low effort leaves the per-agent token
+    caps (2048-8192) for the JSON verdict itself.
+    """
+    kw = dict(kwargs)
+    model = kw.get("model")
+    if model in RETIRED_GROQ_MODELS:
+        kw["model"] = model = RETIRED_GROQ_MODELS[model]
+    if isinstance(model, str) and model.startswith("openai/gpt-oss"):
+        kw["extra_body"] = {**(kw.get("extra_body") or {}), "reasoning_effort": "low"}
+    return kw
+
+
 def _create_completion(**kwargs: Any) -> Any:
     settings = get_settings()
 
@@ -200,7 +225,7 @@ def _create_completion(**kwargs: Any) -> Any:
                 raise LLMUnavailableError("LLM_PROVIDER=none: the language model is disabled (rules-only mode)")
             if settings.LLM_PROVIDER == "openai_compatible":
                 return _compat_client().chat.completions.create(**kwargs)
-            return _get_groq_client().chat.completions.create(**kwargs)
+            return _get_groq_client().chat.completions.create(**_groq_kwargs(kwargs))
 
     started = time.perf_counter()
     try:
