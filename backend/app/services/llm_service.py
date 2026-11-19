@@ -206,16 +206,48 @@ def _groq_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     return kw
 
 
+# Groq answers 429 with a Retry-After header, and a per-minute token bucket usually refills in under ten seconds. The plain
+# exponential backoff (1 s, 2 s) gave up before that, so the last agent of a pipeline run failed whenever the earlier ones had
+# used most of the minute's tokens. Wait at least as long as the provider asks, bounded so a daily-quota 429 (which asks for
+# far longer) still fails fast instead of holding a pipeline stage open.
+MAX_RATE_LIMIT_WAIT_SECONDS = 20.0
+
+
+def _retry_after_seconds(exc: BaseException) -> float | None:
+    headers = getattr(getattr(exc, "response", None), "headers", None)
+    raw = headers.get("retry-after") if headers is not None else None
+    try:
+        return float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _wait_honoring_retry_after(base: Any) -> Any:
+    def wait(retry_state: Any) -> float:
+        seconds = float(base(retry_state))
+        outcome = getattr(retry_state, "outcome", None)
+        exc = outcome.exception() if outcome is not None and outcome.failed else None
+        if isinstance(exc, RateLimitError):
+            asked = _retry_after_seconds(exc)
+            if asked is not None:
+                seconds = max(seconds, min(asked + 0.5, MAX_RATE_LIMIT_WAIT_SECONDS))
+        return seconds
+
+    return wait
+
+
 def _create_completion(**kwargs: Any) -> Any:
     settings = get_settings()
 
     @retry(
         retry=retry_if_exception_type((*_RETRYABLE, CompatRetryableError)),
         stop=stop_after_attempt(max(1, settings.LLM_MAX_RETRIES + 1)),
-        wait=wait_exponential(
-            multiplier=settings.LLM_RETRY_BASE_SECONDS,
-            min=settings.LLM_RETRY_BASE_SECONDS,
-            max=settings.LLM_RETRY_BASE_SECONDS * 8,
+        wait=_wait_honoring_retry_after(
+            wait_exponential(
+                multiplier=settings.LLM_RETRY_BASE_SECONDS,
+                min=settings.LLM_RETRY_BASE_SECONDS,
+                max=settings.LLM_RETRY_BASE_SECONDS * 8,
+            )
         ),
         reraise=True,
     )
