@@ -117,6 +117,16 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
+      # The service container is PostgreSQL 16. A newer pg_dump/pg_restore on the runner writes `SET transaction_timeout`,
+      # which a 16 server rejects, so backup/restore would fail for tooling reasons. Pin the client tools to the server's version.
+      - name: Use PostgreSQL 16 client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - run: pg_dump --version && psql --version
       - run: ./database/verify_migrations.sh tb_migration_check
       - name: Queue semantics on real PostgreSQL (concurrency, leases, dead-letter, retention)
         run: ./database/tests/test_queue.sh tb_migration_check
