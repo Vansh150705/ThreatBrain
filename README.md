@@ -141,7 +141,7 @@ backend/    FastAPI app: agents/, detection/ (rules, correlations, engine, Sigma
             api/v1/endpoints/, tests/, validation/ (benchmark lab), bench/ (performance)
 collector/  tb_collector (log tailing + detections), tb_executor (approved actions), tb_common (API session)
 frontend/   React 19 + Vite + Tailwind v4 console
-database/   migrations/ (001-027), rollback/, seeders/, migrate.sh, backup.sh, restore.sh, tests/ (real-PostgreSQL), verify_migrations.sh
+database/   migrations/ (001-029), rollback/, seeders/, migrate.sh, backup.sh, restore.sh, tests/ (real-PostgreSQL), verify_migrations.sh
 scripts/    release_gates.py (runs every gate, writes the machine-readable report)
 docs/       ARCHITECTURE, SECURITY, DETECTION, VALIDATION, OPERATIONS, RELEASE, AUDIT, BEHAVIORAL_ANALYTICS, AGENT_EVALUATION, reports/
 ```
