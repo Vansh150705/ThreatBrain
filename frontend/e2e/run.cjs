@@ -29,6 +29,11 @@ function check(name, ok, detail = "") {
   if (!ok) failures++;
 }
 
+// Windows resolves npx only as npx.cmd, and Node refuses to spawn a .cmd without a shell.
+const WIN = process.platform === "win32";
+const NPX = WIN ? "npx.cmd" : "npx";
+const SHELL = WIN ? { shell: true } : {};
+
 function start(cmd, args, opts) {
   const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"], ...opts });
   children.push(p);
@@ -74,9 +79,9 @@ async function newPage(browser, tokens, users, who, errors) {
 (async () => {
   console.log("building the frontend (production build against the rig's API)…");
   const env = { ...process.env, VITE_API_BASE_URL: `${API}/api/v1`, VITE_SUPABASE_URL: "http://localhost:54321", VITE_SUPABASE_ANON_KEY: "anon-e2e" };
-  execFileSync("npx", ["vite", "build", "--outDir", "dist-e2e", "--emptyOutDir"], { cwd: path.join(ROOT, "frontend"), env, stdio: "ignore" });
+  execFileSync(NPX, ["vite", "build", "--outDir", "dist-e2e", "--emptyOutDir"], { cwd: path.join(ROOT, "frontend"), env, stdio: "ignore", ...SHELL });
 
-  const py = process.env.PYTHON || "python3";
+  const py = process.env.PYTHON || (WIN ? "python" : "python3");
   const server = start(py, ["-m", "tests.e2e_server", "--port", String(API_PORT)], { cwd: path.join(ROOT, "backend"), env: { ...process.env, PYTHONPATH: ".", E2E_EXTRA_ORIGINS: WEB } });
   let first = "";
   server.stdout.on("data", (d) => { first += d.toString(); });
@@ -84,7 +89,7 @@ async function newPage(browser, tokens, users, who, errors) {
   await waitFor(`${API}/api/v1/health`);
   const boot = JSON.parse(first.split("\n").find((l) => l.startsWith("{")));
   const { tokens, users } = boot;
-  start("npx", ["vite", "preview", "--outDir", "dist-e2e", "--port", String(WEB_PORT), "--strictPort", "--host", "127.0.0.1"], { cwd: path.join(ROOT, "frontend"), env });
+  start(NPX, ["vite", "preview", "--outDir", "dist-e2e", "--port", String(WEB_PORT), "--strictPort", "--host", "127.0.0.1"], { cwd: path.join(ROOT, "frontend"), env, ...SHELL });
   await waitFor(WEB);
 
   const browser = await chromium.launch();
