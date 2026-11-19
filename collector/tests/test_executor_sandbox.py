@@ -22,7 +22,7 @@ HERE = Path(__file__).resolve().parent
 NEEDED = ("unshare", "iptables", "ip6tables", "usermod", "useradd")
 
 pytestmark = pytest.mark.skipif(
-    os.geteuid() != 0 or any(shutil.which(b) is None for b in NEEDED),
+    not hasattr(os, "geteuid") or os.geteuid() != 0 or any(shutil.which(b) is None for b in NEEDED),
     reason="needs root and unshare/iptables/ip6tables/usermod/useradd to build a disposable namespace",
 )
 

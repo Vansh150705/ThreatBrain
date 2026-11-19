@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 import time
 
@@ -139,6 +140,7 @@ def test_spool_is_durable_ordered_and_stops_on_first_failure(tmp_path):
     assert len(sp) == 0 and sent == [0, 1, 2, 3]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes (0600) are not enforced by Windows; the spool relies on the profile ACL there")
 def test_spool_is_bounded_and_private(tmp_path):
     path = tmp_path / "s.jsonl"
     sp = Spool(str(path), max_items=3)
@@ -155,6 +157,7 @@ def test_spool_skips_corrupt_lines(tmp_path):
 
 
 # -------------------------------------------------------- tailing/runner ----
+@pytest.mark.skipif(sys.platform == "win32", reason="logrotate-style rename of an open file is a POSIX behaviour; Windows refuses it (WinError 32)")
 def test_tail_follows_appends_and_survives_rotation(tmp_path):
     log = tmp_path / "auth.log"
     log.write_text("old line\n")

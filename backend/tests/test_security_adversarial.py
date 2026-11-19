@@ -282,10 +282,21 @@ def test_no_builtin_rule_is_vulnerable_to_catastrophic_backtracking():
     engine = get_engine()
     pieces = ["a" * 20000, "(" * 5000, "union select " * 800, "../" * 6000, "${jndi:" * 2000, " " * 20000 + "x", "powershell -enc " + "A" * 19000,
               "\\" * 15000, "http://" + "a." * 5000, "{{" * 6000, "net user " + "a b " * 4000, "sudo " + "-a " * 6000]
-    worst = 0.0
-    for text in pieces:
+    def timed(text: str) -> float:
+        slowest = 0.0
         for field in ({"command_line": text}, {"title": text}, {"raw_data": {"url": text, "user_agent": text}}):
             t0 = time.perf_counter()
             engine.evaluate({"event_type": "process.start", "raw_data": {}, **field})
-            worst = max(worst, time.perf_counter() - t0)
-    assert worst < 1.0, f"slowest adversarial evaluation took {worst:.2f}s across {len(engine.rules)} rules"
+            slowest = max(slowest, time.perf_counter() - t0)
+        return slowest
+
+    # Calibration: just scanning max-size benign text costs ~126 rules x several views of linear regex work, which is
+    # hardware-dependent (a slow or throttled Windows/OneDrive box takes ~1s for 15 KB). Catastrophic backtracking is
+    # orders of magnitude beyond linear scanning, so compare against this machine's own baseline instead of a bare 1.0s.
+    baseline = max(timed(("benign text " * 2000)[:20000]) for _ in range(2))
+    worst = max(timed(text) for text in pieces)
+    limit = max(1.0, 10 * baseline)
+    assert worst < limit, (
+        f"slowest adversarial evaluation took {worst:.2f}s (benign baseline {baseline:.2f}s, limit {limit:.2f}s) "
+        f"across {len(engine.rules)} rules"
+    )

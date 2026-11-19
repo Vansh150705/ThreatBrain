@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -97,6 +98,9 @@ def test_doctor_cli_fails_loudly_on_bad_production_config():
     env = {"PATH": "/usr/bin:/bin", "APP_ENV": "production", "APP_DEBUG": "true", "CORS_ORIGINS": "*",
            "SUPABASE_URL": "http://x", "SUPABASE_ANON_KEY": "a", "SUPABASE_SERVICE_ROLE_KEY": "s",
            "SUPABASE_JWT_SECRET": "short", "PYTHONPATH": "."}
+    # Windows needs SYSTEMROOT to initialise Winsock (else WinError 10106) even with an otherwise minimal env.
+    if os.environ.get("SYSTEMROOT"):
+        env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
     p = subprocess.run([sys.executable, "-m", "app.doctor"], env=env, capture_output=True, text=True, timeout=60)
     assert p.returncode == 1
     assert "APP_DEBUG must be false" in p.stdout and "CORS_ORIGINS must not contain" in p.stdout and "too short" in p.stdout
