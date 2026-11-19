@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+import httpx
 from supabase import Client, create_client
 from supabase.client import ClientOptions
 
@@ -10,6 +11,30 @@ from app.core.logging import get_logger
 
 log = get_logger(__name__)
 
+
+
+def _use_http1(client: Client) -> Client:
+    """Give the PostgREST client an HTTP/1.1 connection pool instead of the library's default HTTP/2 one.
+
+    supabase-py/postgrest build their httpx session with ``http2=True``, so every thread shares one multiplexed connection.
+    FastAPI runs the sync endpoints and the queue worker in a thread pool, and under concurrent load that connection fails
+    in a few percent of calls (``RemoteProtocolError: Server disconnected``, ``ConnectionTerminated``, h2 state errors),
+    which surfaced as random 500s on the dashboard's parallel requests. HTTP/1.1 gives each thread its own pooled
+    connection and removes that class of failure.
+    """
+    old = getattr(getattr(client, "postgrest", None), "session", None)
+    if not isinstance(old, httpx.Client):  # a test double, or a library version with a different layout: leave it alone
+        return client
+    client.postgrest.session = httpx.Client(
+        base_url=old.base_url,
+        headers=old.headers,
+        timeout=old.timeout,
+        follow_redirects=True,
+        http2=False,
+        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20, keepalive_expiry=5.0),
+    )
+    old.close()
+    return client
 
 
 @lru_cache(maxsize=1)
@@ -31,6 +56,8 @@ def get_supabase_admin() -> Client:
             persist_session=False,      # never persist server-side
         ),
     )
+
+    _use_http1(client)
 
     log.info(
         "supabase_admin_client_initialized",
@@ -55,6 +82,7 @@ def get_supabase_user(access_token: str) -> Client:
 
     # Set the auth session so PostgREST receives the JWT on every query.
     # no refresh token here, the frontend handles that
+    _use_http1(client)
     client.postgrest.auth(access_token)
 
     return client
