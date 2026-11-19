@@ -13,8 +13,10 @@ from postgrest.exceptions import APIError
 from pydantic import ValidationError
 
 from app.agents.base import AgentConfigError
+from app.api.v1.endpoints.ingest import MAX_BODY_BYTES as INGEST_MAX_BODY_BYTES
 from app.api.v1.router import api_router
 from app.core import metrics
+from app.core.body_limit import BodySizeLimitMiddleware
 from app.core.config import get_settings
 from app.core.logging import (
     bind_request_context,
@@ -310,6 +312,14 @@ def create_app() -> FastAPI:
 
     #  Mount the versioned API router
     app.include_router(api_router, prefix="/api/v1")
+
+    # Added last so it is the outermost layer: oversized (including chunked) ingest bodies are cut off
+    # before anything else buffers them.
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        max_bytes=INGEST_MAX_BODY_BYTES,
+        path_prefixes=("/api/v1/ingest",),
+    )
 
     return app
 
